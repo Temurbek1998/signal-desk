@@ -12,6 +12,8 @@ import { trackRecord } from "@/lib/server/track.ts";
 import { publicCategories } from "@/lib/instruments.ts";
 import { geraklEnabled } from "@/lib/scalp.ts";
 import Candles3D from "./components/Candles3D.tsx";
+import MiniCandles from "./components/MiniCandles.tsx";
+import { PlansRow, TiltCard } from "./components/Plans3D.tsx";
 
 export const dynamic = "force-dynamic";
 
@@ -147,13 +149,14 @@ export default async function Home() {
           Robot faqat barcha shartlar mos kelganda signal beradi, shuning uchun kunlik son &quot;gacha&quot; deb yozilgan: tinch kunlarda kamroq bo&apos;ladi.
           Har bir signal natijasi <Link href="/natijalar">Natijalar</Link> sahifasida ochiq ko&apos;rinadi.
         </p>
-        <div className="plans tiers">
-          {PAID_TIERS.map((tier) => {
+        <PlansRow count={PAID_TIERS.length} start={1}>
+          {PAID_TIERS.map((tier, i) => {
             const p = plans.find((x) => x.tier === tier && x.days === 30);
             const f = TIER_FEATURES[tier];
             return (
-              <div key={tier} className={`plan ${tier} ${tier === "pro" ? "best" : ""}`}>
+              <TiltCard key={tier} className={`plan plan3d ${tier} ${tier === "pro" ? "best" : ""}`}>
                 {tier === "pro" && <span className="badge">Eng ko&apos;p tanlanadi</span>}
+                <MiniCandles n={(i + 1) as 1 | 2 | 3} />
                 <h3>{TIER_NAME[tier]}</h3>
                 <div className="price">{p ? formatUsdt(p.price_usdt) : "—"}<small> / oy</small></div>
                 <div className="per">{f.lead}</div>
@@ -165,10 +168,10 @@ export default async function Home() {
                   {f.extra.map((x) => <li key={x}>{x}</li>)}
                 </ul>
                 <Link className={`btn ${tier === "pro" ? "gold" : ""}`} href="/royxat">Tanlash</Link>
-              </div>
+              </TiltCard>
             );
           })}
-        </div>
+        </PlansRow>
         <p className="muted">
           {live
             ? `Jonli natija (90 kun): ${all.closed} ta yopilgan signal, ${Math.round(all.winRate * 100)}% i foyda bilan. `

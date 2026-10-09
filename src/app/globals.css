@@ -404,3 +404,38 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .plan .price small { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
 .plan .badge { position: absolute; top: -11px; left: 22px; background: var(--gold); color: var(--on-gold); font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; box-shadow: var(--glow); }
 .sub a, .muted a { color: var(--gold); }
+
+/* ---------- Tariflar 3D ---------- */
+.plans.tiers { gap: 18px; padding-block: 14px 6px; }
+.plan-wrap { perspective: 1000px; display: flex; min-width: 0; }
+.plan.plan3d { flex: 1; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .5s cubic-bezier(.2,.7,.2,1), box-shadow .3s; overflow: visible; isolation: isolate; }
+.plan.plan3d[data-hover] { transition: transform .08s linear, box-shadow .3s; box-shadow: 0 30px 50px -25px var(--drop), 0 0 0 1px var(--line); }
+.plan.plan3d.best[data-hover] { box-shadow: 0 30px 50px -25px var(--drop), 0 0 0 2px var(--gold), var(--glow); }
+.plan.plan3d::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), var(--fill-2), transparent 55%); }
+.plan.plan3d[data-hover]::after { opacity: 1; }
+.plan3d > * { transform: translateZ(18px); }
+.plan3d h3, .plan3d .price { transform: translateZ(40px); }
+.plan3d .badge { transform: translateZ(60px); }
+.plan3d .btn { transform: translateZ(30px); }
+.plan3d .mini3d { transform: translateZ(50px); }
+.mini3d { position: relative; height: 72px; width: 90px; perspective: 500px; margin: -6px 0 -4px; }
+.mini3d-scene { position: absolute; left: 50%; top: 52%; width: 0; height: 0; transform-style: preserve-3d; animation: mini3dspin 9s linear infinite; }
+.mini3d .c3-body { --w: 14px; }
+.mini3d .c3-candle { animation-duration: 3.5s; }
+@keyframes mini3dspin { from { transform: rotateX(-18deg) rotateY(0deg); } to { transform: rotateX(-18deg) rotateY(360deg); } }
+.plan.vip .mini3d .c3-candle { --c1: #ffd34d; --c2: #a8801a; }
+.plan-dots { display: none; justify-content: center; gap: 8px; }
+.plan-dots button { width: 8px; height: 8px; padding: 0; border-radius: 99px; border: 0; background: var(--fill-2); cursor: pointer; transition: width .25s, background .25s; }
+.plan-dots button[aria-selected="true"] { width: 22px; background: var(--gold); }
+
+/* Telefon: kartalar yonma-yon suriladi */
+@media (max-width: 760px) {
+  .plans.tiers { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; padding-block: 18px 10px; gap: 12px; }
+  .plans.tiers::-webkit-scrollbar { display: none; }
+  .plan-wrap { flex: 0 0 82%; scroll-snap-align: center; }
+  .plan.plan3d { padding: 22px 18px 18px; }
+  .plan .price { font-size: 1.6rem; }
+  .plan-dots { display: flex; }
+}
+@media (prefers-reduced-motion: reduce) { .mini3d-scene { animation: none; transform: rotateX(-18deg) rotateY(-30deg); } }
