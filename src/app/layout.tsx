@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { logout } from "./actions.ts";
 import ChatWidget from "./components/ChatWidget.tsx";
 import LogoMark from "./components/Logo.tsx";
+import TabBar from "./components/TabBar.tsx";
 import { currentUser } from "@/lib/server/auth.ts";
 import { adminHref } from "@/lib/adminPath.ts";
 import "./globals.css";
@@ -10,19 +11,24 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Signal Desk", template: "%s · Signal Desk" },
   description: "Oltin (XAU/USD) uchun robot tahlili va savdo signallari",
+  appleWebApp: { capable: true, title: "Signal Desk", statusBarStyle: "default" },
+};
+
+// iPhone: ekran chetigacha (notch va pastki chiziq hisobga olinadi), status bar rangi fonga mos.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser().catch(() => null);
   return (
     <html lang="uz">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-        />
-      </head>
       <body>
         <header className="site-head">
           <div className="in">
@@ -36,7 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {user ? (
                 <>
                   {user.role === "admin" && <Link href={adminHref()}>Admin</Link>}
-                  <Link href="/kabinet">Kabinet</Link>
+                  <Link href="/kabinet" className="tab-dup">Kabinet</Link>
                   <Link href="/signallar" className="btn gold sm">Signallar</Link>
                   <form action={logout}>
                     <button className="btn sm" type="submit">Chiqish</button>
@@ -63,6 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </footer>
         <ChatWidget />
+        <TabBar signedIn={!!user} />
       </body>
     </html>
   );
