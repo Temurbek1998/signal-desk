@@ -198,12 +198,13 @@ test("komissiya filtri: harakat juda kichik bo'lsa signal berilmaydi", async () 
   assert.ok(rejected, "komissiya sababi yozilmadi");
 });
 
-test("bozorlar: standart holatda faqat oltin, flag bilan qo'shiladi", async () => {
-  const { activeCategories, activeInstruments } = await import("../src/lib/instruments.ts");
-  assert.deepEqual(activeInstruments({}).map((i) => i.pair), ["XAU/USD"]);
-  assert.deepEqual(activeCategories({ ACTIVE_CATEGORIES: "gold, forex" }), ["gold", "forex"]);
-  assert.equal(activeInstruments({ ACTIVE_CATEGORIES: "gold,forex,crypto" }).length, 12);
-  assert.deepEqual(activeCategories({ ACTIVE_CATEGORIES: "xyz" }), ["gold"]);
+test("bozorlar: standart holatda robot hammasida, mijozga faqat oltin", async () => {
+  const { activeCategories, activeInstruments, publicCategories } = await import("../src/lib/instruments.ts");
+  assert.deepEqual(activeInstruments({ ROBOT_MARKETS: "gold" }).map((i) => i.pair), ["XAU/USD"]);
+  assert.deepEqual(publicCategories({}), ["gold"]);
+  assert.deepEqual(activeCategories({ ROBOT_MARKETS: "gold, forex" }), ["gold", "forex"]);
+  assert.equal(activeInstruments({}).length, 12);
+  assert.deepEqual(activeCategories({ ROBOT_MARKETS: "xyz" }), ["gold"]);
   const { bucketByTime } = await import("../src/lib/market.ts");
   const m5 = Array.from({ length: 24 }, (_, i) => ({ t: Date.UTC(2026, 0, 1, 0, 0) + i * 300_000, o: i, h: i + 1, l: i - 1, c: i + 0.5 }));
   const h1 = bucketByTime(m5, 60);

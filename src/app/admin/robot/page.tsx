@@ -64,7 +64,7 @@ export default async function RobotPage() {
           : "Robot hali birorta ham aylanish qilmagan. Cron sozlang yoki \"Hozir ishga tushirish\" tugmasini bosing."}
       </p>
 
-      <p className="muted">Kuzatilayotgan bozorlar: {activeCategories().map((c) => ({ gold: "oltin", forex: "valyuta", crypto: "kripto" })[c]).join(", ")} (ACTIVE_CATEGORIES).</p>
+      <p className="muted">Kuzatilayotgan bozorlar: {activeCategories().map((c) => ({ gold: "oltin", forex: "valyuta", crypto: "kripto" })[c]).join(", ")} (ROBOT_MARKETS).</p>
       {goldSource === "yahoo" && (
         <p className="notice warn">
           Oltin narxi Yahoo'dagi GC=F fyuchersidan olinmoqda. U spot XAU/USD dan odatda bir necha o'n dollar farq qiladi, shuning

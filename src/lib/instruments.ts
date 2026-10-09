@@ -27,14 +27,13 @@ export const ALL_INSTRUMENTS: Instrument[] = [
   fx("USD/CAD", "forex", "CAD=X"),
 ];
 
-// Robot qaysi bozorlarni kuzatadi. Hozircha faqat oltin; kripto va valyuta keyin bosqichma-bosqich qo'shiladi:
-//   ACTIVE_CATEGORIES=gold            (standart)
-//   ACTIVE_CATEGORIES=gold,forex      (oltin va valyuta)
-//   ACTIVE_CATEGORIES=gold,forex,crypto
+// Robot qaysi bozorlarda ishlaydi (standart: hammasi). Mijozlarga qaysilari ko'rinishini PUBLIC_CATEGORIES belgilaydi.
+//   ROBOT_MARKETS=gold,forex,crypto   (standart)
+//   ROBOT_MARKETS=gold                (faqat oltin)
 const ALL_CATEGORIES: Category[] = ["gold", "forex", "crypto"];
 
 export function activeCategories(env: Record<string, string | undefined> = process.env): Category[] {
-  const want = (env.ACTIVE_CATEGORIES ?? "gold").split(",").map((s) => s.trim().toLowerCase());
+  const want = (env.ROBOT_MARKETS ?? "gold,forex,crypto").split(",").map((s) => s.trim().toLowerCase());
   const cats = ALL_CATEGORIES.filter((c) => want.includes(c));
   return cats.length ? cats : ["gold"];
 }
