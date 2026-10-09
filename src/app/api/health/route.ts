@@ -18,6 +18,6 @@ export async function GET() {
   } catch (e) {
     const err = e as { message?: string; code?: string };
     const message = String(err.message ?? e).replace(/postgres(ql)?:\/\/\S+/gi, "[url]").replace(/npg_\w+/g, "[parol]");
-    return Response.json({ db: "error", code: err.code ?? null, message, env }, { status: 500 });
+    return Response.json({ db: "error", code: err.code ?? null, message, env });
   }
 }
