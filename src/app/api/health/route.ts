@@ -29,10 +29,10 @@ export async function GET() {
               (SELECT count(*) FROM robot_state) AS states`,
     );
     // Bozorlar sinovi: faqat umumiy tarixiy natija (savdolar soni, o'rtacha R, xulosa), signal tafsilotlari emas.
-    const [mt] = await sql<{ at: Date; rows: { pair: string; tf: string; trades: number; avgR: number; half1: number; half2: number; verdict: string }[]; errors: string }>(
+    const [mt] = await sql<{ at: Date; rows: { pair: string; tf: string; days: number; trades: number; avgR: number; half1: number; half2: number; verdict: string }[]; errors: string }>(
       "SELECT at, rows, left(errors, 400) AS errors FROM market_test ORDER BY at DESC LIMIT 1",
     ).catch(() => []);
-    const marketTest = mt ? { at: mt.at, errors: mt.errors, rows: mt.rows.map((r) => `${r.pair} ${r.tf}: ${r.trades} savdo, ${r.avgR.toFixed(3)}R (${r.half1.toFixed(2)}/${r.half2.toFixed(2)}) ${r.verdict}`) } : null;
+    const marketTest = mt ? { at: mt.at, errors: mt.errors, rows: mt.rows.map((r) => `${r.pair} ${r.tf} (${r.days} kun): ${r.trades} savdo, ${r.avgR.toFixed(3)}R (${r.half1.toFixed(2)}/${r.half2.toFixed(2)}) ${r.verdict}`) } : null;
     return Response.json({ db: "ok", ms, env, robot: { runs, counts }, marketTest });
   } catch (e) {
     const err = e as { message?: string; code?: string };
