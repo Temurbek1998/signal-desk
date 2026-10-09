@@ -283,3 +283,17 @@ ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_at timestamptz;
 ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_analysis jsonb;
 ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS zeus jsonb;
 ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS analysis jsonb;
+
+-- Robot + Claude birgalikdagi bozor ko'rinishi (admin "Robot tahlili" sahifasi): Claude robot hisoblarini o'qib, o'z tahlilini qo'shadi.
+CREATE TABLE IF NOT EXISTS ai_views (
+  id serial PRIMARY KEY,
+  pair text NOT NULL,
+  at timestamptz NOT NULL DEFAULT now(),
+  bias text NOT NULL,
+  confidence int NOT NULL DEFAULT 0,
+  agree text,
+  summary text NOT NULL DEFAULT '',
+  analysis jsonb,
+  model text
+);
+CREATE INDEX IF NOT EXISTS ai_views_pair_at ON ai_views (pair, at DESC);

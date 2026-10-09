@@ -3,14 +3,16 @@ import { adminHref } from "@/lib/adminPath.ts";
 import { activeInstruments } from "@/lib/instruments.ts";
 import { CONTEXT_TFS, TIMEFRAMES, type Timeframe } from "@/lib/types.ts";
 import { runRobotNow } from "../../actions.ts";
-import AiExplain from "../../components/AiExplain.tsx";
+import AiAnalysisView from "../../components/AiAnalysisView.tsx";
+import ClaudeViewButton from "../../components/ClaudeViewButton.tsx";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 import LocalTime from "../../components/LocalTime.tsx";
-import RobotChart from "../../components/RobotChart.tsx";
+import RobotChart, { type ChartLevel } from "../../components/RobotChart.tsx";
 import RunNowButton from "../../components/RunNowButton.tsx";
 import { requireAdmin } from "@/lib/server/auth.ts";
 import { chartData } from "@/lib/server/analysis.ts";
 import { provider } from "@/lib/server/llm.ts";
+import { latestView } from "@/lib/server/aiView.ts";
 
 export const metadata = { title: "Robot tahlili", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -32,6 +34,11 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
   }
   const pair = d?.inst.pair ?? q.pair ?? "XAU/USD";
   const a = d?.analysis;
+  const view = await latestView(pair).catch(() => null);
+  const ca = view?.analysis ?? null;
+  const levels: ChartLevel[] = [...(ca?.levels ?? [])];
+  if (ca?.invalidation) levels.push({ price: ca.invalidation, kind: "invalidation", note: "Claude: g'oya shu narxda bekor" });
+  const robotHere = d?.states.find((x) => x.timeframe === tf);
   const fmt = (v: number | undefined | null) => (v == null || !Number.isFinite(v) ? "—" : v.toFixed(d?.digits ?? 2));
 
   return (
@@ -39,8 +46,8 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
       <AutoRefresh seconds={60} />
       <header className="page-head">
         <div>
-          <h1>Robot tahlili</h1>
-          <p className="sub">Robot bozorni qanday ko'ryapti: grafik, indikatorlar, har taymfreymdagi xulosasi va signallari.</p>
+          <h1>Robot + Claude tahlili</h1>
+          <p className="sub">Robot (Zeus) hisoblaydi, Claude tushunadi: grafikda robot signallari va Claude chizgan zonalar, darajalar birga ko'rinadi.</p>
         </div>
         <form action={runRobotNow}><RunNowButton /></form>
       </header>
@@ -57,7 +64,8 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
           </div>
         </div>
         {d ? (
-          <RobotChart candles={d.candles} ema20={d.ema20} ema50={d.ema50} signals={d.signals} digits={d.digits} tfMinutes={d.minutes} />
+          <RobotChart candles={d.candles} ema20={d.ema20} ema50={d.ema50} signals={d.signals} digits={d.digits} tfMinutes={d.minutes}
+            levels={levels} zones={ca?.zones ?? []} />
         ) : (
           <p className="err">Narx ma'lumotini olib bo'lmadi: {error}</p>
         )}
@@ -70,6 +78,41 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
           </div>
         )}
       </section>
+
+      <section className="panel">
+        <div className="bar">
+          <h2>Robot va Claude birgalikda</h2>
+          <ClaudeViewButton pair={pair} enabled={!!provider()} />
+        </div>
+        <div className="an-grid">
+          <div>
+            <h3 style={{ marginTop: 0 }}>Robot (Zeus), {tf}</h3>
+            <p style={{ margin: 0 }}>
+              {robotHere?.side && robotHere.status === "active"
+                ? <b className={robotHere.side === "BUY" ? "up" : "down"}>{robotHere.quality === "strong" ? "Kuchli" : "Kuchsiz"} {robotHere.side}</b>
+                : <b>Kutmoqda</b>}
+            </p>
+            <p className="muted">{robotHere?.reason ?? "Hali tahlil yo'q"}</p>
+          </div>
+          <div>
+            <h3 style={{ marginTop: 0 }}>Claude</h3>
+            {view ? (
+              <>
+                <p style={{ margin: 0 }}>
+                  <b className={view.bias === "BUY" ? "up" : view.bias === "SELL" ? "down" : ""}>{view.bias === "WAIT" ? "Kutish" : view.bias}</b>
+                  {` · ishonch ${view.confidence}%`}
+                  {view.agree && <span className={`an-verdict ${view.agree === "rozi" ? "tasdiq" : view.agree === "qarshi" ? "ehtiyot" : ""}`} style={{ marginLeft: 8 }}>robot bilan {view.agree}</span>}
+                </p>
+                <p className="muted">Yangilangan <LocalTime at={view.at} /></p>
+              </>
+            ) : <p className="muted" style={{ margin: 0 }}>{provider() ? "Bu juftlik uchun hali Claude tahlili yo'q. Tugmani bosing." : "AI ulanmagan."}</p>}
+          </div>
+        </div>
+        {view?.summary && <p className="ai-box" style={{ margin: 0 }}>{view.summary}</p>}
+        <p className="muted" style={{ margin: 0 }}>Oltin uchun Claude har soatda o&apos;zi yangilaydi, boshqa juftliklar tugma bilan. Bu faqat admin uchun.</p>
+      </section>
+
+      {ca && <AiAnalysisView a={ca} digits={d?.digits} />}
 
       <section className="panel">
         <h2>Robot xulosasi har taymfreymda</h2>
@@ -118,10 +161,6 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
         )}
       </section>
 
-      <section className="panel">
-        <h2>AI izohi</h2>
-        <AiExplain pair={pair} tf={tf} enabled={!!provider()} />
-      </section>
     </main>
   );
 }

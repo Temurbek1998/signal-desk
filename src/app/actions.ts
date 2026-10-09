@@ -194,42 +194,16 @@ export async function aiDecideNow(_prev: { msg?: string } | null): Promise<{ msg
 }
 
 // Robot tahlilining AI izohi (admin). AI signal bermaydi: faqat robot hisoblagan ma'lumotni so'z bilan tushuntiradi.
-export async function aiExplain(_prev: { text?: string; error?: string } | null, form: FormData): Promise<{ text?: string; error?: string }> {
-  await requireAdmin();
-  const { complete, provider } = await import("@/lib/server/llm.ts");
-  if (!provider()) return { error: "AI hali ulanmagan. Vercel'da GEMINI_API_KEY (bepul) yoki ANTHROPIC_API_KEY qo'shilsa, bu tugma ishlaydi." };
-  const { chartData } = await import("@/lib/server/analysis.ts");
-  const { TIMEFRAMES } = await import("@/lib/types.ts");
-  const tf = TIMEFRAMES.find((t) => t === form.get("tf")) ?? "M15";
+export async function claudeViewNow(_prev: { msg?: string } | null, form: FormData): Promise<{ msg?: string }> {
+  const admin = await requireAdmin();
+  const pair = String(form.get("pair") ?? "");
+  await logAdmin(admin, `Claude tahlili so'raldi: ${pair}`);
+  const { claudeView } = await import("@/lib/server/aiView.ts");
   try {
-    const d = await chartData(String(form.get("pair") ?? ""), tf, 60);
-    const a = d.analysis;
-    const facts = {
-      juftlik: d.inst.pair, taymfreym: tf,
-      oxirgi_narx: d.candles.at(-1)?.c,
-      indikatorlar: a && { trend: a.trend, ema20: a.ema20, ema50: a.ema50, rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: a.atr },
-      robot_xulosalari: d.states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, holat: s.status, ishonch: s.confidence, sabab: s.reason })),
-      katta_trend: d.context,
-      faol_signallar: d.signals.filter((s) => s.status === "active"),
-      oxirgi_30_yopilish: d.candles.slice(-30).map((c) => c.c),
-      // Muhim darajalar: so'nggi 60 shamning eng yuqori va eng past nuqtalari, vaqti bilan (UTC).
-      muhim_darajalar: (() => {
-        const w = d.candles.slice(-60);
-        const hi = w.reduce((a, c) => (c.h > a.h ? c : a), w[0]);
-        const lo = w.reduce((a, c) => (c.l < a.l ? c : a), w[0]);
-        return hi && lo ? { qarshilik: hi.h, qarshilik_vaqti_utc: new Date(hi.t).toISOString(), qollab_quvvat: lo.l, qollab_quvvat_vaqti_utc: new Date(lo.t).toISOString() } : null;
-      })(),
-      hozir_utc: new Date().toISOString(),
-    };
-    const system = `Sen Signal Desk savdo robotining tahlilchisisan. Faqat o'zbek tilida (lotin), qisqa va aniq yoz.
-Vazifang: robot hisoblagan ma'lumotlarni admin uchun tushuntirish. Qoidalar:
-- Faqat berilgan ma'lumotga tayan, narx yoki daraja o'ylab topma. Muhim darajalar (qarshilik, qo'llab-quvvatlash, EMA20, EMA50) va ularning vaqtini aniq raqam bilan ayt.
-- O'zingdan yangi signal, kirish, TP yoki SL berma. Signal faqat robot qoidalari bilan chiqadi.
-- Tuzilma: 1) bozor holati (trend, kuch, momentum), 2) har taymfreym (M5, M15, M30, H1) bo'yicha qisqa xulosa va sababi, 3) muhim darajalar, 4) robot qaysi shart bajarilsa va qaysi darajada kirishi mumkin, 5) xavflar.
-- 10-15 qatordan oshmasin. Vaqtlarni UTC deb belgila.`;
-    const text = await complete(system, [{ role: "user", content: JSON.stringify(facts) }]);
-    return { text };
+    const v = await claudeView(pair);
+    revalidatePath("/admin/tahlil");
+    return { msg: `Claude: ${v.bias}, ishonch ${v.confidence}%` };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
+    return { msg: e instanceof Error ? e.message : String(e) };
   }
 }
