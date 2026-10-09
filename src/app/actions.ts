@@ -198,13 +198,21 @@ export async function aiExplain(_prev: { text?: string; error?: string } | null,
       katta_trend: d.context,
       faol_signallar: d.signals.filter((s) => s.status === "active"),
       oxirgi_30_yopilish: d.candles.slice(-30).map((c) => c.c),
+      // Muhim darajalar: so'nggi 60 shamning eng yuqori va eng past nuqtalari, vaqti bilan (UTC).
+      muhim_darajalar: (() => {
+        const w = d.candles.slice(-60);
+        const hi = w.reduce((a, c) => (c.h > a.h ? c : a), w[0]);
+        const lo = w.reduce((a, c) => (c.l < a.l ? c : a), w[0]);
+        return hi && lo ? { qarshilik: hi.h, qarshilik_vaqti_utc: new Date(hi.t).toISOString(), qollab_quvvat: lo.l, qollab_quvvat_vaqti_utc: new Date(lo.t).toISOString() } : null;
+      })(),
+      hozir_utc: new Date().toISOString(),
     };
     const system = `Sen Signal Desk savdo robotining tahlilchisisan. Faqat o'zbek tilida (lotin), qisqa va aniq yoz.
 Vazifang: robot hisoblagan ma'lumotlarni admin uchun tushuntirish. Qoidalar:
-- Faqat berilgan ma'lumotga tayan, narx yoki daraja o'ylab topma.
+- Faqat berilgan ma'lumotga tayan, narx yoki daraja o'ylab topma. Muhim darajalar (qarshilik, qo'llab-quvvatlash, EMA20, EMA50) va ularning vaqtini aniq raqam bilan ayt.
 - O'zingdan yangi signal, kirish, TP yoki SL berma. Signal faqat robot qoidalari bilan chiqadi.
-- Tuzilma: 1) bozor holati (trend, kuch, momentum), 2) robot har taymfreymda nima deyapti va nega, 3) robot qaysi shart bajarilsa kirishi mumkin, 4) xavflar.
-- 8-12 qatordan oshmasin.`;
+- Tuzilma: 1) bozor holati (trend, kuch, momentum), 2) har taymfreym (M5, M15, M30, H1) bo'yicha qisqa xulosa va sababi, 3) muhim darajalar, 4) robot qaysi shart bajarilsa va qaysi darajada kirishi mumkin, 5) xavflar.
+- 10-15 qatordan oshmasin. Vaqtlarni UTC deb belgila.`;
     const text = await complete(system, [{ role: "user", content: JSON.stringify(facts) }]);
     return { text };
   } catch (e) {
