@@ -1,5 +1,5 @@
 import { analyze, latestSignal, quality } from "./engine.ts";
-import { activeInstruments } from "./instruments.ts";
+import { activeInstruments, ALL_INSTRUMENTS } from "./instruments.ts";
 import { marketOpen } from "./sessions.ts";
 import { pipsSignals } from "./pips.ts";
 import { scalpSignals } from "./scalp.ts";
@@ -32,13 +32,15 @@ export async function marketContext(inst: Instrument): Promise<MarketContext> {
 const ARROW = { up: "↑", down: "↓", flat: "→" } as const;
 export const contextText = (c: MarketContext) => CONTEXT_TFS.filter((k) => c[k]).map((k) => `${k} ${ARROW[c[k]!]}`).join(", ");
 
-export async function runRobot(tf: Timeframe) {
+// keepPairs: o'chirilgan bozorlardagi ochiq savdolar yopilguncha kuzatilishi uchun (yangi savdo ochilmaydi, track.ts).
+export async function runRobot(tf: Timeframe, keepPairs: string[] = []) {
   const errors: { pair: string; message: string }[] = [];
   // Kalendar ishlamasa ham robot signal berishda davom etadi.
   const calendar: NewsEvent[] = await getCalendar().catch(() => []);
   const results = await Promise.all(
     // Bozor yopiq bo'lsa (dam olish kunlari, kunlik tanaffus) robot bu juftlikni tahlil qilmaydi va savdoga kirmaydi.
-    activeInstruments().filter((i) => marketOpen(i.category)).map(async (inst): Promise<Signal[]> => {
+    [...activeInstruments(), ...ALL_INSTRUMENTS.filter((i) => keepPairs.includes(i.pair) && !activeInstruments().some((a) => a.pair === i.pair))]
+      .filter((i) => marketOpen(i.category)).map(async (inst): Promise<Signal[]> => {
       try {
         // Oltin M15: pips rejimi uchun kun boshidan kuzatish kerak, shuning uchun ko'proq sham olinadi.
         const pips = inst.category === "gold" && tf === "M15";

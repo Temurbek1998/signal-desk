@@ -27,8 +27,11 @@ export async function runCycle(trigger: string, timeframes: Timeframe[] = TIMEFR
   const errors: string[] = [];
 
   const contexts = new Map<string, Signal["context"]>();
+  // O'chirilgan bozorlarda ochiq qolgan signallar ham yopilguncha kuzatiladi.
+  const open = await sql<{ pair: string }>("SELECT DISTINCT pair FROM signal_log WHERE status = 'active'");
+  const keep = open.map((o) => o.pair);
   for (const tf of timeframes) {
-    const r = await runRobot(tf);
+    const r = await runRobot(tf, keep);
     for (const s of r.signals) if (s.context && Object.keys(s.context).length) contexts.set(s.pair, s.context);
     failed += r.errors.length;
     for (const e of r.errors) errors.push(`${tf} ${e.pair}: ${e.message}`);
