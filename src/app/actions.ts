@@ -183,7 +183,7 @@ export async function runMarketTestNow() {
 export async function aiExplain(_prev: { text?: string; error?: string } | null, form: FormData): Promise<{ text?: string; error?: string }> {
   await requireAdmin();
   const { complete, provider } = await import("@/lib/server/llm.ts");
-  if (!provider()) return { error: "AI hali ulanmagan. Vercel'da ANTHROPIC_API_KEY qo'shilsa, bu tugma ishlaydi." };
+  if (!provider()) return { error: "AI hali ulanmagan. Vercel'da GEMINI_API_KEY (bepul) yoki ANTHROPIC_API_KEY qo'shilsa, bu tugma ishlaydi." };
   const { chartData } = await import("@/lib/server/analysis.ts");
   const { TIMEFRAMES } = await import("@/lib/types.ts");
   const tf = TIMEFRAMES.find((t) => t === form.get("tf")) ?? "M15";

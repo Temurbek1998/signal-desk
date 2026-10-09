@@ -11,7 +11,7 @@ export default function AiExplain({ pair, tf, enabled }: { pair: string; tf: str
       <div className="bar">
         <p className="muted" style={{ margin: 0 }}>
           {enabled ? "AI robotning hisoblarini so'z bilan tushuntiradi. U signal bermaydi, signal faqat robot qoidalaridan chiqadi."
-            : "AI hali ulanmagan: Vercel'da ANTHROPIC_API_KEY qo'shilsa yoqiladi."}
+            : "AI hali ulanmagan: Vercel'da GEMINI_API_KEY (bepul) yoki ANTHROPIC_API_KEY qo'shilsa yoqiladi."}
         </p>
         <button className="btn gold sm" type="submit" disabled={pending || !enabled}>{pending ? "AI o'ylamoqda…" : "AI izohi"}</button>
       </div>
