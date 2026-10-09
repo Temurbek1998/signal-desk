@@ -233,3 +233,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS signal_log_key ON signal_log (pair, timeframe,
 ALTER TABLE signal_log DROP CONSTRAINT IF EXISTS signal_log_status_check;
 ALTER TABLE signal_log ADD CONSTRAINT signal_log_status_check CHECK (status IN ('active', 'tp1', 'tp2', 'sl', 'close'));
 ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS strategy text NOT NULL DEFAULT 'trend';
+
+-- Bozorlar sinovi: har bir valyuta va kripto juftligining so'nggi ~60 kunlik tarixiy natijasi (haftada bir yangilanadi).
+CREATE TABLE IF NOT EXISTS market_test (
+  id     serial PRIMARY KEY,
+  at     timestamptz NOT NULL DEFAULT now(),
+  rows   jsonb NOT NULL,
+  errors text NOT NULL DEFAULT ''
+);

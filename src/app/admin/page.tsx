@@ -44,6 +44,7 @@ export default async function AdminPage() {
         </div>
         <Link className="btn gold sm" href={adminHref("/robot")}>Robot jurnali</Link>
         <Link className="btn gold sm" href={adminHref("/demo")}>Demo hisob</Link>
+        <Link className="btn gold sm" href={adminHref("/sinov")}>Bozorlar sinovi</Link>
       </header>
 
       <div className="stats">

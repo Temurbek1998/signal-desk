@@ -23,7 +23,7 @@ export function routeAdmin(hostHeader: string | null, pathname: string, env: Rec
   const isInternal = pathname === "/admin" || pathname.startsWith("/admin/");
   if (host && reqHost === host) {
     if (pathname === "/") return "/admin";
-    if (pathname === "/robot" || pathname === "/demo") return "/admin" + pathname;
+    if (pathname === "/robot" || pathname === "/demo" || pathname === "/sinov") return "/admin" + pathname;
   }
   if (path && (pathname === `/${path}` || pathname.startsWith(`/${path}/`))) {
     return "/admin" + pathname.slice(path.length + 1);

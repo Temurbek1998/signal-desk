@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { lastMarketTest, saveMarketTest } from "@/lib/server/marketTest.ts";
 import { runCycle } from "@/lib/server/runner.ts";
 
 export const dynamic = "force-dynamic";
@@ -22,5 +23,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q", why }, { status: 401 });
   }
   const r = await runCycle("cron");
+  // Bozorlar sinovi haftada bir marta, javob yuborilgandan keyin (cron-job.org kutib qolmasin).
+  after(async () => {
+    const last = await lastMarketTest().catch(() => null);
+    if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});
+  });
   return NextResponse.json({ ok: true, ...r });
 }

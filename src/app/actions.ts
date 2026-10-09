@@ -170,3 +170,11 @@ export async function runRobotNow() {
   await runCycle("admin");
   revalidatePath("/admin/robot");
 }
+
+export async function runMarketTestNow() {
+  const admin = await requireAdmin();
+  await logAdmin(admin, "bozorlar sinovi qo'lda ishga tushirildi");
+  const { saveMarketTest } = await import("@/lib/server/marketTest.ts");
+  await saveMarketTest();
+  revalidatePath("/admin/sinov");
+}
