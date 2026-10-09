@@ -1,9 +1,10 @@
 import { after, NextResponse } from "next/server";
 import { lastMarketTest, saveMarketTest } from "@/lib/server/marketTest.ts";
 import { runCycle } from "@/lib/server/runner.ts";
+import { aiDecide, aiTraderEnabled, trackAiTrades } from "@/lib/server/aiTrader.ts";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // Robotning bitta aylanishi. Har 5 daqiqada chaqirilishi kerak (Vercel Cron yoki cron-job.org):
 //   GET /api/cron  bilan  Authorization: Bearer <CRON_SECRET>
@@ -25,6 +26,11 @@ export async function GET(req: Request) {
   const r = await runCycle("cron");
   // Bozorlar sinovi haftada bir marta, javob yuborilgandan keyin (cron-job.org kutib qolmasin).
   after(async () => {
+    // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror soatda bir marta.
+    if (aiTraderEnabled()) {
+      await trackAiTrades().catch((e) => console.error("AI kuzatuv", e));
+      await aiDecide().catch((e) => console.error("AI qaror", e));
+    }
     const last = await lastMarketTest().catch(() => null);
     if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});
   });

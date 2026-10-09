@@ -179,6 +179,20 @@ export async function runMarketTestNow() {
   revalidatePath("/admin/sinov");
 }
 
+// AI treyderdan hozir qaror so'rash (admin). Ochiq AI savdo bo'lsa yangi qaror olinmaydi.
+export async function aiDecideNow(_prev: { msg?: string } | null): Promise<{ msg?: string }> {
+  const admin = await requireAdmin();
+  await logAdmin(admin, "AI treyderdan qo'lda qaror so'raldi");
+  const { aiDecide } = await import("@/lib/server/aiTrader.ts");
+  try {
+    const r = await aiDecide(true);
+    revalidatePath("/admin/ai");
+    return { msg: r.skipped ?? `Qaror: ${r.trade?.action} (${r.trade?.status})` };
+  } catch (e) {
+    return { msg: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // Robot tahlilining AI izohi (admin). AI signal bermaydi: faqat robot hisoblagan ma'lumotni so'z bilan tushuntiradi.
 export async function aiExplain(_prev: { text?: string; error?: string } | null, form: FormData): Promise<{ text?: string; error?: string }> {
   await requireAdmin();

@@ -241,3 +241,26 @@ CREATE TABLE IF NOT EXISTS market_test (
   rows   jsonb NOT NULL,
   errors text NOT NULL DEFAULT ''
 );
+
+-- AI treyder (faqat demo): har soatdagi qaror (BUY/SELL/WAIT), darajalari, sababi va natijasi (R).
+CREATE TABLE IF NOT EXISTS ai_trades (
+  id         bigserial PRIMARY KEY,
+  at         timestamptz NOT NULL DEFAULT now(),
+  pair       text NOT NULL,
+  action     text NOT NULL,
+  status     text NOT NULL,
+  entry      double precision,
+  sl         double precision,
+  tp1        double precision,
+  tp2        double precision,
+  confidence int NOT NULL DEFAULT 0,
+  reason     text NOT NULL DEFAULT '',
+  note       text NOT NULL DEFAULT '',
+  model      text NOT NULL DEFAULT '',
+  tp1_hit    boolean NOT NULL DEFAULT false,
+  result_r   double precision,
+  closed_at  timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ai_trades_at ON ai_trades (at DESC);
+CREATE INDEX IF NOT EXISTS ai_trades_open ON ai_trades (status) WHERE status IN ('open', 'tp1');

@@ -7,6 +7,7 @@ const ITEMS = [
   { key: "tahlil", label: "Robot tahlili", sub: "/tahlil" },
   { key: "robot", label: "Robot logi", sub: "/robot" },
   { key: "signallar", label: "Signallar", sub: "/signallar" },
+  { key: "ai", label: "AI treyder", sub: "/ai" },
   { key: "demo", label: "Demo hisob", sub: "/demo" },
   { key: "sinov", label: "Bozorlar sinovi", sub: "/sinov" },
 ];

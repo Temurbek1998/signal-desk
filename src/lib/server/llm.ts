@@ -20,12 +20,17 @@ export function provider() {
   return null;
 }
 
-export async function complete(system: string, messages: ChatMessage[]): Promise<string> {
+// opts.json: javob shu JSON sxemaga mos bo'lsin (Anthropic'da qat'iy, boshqalarda JSON rejimi).
+// opts.model: shu chaqiruv uchun model (masalan AI treyder uchun alohida), opts.maxTokens: javob chegarasi.
+export type CompleteOpts = { json?: Record<string, unknown>; model?: string; maxTokens?: number };
+
+export async function complete(system: string, messages: ChatMessage[], opts: CompleteOpts = {}): Promise<string> {
   const p = provider();
   if (!p) throw new LlmNotConfigured("AI operator hali ulanmagan");
 
   if (p === "mock") {
     const last = messages[messages.length - 1]?.content ?? "";
+    if (opts.json) return JSON.stringify({ action: "WAIT", sl: 0, tp1: 0, tp2: 0, confidence: 40, reason: "Sinov javobi: aniq ustunlik yo'q." });
     return `Sinov javobi: "${last.slice(0, 80)}" savolingizni oldim.`;
   }
 
@@ -34,10 +39,11 @@ export async function complete(system: string, messages: ChatMessage[]): Promise
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL ?? "deepseek-chat",
+        model: opts.model ?? process.env.LLM_MODEL ?? "deepseek-chat",
         messages: [{ role: "system", content: system }, ...messages],
-        max_tokens: 700,
+        max_tokens: opts.maxTokens ?? 1200,
         temperature: 0.4,
+        ...(opts.json ? { response_format: { type: "json_object" } } : {}),
       }),
     });
     if (!res.ok) throw new Error(`DeepSeek ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -46,14 +52,14 @@ export async function complete(system: string, messages: ChatMessage[]): Promise
   }
 
   if (p === "gemini") {
-    const model = process.env.LLM_MODEL ?? "gemini-2.5-flash";
+    const model = opts.model ?? process.env.LLM_MODEL ?? "gemini-2.5-flash";
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-        generationConfig: { maxOutputTokens: 1200, temperature: 0.4 },
+        generationConfig: { maxOutputTokens: opts.maxTokens ?? 1200, temperature: 0.4, ...(opts.json ? { responseMimeType: "application/json" } : {}) },
       }),
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -69,13 +75,15 @@ export async function complete(system: string, messages: ChatMessage[]): Promise
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: process.env.LLM_MODEL ?? "claude-haiku-5-5",
+      model: opts.model ?? process.env.LLM_MODEL ?? "claude-haiku-5-5",
       system,
       messages,
-      max_tokens: 1200,
+      max_tokens: opts.maxTokens ?? 1200,
+      ...(opts.json ? { output_config: { format: { type: "json_schema", schema: opts.json } } } : {}),
     }),
   });
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
+  if (data.stop_reason === "refusal") throw new Error("Anthropic: model javob berishdan bosh tortdi");
   return (data.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("").trim();
 }

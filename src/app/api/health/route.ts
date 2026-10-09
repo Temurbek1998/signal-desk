@@ -12,6 +12,7 @@ export async function GET() {
     MAIL_PROVIDER: process.env.MAIL_PROVIDER ?? null,
     TWELVEDATA_API_KEY: Boolean(process.env.TWELVEDATA_API_KEY),
     ROBOT_MARKETS: process.env.ROBOT_MARKETS ?? null,
+    AI_KEY: process.env.ANTHROPIC_API_KEY ? "anthropic" : process.env.GEMINI_API_KEY ? "gemini" : process.env.DEEPSEEK_API_KEY ? "deepseek" : null,
   };
   try {
     const t = Date.now();
@@ -21,12 +22,14 @@ export async function GET() {
     const runs = await sql<{ at: Date; trigger: string; analyzed: number; failed: number; strong: number; weak: number; errors: string }>(
       "SELECT started_at AS at, trigger, analyzed, failed, strong, weak, left(errors, 600) AS errors FROM robot_runs ORDER BY started_at DESC LIMIT 3",
     );
-    const [counts] = await sql<{ signals: string; open_signals: string; demo: string; demo_open: string; states: string }>(
+    const [counts] = await sql<{ signals: string; open_signals: string; demo: string; demo_open: string; states: string; ai_trades: string; ai_decisions: string }>(
       `SELECT (SELECT count(*) FROM signal_log) AS signals,
               (SELECT count(*) FROM signal_log WHERE status = 'active') AS open_signals,
               (SELECT count(*) FROM demo_trades) AS demo,
               (SELECT count(*) FROM demo_trades WHERE status = 'open') AS demo_open,
-              (SELECT count(*) FROM robot_state) AS states`,
+              (SELECT count(*) FROM robot_state) AS states,
+              (SELECT count(*) FROM ai_trades WHERE status NOT IN ('wait', 'rejected')) AS ai_trades,
+              (SELECT count(*) FROM ai_trades) AS ai_decisions`,
     );
     // Bozorlar sinovi: faqat umumiy tarixiy natija (savdolar soni, o'rtacha R, xulosa), signal tafsilotlari emas.
     const [mt] = await sql<{ at: Date; rows: { pair: string; tf: string; days: number; trades: number; avgR: number; half1: number; half2: number; verdict: string }[]; errors: string }>(
