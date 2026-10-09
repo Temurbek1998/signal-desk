@@ -439,3 +439,78 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
   .plan-dots { display: flex; }
 }
 @media (prefers-reduced-motion: reduce) { .mini3d-scene { animation: none; transform: rotateX(-18deg) rotateY(-30deg); } }
+
+/* ---------- Zeus roboti 3D ("Robot haqida") ---------- */
+.rb-stage { --px: 0; --py: 0; position: relative; height: 440px; perspective: 1000px; perspective-origin: 50% 35%; overflow: hidden; border-radius: 24px; touch-action: pan-y;
+  background: radial-gradient(ellipse at 50% 70%, var(--fill-2), transparent 65%); }
+.rb-scene { position: absolute; left: 50%; top: 56%; width: 0; height: 0; transform-style: preserve-3d; animation: rbturn 14s ease-in-out infinite alternate; }
+@keyframes rbturn { from { transform: rotateX(-10deg) rotateY(-38deg); } to { transform: rotateX(-14deg) rotateY(38deg); } }
+.rb-floor { position: absolute; left: -260px; top: -260px; width: 520px; height: 520px; transform: translateY(108px) rotateX(90deg);
+  background-image: linear-gradient(var(--c3-grid) 1px, transparent 1px), linear-gradient(90deg, var(--c3-grid) 1px, transparent 1px); background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 68%); mask-image: radial-gradient(circle, #000 25%, transparent 68%); }
+.rb-shadow { position: absolute; left: -80px; top: -40px; width: 160px; height: 80px; border-radius: 50%; background: radial-gradient(var(--drop), transparent 70%); transform: translateY(107px) rotateX(90deg); animation: rbshadow 4s ease-in-out infinite; }
+@keyframes rbshadow { 50% { scale: .82; opacity: .7; } }
+.rb-bot, .rb-head, .rb-arm, .rb-orbit, .rb-chip { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.rb-bot { animation: rbfloat 4s ease-in-out infinite; }
+@keyframes rbfloat { 50% { translate: 0 -10px 0; } }
+.rb-head { animation: rbhead 7s ease-in-out infinite; transform-origin: 0 -90px; }
+@keyframes rbhead { 0%, 100% { rotate: y 0deg; } 30% { rotate: y 18deg; } 65% { rotate: y -14deg; } }
+.rb-arm.l { animation: rbarm 4s ease-in-out infinite; transform-origin: -76px -50px; }
+.rb-arm.r { animation: rbarm 4s ease-in-out infinite reverse; transform-origin: 76px -50px; }
+@keyframes rbarm { 50% { rotate: x 14deg; } }
+.bx { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; transform: translate3d(var(--tx), var(--ty), var(--tz)); }
+.bx > i { position: absolute; display: block; }
+.bx .f, .bx .b { width: var(--w); height: var(--h); left: calc(var(--w) / -2); top: calc(var(--h) / -2); }
+.bx .l, .bx .r { width: var(--d); height: var(--h); left: calc(var(--d) / -2); top: calc(var(--h) / -2); }
+.bx .t, .bx .m { width: var(--w); height: var(--d); left: calc(var(--w) / -2); top: calc(var(--d) / -2); }
+.bx .f { transform: translateZ(calc(var(--d) / 2)); }
+.bx .b { transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+.bx .l { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+.bx .r { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+.bx .t { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
+.bx .m { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+.rb-metal { --m1: var(--surface-2); --m2: var(--bg-2); --m3: var(--thumb); }
+.rb-dark { --m1: var(--bg-2); --m2: var(--bg); --m3: var(--surface-2); }
+.rb-metal > i, .rb-dark > i { background: var(--m2); border: 1px solid var(--line); }
+.rb-metal > .f, .rb-dark > .f { background: linear-gradient(160deg, var(--m3), var(--m1)); }
+.rb-metal > .t, .rb-dark > .t { background: var(--m3); }
+.rb-metal > .f { border-color: var(--glow-ring); }
+.rb-glow > i { background: var(--gold); box-shadow: 0 0 16px var(--gold); }
+.rb-ant { animation: rbblink 2.2s ease-in-out infinite; }
+@keyframes rbblink { 50% { opacity: .35; } }
+.rb-face { position: absolute; inset: 14px 14px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; align-content: center; }
+.rb-face b { width: 18px; height: 12px; border-radius: 4px; background: var(--gold); box-shadow: 0 0 12px var(--gold); animation: rbeyes 5s infinite; }
+.rb-face em { flex-basis: 100%; height: 0; }
+@keyframes rbeyes { 0%, 92%, 100% { scale: 1 1; } 95% { scale: 1 .1; } }
+.rb-screen { position: absolute; inset: 16px 14px 22px; border-radius: 8px; background: var(--bg); border: 1px solid var(--glow-ring); display: flex; flex-direction: column; justify-content: center; padding: 6px; gap: 2px; }
+.rb-screen svg { width: 100%; height: auto; }
+.rb-screen path { fill: none; stroke: var(--gold); stroke-width: 2.5; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--glow-text)); stroke-dasharray: 120; animation: rbdraw 4s ease-in-out infinite; }
+@keyframes rbdraw { from { stroke-dashoffset: 120; } 60%, to { stroke-dashoffset: 0; } }
+.rb-screen small { font: 700 9px var(--f-mono); color: var(--gold); letter-spacing: .08em; }
+.rb-orbit { top: -30px; animation: rborbit 10s linear infinite; }
+@keyframes rborbit { to { rotate: y 360deg; } }
+.rb-chip { transform: rotateY(var(--a)) translateZ(185px); }
+.rb-chip .rb-candle > i { background: var(--c3-up); box-shadow: 0 0 10px var(--glow-text); }
+.rb-chip.dn .rb-candle > i { background: var(--c3-dn); }
+@media (max-width: 760px) { .rb-stage { height: 360px; } .rb-scene { scale: .78; } }
+@media (prefers-reduced-motion: reduce) { .rb-scene, .rb-bot, .rb-head, .rb-arm, .rb-orbit, .rb-ant, .rb-face b, .rb-screen path, .rb-shadow { animation: none; } }
+
+/* Robot haqida sahifasi */
+.about-hero { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 16px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 32px; align-items: center; }
+@media (max-width: 880px) { .about-hero { grid-template-columns: 1fr; padding-block: 24px 8px; } }
+.about-hero h1 { font-size: clamp(2rem, 4.2vw, 3.1rem); line-height: 1.08; margin-top: 10px; }
+.about-hero h1 em { font-style: normal; color: var(--gold); text-shadow: 0 0 14px var(--glow-text); }
+.tasks { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; counter-reset: task; }
+.task { background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.task h3 { font-size: 1.02rem; display: flex; align-items: center; gap: 10px; }
+.task h3::before { counter-increment: task; content: counter(task, decimal-leading-zero); font: 700 .75rem var(--f-mono); color: var(--on-gold); background: var(--gold); border-radius: 7px; padding: 3px 6px; box-shadow: var(--glow); }
+.task p { margin: 0; color: var(--muted); font-size: .92rem; }
+.task .kv { font: .8rem var(--f-mono); color: var(--gold); }
+.cycle { display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--line); margin-left: 8px; }
+.cycle li { list-style: none; position: relative; padding: 0 0 16px 20px; }
+.cycle li::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--glow-text); }
+.cycle b { display: block; }
+.cycle span { color: var(--muted); font-size: .92rem; }
+.nots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.nots div { background: var(--sell-soft); color: var(--fg); border-radius: 14px; padding: 12px 14px; font-size: .92rem; }
+.nots div b { color: var(--sell); }

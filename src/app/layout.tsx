@@ -43,6 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
             <nav className="nav">
               <ThemeToggle />
+              <Link href="/robot-haqida" className="hide-sm">Robot haqida</Link>
               <Link href="/natijalar" className="hide-sm">Natijalar</Link>
               <Link href="/#narxlar" className="hide-sm">Narxlar</Link>
               {user ? (
@@ -71,6 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               bozorlarda savdo yuqori xavf bilan bog'liq, kiritilgan mablag'ning bir qismi yoki hammasini yo'qotish
               mumkin. O'tgan natijalar kelajakdagi natijani kafolatlamaydi.
             </p>
+            <p className="muted"><Link href="/robot-haqida">Robot haqida</Link> · <Link href="/natijalar">Natijalar</Link> · <Link href="/#narxlar">Narxlar</Link></p>
             <p className="muted">© {new Date().getFullYear()} Signal Desk</p>
           </div>
         </footer>

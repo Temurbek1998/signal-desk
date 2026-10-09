@@ -131,6 +131,7 @@ export default async function Home() {
 
       <section className="section">
         <h2>Zeus qanday tahlil qiladi</h2>
+        <p className="sub"><Link href="/robot-haqida">Robot haqida batafsil: barcha vazifalari va 3D ko&apos;rinishi</Link></p>
         <div className="steps">
           <div className="step"><h3>Trend</h3><p>EMA20 va EMA50 orqali bozor yo'nalishini aniqlaydi. Trendga qarshi signal berilmaydi.</p></div>
           <div className="step"><h3>Trend kuchi</h3><p>ADX 20 dan past bo'lsa, bozor yon harakatda deb hisoblanadi va signal berilmaydi.</p></div>
