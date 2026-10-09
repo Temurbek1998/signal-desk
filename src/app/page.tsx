@@ -3,9 +3,15 @@ import { formatUsdt, listPlans } from "@/lib/server/billing.ts";
 import { PAID_TIERS, TIER_NAME } from "@/lib/memory.ts";
 
 const CHAT_LIMIT = { standard: 30, pro: 45, vip: 60 } as const;
+const TIER_FEATURES = {
+  standard: { lead: "Boshlash uchun", count: "Kuniga 5 tagacha signal", rating: "Faqat eng ishonchli (A reyting) signallar", extra: [] as string[] },
+  pro: { lead: "Faol treyder uchun", count: "Kuniga 12 tagacha signal", rating: "A va B reytingli kuchli signallar", extra: [] as string[] },
+  vip: { lead: "Hammasi va shaxsiy yordam", count: "Cheklovsiz: robotning barcha kuchli signallari", rating: "A va B reytingli kuchli signallar", extra: ["Ustuvor shaxsiy yordam"] },
+};
 import { trackRecord } from "@/lib/server/track.ts";
 import { publicCategories } from "@/lib/instruments.ts";
 import { geraklEnabled } from "@/lib/scalp.ts";
+import Candles3D from "./components/Candles3D.tsx";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +44,18 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="hero-card" aria-label="Namuna signal">
+        <Candles3D />
+      </section>
+
+      <section className="section sample">
+        <div>
+          <h2>Signal qanday keladi</h2>
+          <p className="sub">
+            Har signalda kirish narxi, ikkita Take Profit, Stop Loss va robot nima uchun kirganining sababi bo&apos;ladi.
+            Muhim yangilik yaqin bo&apos;lsa, ogohlantirish ham chiqadi.
+          </p>
+        </div>
+          <div className="hero-card" aria-label="Namuna signal">
           <div className="top">
             <div>
               <div className="pair">XAU/USD</div>
@@ -125,41 +142,38 @@ export default async function Home() {
       <section className="section" id="narxlar">
         <h2>Tariflar</h2>
         <p className="sub">
-          Zeus trend rejimida faqat barcha shartlar mos kelganda signal beradi, pips rejimi bilan birga oltinda kuniga
-          o'rtacha 1–2 ta signal chiqadi, ba'zi kunlari umuman chiqmaydi. Mijozlarga kuniga 2 tagacha signal beriladi. Standart tarifda eng yuqori reytingli (A) signallar, PRO va VIP tariflarda
-          A va B reytingli signallar ochiq.
-          Signal reytingini robot o'z xotirasidan, ya'ni o'xshash signallarning o'tgan natijalaridan hisoblaydi.
+          Hamma tarif oylik. Signallarni bitta robot beradi, tariflar signal soni, reytingi va yordam darajasi bilan farq qiladi.
+          Robot faqat barcha shartlar mos kelganda signal beradi, shuning uchun kunlik son &quot;gacha&quot; deb yozilgan: tinch kunlarda kamroq bo&apos;ladi.
+          Har bir signal natijasi <Link href="/natijalar">Natijalar</Link> sahifasida ochiq ko&apos;rinadi.
         </p>
-        {PAID_TIERS.map((tier) => (
-          <div key={tier} className="plan-group">
-            <h3>{TIER_NAME[tier]}</h3>
-            <div className="plans">
-              {plans.filter((p) => p.tier === tier).map((p) => {
-                const base = plans.find((x) => x.tier === tier && x.days === 30);
-                const best = p.days === 90;
-                return (
-                  <div key={p.id} className={`plan ${best ? "best" : ""} ${tier}`}>
-                    <h3>{p.name}</h3>
-                    <div className="price">{formatUsdt(p.price_usdt)}</div>
-                    <div className="per">
-                      {base && p.days > 30
-                        ? `oyiga ${formatUsdt(Math.round((p.price_usdt / p.days) * 300) / 10)}, ${Math.round((1 - p.price_usdt / ((base.price_usdt / 30) * p.days)) * 100)}% tejash`
-                        : `${p.days} kun`}
-                    </div>
-                    <ul>
-                      <li>{tier === "standard" ? "Eng kuchli signallar (A reyting)" : "A va B reytingli barcha kuchli signallar"}</li>
-                      {tier === "vip" && <li>Ustuvor yordam</li>}
-                      <li>{marketLine}</li>
-                      <li>Yangiliklar ogohlantirishi</li>
-                      <li>AI operator: kuniga {CHAT_LIMIT[tier]} savol</li>
-                    </ul>
-                    <Link className={`btn ${best ? "gold" : ""}`} href="/royxat">Tanlash</Link>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <div className="plans tiers">
+          {PAID_TIERS.map((tier) => {
+            const p = plans.find((x) => x.tier === tier && x.days === 30);
+            const f = TIER_FEATURES[tier];
+            return (
+              <div key={tier} className={`plan ${tier} ${tier === "pro" ? "best" : ""}`}>
+                {tier === "pro" && <span className="badge">Eng ko&apos;p tanlanadi</span>}
+                <h3>{TIER_NAME[tier]}</h3>
+                <div className="price">{p ? formatUsdt(p.price_usdt) : "—"}<small> / oy</small></div>
+                <div className="per">{f.lead}</div>
+                <ul>
+                  <li>{f.count}</li>
+                  <li>{f.rating}</li>
+                  <li>{marketLine}, yangiliklar ogohlantirishi</li>
+                  <li>AI operator: kuniga {CHAT_LIMIT[tier]} savol</li>
+                  {f.extra.map((x) => <li key={x}>{x}</li>)}
+                </ul>
+                <Link className={`btn ${tier === "pro" ? "gold" : ""}`} href="/royxat">Tanlash</Link>
+              </div>
+            );
+          })}
+        </div>
+        <p className="muted">
+          {live
+            ? `Jonli natija (90 kun): ${all.closed} ta yopilgan signal, ${Math.round(all.winRate * 100)}% i foyda bilan. `
+            : "Jonli natijalar hali yig'ilmoqda. "}
+          Hech bir tarif foydani kafolatlamaydi: har signalda Stop Loss bor va natijalar ochiq.
+        </p>
       </section>
 
       <section className="section">

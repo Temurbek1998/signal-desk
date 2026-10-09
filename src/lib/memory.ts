@@ -49,10 +49,10 @@ export const TIER_NAME: Record<Tier, string> = { standard: "Standart", pro: "PRO
 
 // Har bir daraja qaysi reytingdagi signallarni va kuniga nechtasini ko'radi.
 export const TIER_RULES: Record<Tier, { ratings: Rating[]; daily: number }> = {
-  // Mijozlarga kuniga 1-2 ta eng aniq signal; admin hammasini ko'radi va Telegramda oladi.
-  standard: { ratings: ["A"], daily: 2 },
-  pro: { ratings: ["A", "B"], daily: 2 },
-  vip: { ratings: ["A", "B"], daily: 2 },
+  // Kunlik chegara "gacha": robot faqat shartlar mos kelganda signal beradi, shuning uchun soni kafolatlanmaydi.
+  standard: { ratings: ["A"], daily: 5 },
+  pro: { ratings: ["A", "B"], daily: 12 },
+  vip: { ratings: ["A", "B"], daily: Infinity },
   admin: { ratings: ["A", "B", "C"], daily: Infinity },
 };
 

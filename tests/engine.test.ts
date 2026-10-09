@@ -139,12 +139,12 @@ test("xotira: yomon natijali juftlik bloklanadi, yaxshisi A oladi", () => {
   assert.equal(rate(70, { n: 0, wins: 0 }, { n: 0, wins: 0 }).rating, "B");
 });
 
-test("tarif: standart kuniga 5 ta A, PRO 9 ta, VIP 15 ta A va B, admin hammasi", () => {
+test("tarif: standart kuniga 5 tagacha A, PRO 12 tagacha A va B, VIP cheklovsiz A va B, admin hammasi", () => {
   const day = Array.from({ length: 30 }, (_, i) => ({ id: i, rating: i % 3 === 0 ? "A" : i % 3 === 1 ? "B" : "C" }));
-  assert.deepEqual(allocate(day, "standard").map((s) => s.id), [0, 3]);
-  assert.equal(allocate(day, "pro").length, 2);
+  assert.deepEqual(allocate(day, "standard").map((s) => s.id), [0, 3, 6, 9, 12]);
+  assert.equal(allocate(day, "pro").length, 12);
   assert.ok(allocate(day, "pro").every((s) => s.rating !== "C"));
-  assert.equal(allocate(day, "vip").length, 2);
+  assert.equal(allocate(day, "vip").length, 20);
   assert.ok(allocate(day, "vip").every((s) => s.rating !== "C"));
   assert.equal(allocate(day, "admin").length, 30);
 });

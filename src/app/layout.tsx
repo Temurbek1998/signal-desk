@@ -4,6 +4,7 @@ import { logout } from "./actions.ts";
 import ChatWidget from "./components/ChatWidget.tsx";
 import LogoMark from "./components/Logo.tsx";
 import TabBar from "./components/TabBar.tsx";
+import ThemeToggle from "./components/ThemeToggle.tsx";
 import { currentUser } from "@/lib/server/auth.ts";
 import { adminHref } from "@/lib/adminPath.ts";
 import "./globals.css";
@@ -19,13 +20,20 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#050806",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#050806" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f7f2" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser().catch(() => null);
   return (
-    <html lang="uz">
+    <html lang="uz" suppressHydrationWarning>
+      <head>
+        {/* Saqlangan kun/tun tanlovi sahifa chizilishidan oldin qo'llanadi (miltillamasin). */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}` }} />
+      </head>
       <body>
         <header className="site-head">
           <div className="in">
@@ -34,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               Signal Desk
             </Link>
             <nav className="nav">
+              <ThemeToggle />
               <Link href="/natijalar" className="hide-sm">Natijalar</Link>
               <Link href="/#narxlar" className="hide-sm">Narxlar</Link>
               {user ? (
