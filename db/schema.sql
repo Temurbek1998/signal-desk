@@ -265,8 +265,9 @@ CREATE TABLE IF NOT EXISTS ai_trades (
 CREATE INDEX IF NOT EXISTS ai_trades_at ON ai_trades (at DESC);
 CREATE INDEX IF NOT EXISTS ai_trades_open ON ai_trades (status) WHERE status IN ('open', 'tp1');
 
--- Oylik tariflar (Bek qarori, 2026-10): Standart 49, PRO 99, VIP 200 USDT. Uzoq muddatli tariflar sotuvdan olinadi.
-UPDATE plans SET name = 'Standart · 1 oy', price_usdt = 49, sort = 1, active = true WHERE id = 'month';
-UPDATE plans SET name = 'PRO · 1 oy', price_usdt = 99, sort = 2, active = true WHERE id = 'pro_month';
-UPDATE plans SET name = 'VIP · 1 oy', price_usdt = 200, sort = 3, active = true WHERE id = 'vip_month';
+-- Oylik tariflar (2026-10, Bek "o'zing halol qo'y" dedi): jonli natija hali yig'ilmagan, shuning uchun boshlang'ich narx past.
+-- Kamida 3 oylik jonli natija foydali chiqqach oshiriladi. Uzoq muddatli tariflar sotuvdan olinadi.
+UPDATE plans SET name = 'Standart · 1 oy', price_usdt = 19, sort = 1, active = true WHERE id = 'month';
+UPDATE plans SET name = 'PRO · 1 oy', price_usdt = 39, sort = 2, active = true WHERE id = 'pro_month';
+UPDATE plans SET name = 'VIP · 1 oy', price_usdt = 79, sort = 3, active = true WHERE id = 'vip_month';
 UPDATE plans SET active = false WHERE id IN ('quarter', 'year', 'pro_quarter', 'pro_year', 'vip_quarter', 'vip_year');

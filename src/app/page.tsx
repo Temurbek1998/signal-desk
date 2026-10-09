@@ -142,7 +142,8 @@ export default async function Home() {
       <section className="section" id="narxlar">
         <h2>Tariflar</h2>
         <p className="sub">
-          Hamma tarif oylik. Signallarni bitta robot beradi, tariflar signal soni, reytingi va yordam darajasi bilan farq qiladi.
+          Hamma tarif oylik. Robot yangi, jonli natijalari endi yig'ilmoqda, shuning uchun narxlar boshlang'ich darajada:
+          natija o'zini isbotlagach oshiriladi. Signallarni bitta robot beradi, tariflar signal soni, reytingi va yordam darajasi bilan farq qiladi.
           Robot faqat barcha shartlar mos kelganda signal beradi, shuning uchun kunlik son &quot;gacha&quot; deb yozilgan: tinch kunlarda kamroq bo&apos;ladi.
           Har bir signal natijasi <Link href="/natijalar">Natijalar</Link> sahifasida ochiq ko&apos;rinadi.
         </p>
