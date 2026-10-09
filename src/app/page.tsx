@@ -79,10 +79,22 @@ export default async function Home() {
             </>
           ) : (
             <>
-              <div className="stat"><b>72%</b><span>M15 win rate</span></div>
-              <div className="stat"><b>73%</b><span>M30 win rate</span></div>
-              <div className="stat"><b>1.16–1.20</b><span>Profit factor</span></div>
-              <div className="stat"><b>215</b><span>Sinov savdolari{goldOnly ? " (kripto)" : ""}</span></div>
+              {goldOnly ? (
+                // GOLD_BACKTEST.md: oltin M15, 123 kun, tanlangan sozlama.
+                <>
+                  <div className="stat"><b>87%</b><span>M15 win rate (TP1 gacha)</span></div>
+                  <div className="stat"><b>2.64</b><span>Profit factor</span></div>
+                  <div className="stat"><b>38</b><span>Sinov savdolari</span></div>
+                  <div className="stat"><b>123</b><span>Sinov kunlari</span></div>
+                </>
+              ) : (
+                <>
+                  <div className="stat"><b>72%</b><span>M15 win rate</span></div>
+                  <div className="stat"><b>73%</b><span>M30 win rate</span></div>
+                  <div className="stat"><b>1.16–1.20</b><span>Profit factor</span></div>
+                  <div className="stat"><b>215</b><span>Sinov savdolari (kripto)</span></div>
+                </>
+              )}
             </>
           )}
         </div>
