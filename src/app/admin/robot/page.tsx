@@ -4,6 +4,7 @@ import { activeCategories, activeInstruments } from "@/lib/instruments.ts";
 import { runRobotNow } from "../../actions.ts";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 import RunNowButton from "../../components/RunNowButton.tsx";
+import LocalTime from "../../components/LocalTime.tsx";
 import { requireAdmin } from "@/lib/server/auth.ts";
 import { sql } from "@/lib/server/db.ts";
 import { memoryTable } from "@/lib/server/memory.ts";
@@ -50,8 +51,8 @@ export default async function RobotPage() {
       <AutoRefresh seconds={60} />
       <header className="page-head">
         <div>
-          <h1>Robot</h1>
-          <p className="sub"><Link href={adminHref()}>Admin</Link> · robotning har bir qarori va hodisalari. Sahifa har daqiqada yangilanadi.</p>
+          <h1>Robot logi</h1>
+          <p className="sub">Robot nima qildi: aylanishlar, signal ochilishi va yopilishi, xatolar va xotira. Sahifa har daqiqada yangilanadi.</p>
         </div>
         <form action={runRobotNow}><RunNowButton /></form>
       </header>
@@ -78,66 +79,6 @@ export default async function RobotPage() {
         <div className="stat"><b>{today.runs}</b><span>Aylanishlar, 24 soat</span></div>
         <div className="stat"><b>{last ? `${last.strong} / ${last.weak}` : "—"}</b><span>Hozir faol: kuchli / kuchsiz</span></div>
       </div>
-
-      <section className="panel">
-        <h2>Bozor manzarasi: katta taymfreymlar</h2>
-        <p className="muted">Robot M5, M15, M30, H1 dan tashqari H4, kunlik (D1), haftalik (W1) va oylik (MN) trendni ham kuzatadi.
-          Bu signal filtri emas: oltin sinovida katta trendga qarshi signallar ham yaxshi natija bergan. Har signal xabarida ko'rsatiladi.</p>
-        {ctx.length === 0 ? (
-          <p className="muted">Hali ma'lumot yo'q: robot birinchi aylanishdan keyin to'ldiradi.</p>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Juftlik</th>{CONTEXT_TFS.map((k) => <th key={k}>{k}</th>)}</tr></thead>
-              <tbody>
-                {[...new Set(ctx.map((c) => c.pair))].map((p) => (
-                  <tr key={p}>
-                    <td><b>{p}</b></td>
-                    {CONTEXT_TFS.map((k) => {
-                      const tr = ctx.find((c) => c.pair === p && c.timeframe === k)?.trend;
-                      return <td key={k} className={tr === "up" ? "up" : tr === "down" ? "down" : "muted"}>{tr === "up" ? "↑ yuqoriga" : tr === "down" ? "↓ pastga" : tr === "flat" ? "→ yon" : "—"}</td>;
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="panel">
-        <h2>Hozirgi holat</h2>
-        <p className="muted">Har bir katakda robotning oxirgi qarori va sababi. Kuchsiz signallar obunachilarga ko'rinmaydi.</p>
-        {pairs.length === 0 ? (
-          <p className="muted">Ma'lumot yo'q.</p>
-        ) : (
-          <div className="table-wrap">
-            <table className="robot-grid">
-              <thead>
-                <tr><th>Juftlik</th>{TIMEFRAMES.map((tf) => <th key={tf}>{tf}</th>)}</tr>
-              </thead>
-              <tbody>
-                {pairs.map((p) => (
-                  <tr key={p}>
-                    <td><b>{p}</b></td>
-                    {TIMEFRAMES.map((tf) => {
-                      const c = cell(p, tf);
-                      const live = c?.side && c.status === "active";
-                      const cls = live ? (c!.quality === "strong" ? "strong" : "weak") : "";
-                      return (
-                        <td key={tf} className={`rg ${cls}`}>
-                          {live && <span className={`side ${c!.side === "BUY" ? "buy" : "sell"}`}>{c!.side}</span>}
-                          <span>{c?.reason ?? "—"}</span>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
 
       <section className="panel">
         <h2>Robot xotirasi</h2>
@@ -183,7 +124,7 @@ export default async function RobotPage() {
               <tbody>
                 {events.map((e) => (
                   <tr key={e.id}>
-                    <td>{t(e.at)}</td>
+                    <td><LocalTime at={e.at} /></td>
                     <td><span className={`pill ${e.kind === "error" ? "sl" : e.kind === "signal" ? "active" : "tp1"}`}>{KIND[e.kind] ?? e.kind}</span></td>
                     <td>{e.pair}</td>
                     <td>{e.timeframe}</td>
@@ -204,7 +145,7 @@ export default async function RobotPage() {
             <tbody>
               {runs.map((r) => (
                 <tr key={r.id} title={r.errors}>
-                  <td>{t(r.started_at)}</td>
+                  <td><LocalTime at={r.started_at} /></td>
                   <td>{r.trigger}</td>
                   <td className="num">{((new Date(r.finished_at).getTime() - new Date(r.started_at).getTime()) / 1000).toFixed(1)} s</td>
                   <td className="num">{r.analyzed}</td>

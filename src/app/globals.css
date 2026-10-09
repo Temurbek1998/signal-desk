@@ -1,24 +1,15 @@
-/* Signal Desk: iOS uslubi. Apple tizim shrifti, iOS tizim ranglari, oltin urg'u. Tun/kun rejimi telefon sozlamasiga ergashadi. */
+/* Signal Desk: fosfor yashil (Bek qarori). Qora fon, fosfor kabi yonib turuvchi yashil urg'u, iOS shakllari.
+   Bitta ataylab tanlangan qorong'i ko'rinish: telefon kunduzgi rejimda bo'lsa ham shunday qoladi. */
 :root {
-  --bg: #f2f2f7; --bg-2: #e9e9ef; --surface: #ffffff; --surface-2: #f2f2f7; --line: rgba(60, 60, 67, 0.18); --fg: #000000; --muted: #6c6c70;
-  --fill: rgba(120, 120, 128, 0.12); --fill-2: rgba(120, 120, 128, 0.2); --thumb: #ffffff;
-  --gold: #a86f00; --gold-2: #8f5f00; --gold-soft: #fbf0d9; --on-gold: #ffffff;
-  --buy: #248a3d; --buy-soft: #e3f5e8; --sell: #d70015; --sell-soft: #fde6e8;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px -12px rgba(0, 0, 0, 0.12);
+  --bg: #050806; --bg-2: #0a110c; --surface: #0c140f; --surface-2: #122019; --line: rgba(57, 255, 20, 0.14); --fg: #e8ffec; --muted: #84a08b;
+  --fill: rgba(57, 255, 20, 0.07); --fill-2: rgba(57, 255, 20, 0.14); --thumb: #1b3322;
+  --gold: #39ff14; --gold-2: #7dff5c; --gold-soft: #0f2a0c; --on-gold: #021202; --glow: 0 0 18px rgba(57, 255, 20, 0.35);
+  --buy: #3dffa0; --buy-soft: #0b2a1c; --sell: #ff4d6a; --sell-soft: #2e0c14;
+  --shadow: 0 0 0 1px rgba(57, 255, 20, 0.08);
   --f-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
   --f-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   --f-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000000; --bg-2: #1c1c1e; --surface: #1c1c1e; --surface-2: #2c2c2e; --line: rgba(84, 84, 88, 0.6); --fg: #ffffff; --muted: #98989f;
-    --fill: rgba(118, 118, 128, 0.24); --fill-2: rgba(118, 118, 128, 0.36); --thumb: #636366;
-    --gold: #ffc53d; --gold-2: #ffd36b; --gold-soft: #33280f; --on-gold: #1a1300;
-    --buy: #30d158; --buy-soft: #0f2e18; --sell: #ff453a; --sell-soft: #3a1412;
-    --shadow: none;
-    color-scheme: dark;
-  }
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -234,6 +225,7 @@ h1, h2, h3 { letter-spacing: -0.022em; font-weight: 700; }
 
 /* Tugmalar: iOS "filled" va "tinted" */
 .btn { border: 0; border-radius: 14px; background: var(--fill); padding: 12px 20px; font-weight: 600; transition: transform .12s ease, opacity .12s ease; }
+.btn:disabled { opacity: .45; box-shadow: none; cursor: not-allowed; }
 .btn:active, .tab:active, .btn-small:active { transform: scale(0.97); opacity: .7; }
 .btn.sm { border-radius: 999px; padding: 7px 14px; }
 .btn-small { border: 0; border-radius: 999px; }
@@ -288,3 +280,51 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .eyebrow, .plan-group > h3 { font-family: var(--f-body); letter-spacing: 0.04em; }
 .cat, .levels .k { font-family: var(--f-body); }
 @media (max-width: 640px) { .chat-fab { padding: 9px 16px; font-size: 0.92rem; } }
+
+/* ---------- Fosfor yonishi ---------- */
+.btn.gold, .tab[aria-pressed="true"], .bubble.user { box-shadow: var(--glow); }
+.btn.gold:hover { background: var(--gold-2); }
+.hero h1 em, .eyebrow, .step h3 { text-shadow: 0 0 14px rgba(57, 255, 20, 0.45); }
+.logo .mark { background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(57, 255, 20, 0.3); }
+.dot { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+.tabbar a[aria-current="page"] { text-shadow: 0 0 10px rgba(57, 255, 20, 0.6); }
+
+/* Admin bo'limlari menyusi */
+.admin-nav { max-width: 1180px; margin: 12px auto 0; padding-inline: 16px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.admin-nav::-webkit-scrollbar { display: none; }
+.admin-nav a { flex: none; text-decoration: none; padding: 8px 14px; border-radius: 999px; background: var(--fill); color: var(--muted); font-weight: 600; font-size: 0.9rem; }
+.admin-nav a[aria-current="page"] { background: var(--gold); color: var(--on-gold); box-shadow: var(--glow); }
+
+/* Robot tahlili grafigi */
+.chart-wrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.chart-info { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.chart-scroll { overflow-x: auto; }
+.robot-chart { width: 100%; min-width: 640px; height: auto; display: block; touch-action: pan-x; }
+.robot-chart .grid { stroke: var(--line); stroke-width: 1; }
+.robot-chart .ax { fill: var(--muted); font: 11px var(--f-mono); }
+.robot-chart .cu line, .robot-chart .cu rect { stroke: var(--buy); fill: var(--buy); }
+.robot-chart .cd line, .robot-chart .cd rect { stroke: var(--sell); fill: var(--sell); }
+.robot-chart path.ema20 { fill: none; stroke: var(--gold); stroke-width: 1.6; filter: drop-shadow(0 0 3px rgba(57,255,20,.6)); }
+.robot-chart path.ema50 { fill: none; stroke: #4fb7ff; stroke-width: 1.6; }
+.robot-chart .last { stroke: var(--fg); stroke-width: 1; stroke-dasharray: 2 4; opacity: .6; }
+.robot-chart .cross { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.robot-chart [class^="lv-"] line { stroke-width: 1.4; stroke-dasharray: 6 4; }
+.robot-chart [class^="lv-"] text { font: 600 11px var(--f-mono); fill: var(--bg); }
+.robot-chart .lv-entry line { stroke: var(--fg); } .robot-chart .lv-entry rect { fill: var(--fg); }
+.robot-chart .lv-tp line { stroke: var(--buy); } .robot-chart .lv-tp rect { fill: var(--buy); }
+.robot-chart .lv-sl line { stroke: var(--sell); } .robot-chart .lv-sl rect { fill: var(--sell); }
+.robot-chart .mk-buy path { fill: var(--gold); filter: drop-shadow(0 0 4px var(--gold)); }
+.robot-chart .mk-sell path { fill: var(--sell); }
+.robot-chart .mk-buy text, .robot-chart .mk-sell text { font: 600 10px var(--f-body); fill: var(--fg); }
+.chart-info .ema20, .chart-legend .ema20 { color: var(--gold); } .chart-info .ema50 { color: #4fb7ff; }
+.chart-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+.sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
+.sw.ema20 { background: var(--gold); } .sw.ema50 { background: #4fb7ff; } .sw.buy { background: var(--gold); height: 8px; width: 8px; } .sw.sell { background: var(--sell); height: 8px; width: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips a { text-decoration: none; padding: 6px 12px; border-radius: 999px; background: var(--fill); color: var(--fg); font-weight: 600; font-size: 0.86rem; }
+.chips a[aria-current="true"] { background: var(--gold); color: var(--on-gold); box-shadow: var(--glow); }
+.tf-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.tf-card { background: var(--surface-2); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.86rem; min-width: 0; }
+.tf-card b { font-family: var(--f-mono); }
+.tf-card.strong { box-shadow: 0 0 0 1px var(--gold), var(--glow); }
+.ai-box { white-space: pre-wrap; background: var(--surface-2); border-radius: 14px; padding: 14px; margin: 0; font-size: 0.92rem; line-height: 1.55; }

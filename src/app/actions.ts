@@ -178,3 +178,36 @@ export async function runMarketTestNow() {
   await saveMarketTest();
   revalidatePath("/admin/sinov");
 }
+
+// Robot tahlilining AI izohi (admin). AI signal bermaydi: faqat robot hisoblagan ma'lumotni so'z bilan tushuntiradi.
+export async function aiExplain(_prev: { text?: string; error?: string } | null, form: FormData): Promise<{ text?: string; error?: string }> {
+  await requireAdmin();
+  const { complete, provider } = await import("@/lib/server/llm.ts");
+  if (!provider()) return { error: "AI hali ulanmagan. Vercel'da ANTHROPIC_API_KEY qo'shilsa, bu tugma ishlaydi." };
+  const { chartData } = await import("@/lib/server/analysis.ts");
+  const { TIMEFRAMES } = await import("@/lib/types.ts");
+  const tf = TIMEFRAMES.find((t) => t === form.get("tf")) ?? "M15";
+  try {
+    const d = await chartData(String(form.get("pair") ?? ""), tf, 60);
+    const a = d.analysis;
+    const facts = {
+      juftlik: d.inst.pair, taymfreym: tf,
+      oxirgi_narx: d.candles.at(-1)?.c,
+      indikatorlar: a && { trend: a.trend, ema20: a.ema20, ema50: a.ema50, rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: a.atr },
+      robot_xulosalari: d.states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, holat: s.status, ishonch: s.confidence, sabab: s.reason })),
+      katta_trend: d.context,
+      faol_signallar: d.signals.filter((s) => s.status === "active"),
+      oxirgi_30_yopilish: d.candles.slice(-30).map((c) => c.c),
+    };
+    const system = `Sen Signal Desk savdo robotining tahlilchisisan. Faqat o'zbek tilida (lotin), qisqa va aniq yoz.
+Vazifang: robot hisoblagan ma'lumotlarni admin uchun tushuntirish. Qoidalar:
+- Faqat berilgan ma'lumotga tayan, narx yoki daraja o'ylab topma.
+- O'zingdan yangi signal, kirish, TP yoki SL berma. Signal faqat robot qoidalari bilan chiqadi.
+- Tuzilma: 1) bozor holati (trend, kuch, momentum), 2) robot har taymfreymda nima deyapti va nega, 3) robot qaysi shart bajarilsa kirishi mumkin, 4) xavflar.
+- 8-12 qatordan oshmasin.`;
+    const text = await complete(system, [{ role: "user", content: JSON.stringify(facts) }]);
+    return { text };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}

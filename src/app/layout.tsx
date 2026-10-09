@@ -11,7 +11,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Signal Desk", template: "%s · Signal Desk" },
   description: "Oltin (XAU/USD) uchun robot tahlili va savdo signallari",
-  appleWebApp: { capable: true, title: "Signal Desk", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Signal Desk", statusBarStyle: "black-translucent" },
 };
 
 // iPhone: ekran chetigacha (notch va pastki chiziq hisobga olinadi), status bar rangi fonga mos.
@@ -19,10 +19,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
+  themeColor: "#050806",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

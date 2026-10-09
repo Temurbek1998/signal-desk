@@ -12,7 +12,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const [pending, users, [totals], log] = await Promise.all([
+  const [[robot], pending, users, [totals], log] = await Promise.all([
+    sql<{ last: Date | null; open: string; day: string }>(
+      `SELECT (SELECT max(finished_at) FROM robot_runs) AS last, (SELECT count(*) FROM signal_log WHERE status = 'active') AS open,
+              (SELECT count(*) FROM signal_log WHERE signal_time > now() - interval '24 hours') AS day`,
+    ),
     sql<{ id: string; email: string; plan: string; amount_usdt: string | null; network: string | null; tx_hash: string | null; note: string; created_at: Date }>(
       `SELECT p.id, u.email, pl.name AS plan, p.amount_usdt, p.network, p.tx_hash, p.note, p.created_at
        FROM payments p JOIN users u ON u.id = p.user_id JOIN plans pl ON pl.id = p.plan_id
@@ -35,17 +39,28 @@ export default async function AdminPage() {
     ),
   ]);
 
+  const robotAge = robot.last ? (Date.now() - new Date(robot.last).getTime()) / 60_000 : Infinity;
   return (
     <main className="wrap">
       <header className="page-head">
         <div>
           <h1>Admin panel</h1>
-          <p className="sub">To'lovlar, obunalar va foydalanuvchilar</p>
+          <p className="sub">Robot holati, to'lovlar, obunalar va foydalanuvchilar</p>
         </div>
-        <Link className="btn gold sm" href={adminHref("/robot")}>Robot jurnali</Link>
-        <Link className="btn gold sm" href={adminHref("/demo")}>Demo hisob</Link>
-        <Link className="btn gold sm" href={adminHref("/sinov")}>Bozorlar sinovi</Link>
       </header>
+
+      <section className="panel">
+        <div className="bar">
+          <h2>Robot</h2>
+          <Link className="btn gold sm" href={adminHref("/tahlil")}>Robot tahlilini ochish</Link>
+        </div>
+        <div className="stats">
+          <div className="stat"><b className={robotAge <= 12 ? "up" : "down"}>{robot.last ? (robotAge <= 12 ? "Ishlayapti" : "To'xtagan") : "—"}</b>
+            <span>{robot.last ? `Oxirgi tahlil ${Math.round(robotAge)} daqiqa oldin` : "Hali ishga tushmagan"}</span></div>
+          <div className="stat"><b>{robot.open}</b><span>Ochiq signallar</span></div>
+          <div className="stat"><b>{robot.day}</b><span>Signallar, 24 soat</span></div>
+        </div>
+      </section>
 
       <div className="stats">
         <div className="stat"><b>{totals.users}</b><span>Foydalanuvchilar</span></div>
