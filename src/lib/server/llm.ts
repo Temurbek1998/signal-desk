@@ -30,8 +30,9 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
 
   if (p === "mock") {
     const last = messages[messages.length - 1]?.content ?? "";
-    if (opts.json && "verdict" in ((opts.json.properties as object) ?? {})) return JSON.stringify({ verdict: "tasdiq", confidence: 60, note: "Sinov javobi: H1 tuzilmasi signal yo'nalishini qo'llaydi." });
-    if (opts.json) return JSON.stringify({ action: "WAIT", sl: 0, tp1: 0, tp2: 0, confidence: 40, reason: "Sinov javobi: aniq ustunlik yo'q." });
+    const analysis = opts.json && "analysis" in ((opts.json.properties as object) ?? {}) ? mockAnalysis(last) : undefined;
+    if (opts.json && "verdict" in ((opts.json.properties as object) ?? {})) return JSON.stringify({ verdict: "tasdiq", confidence: 60, note: "Sinov javobi: H1 tuzilmasi signal yo'nalishini qo'llaydi.", analysis });
+    if (opts.json) return JSON.stringify({ action: "WAIT", sl: 0, tp1: 0, tp2: 0, confidence: 40, reason: "Sinov javobi: aniq ustunlik yo'q.", analysis });
     return `Sinov javobi: "${last.slice(0, 80)}" savolingizni oldim.`;
   }
 
@@ -87,4 +88,24 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
   const data = await res.json();
   if (data.stop_reason === "refusal") throw new Error("Anthropic: model javob berishdan bosh tortdi");
   return (data.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("").trim();
+}
+
+// Sinov (mock) uchun joriy narx atrofida namunaviy tahlil.
+function mockAnalysis(input: string) {
+  const p = Number(input.match(/"joriy_narx":([\d.]+)/)?.[1] ?? 0);
+  const at = (k: number) => Math.round(p * (1 + k / 1000) * 100) / 100;
+  return {
+    strategy: "Sinov: trend davomi, H1 pullback tugashidan kirish.",
+    trends: { D1: "up", H4: "up", H1: "up", M15: "flat" },
+    levels: [
+      { price: at(4), kind: "resistance", note: "Oldingi cho'qqi" },
+      { price: at(-3), kind: "support", note: "H1 tubi" },
+      { price: at(6), kind: "liquidity", note: "Cho'qqi ustidagi stoplar" },
+    ],
+    zones: [{ from: at(-6), to: at(-4), kind: "demand", note: "H4 talab zonasi" }],
+    reasons: ["D1 va H4 trendi yuqoriga", "Narx EMA50 dan qaytdi"],
+    risks: ["Yaqin qarshilik"],
+    invalidation: at(-7),
+    scenario: "Sinov ssenariysi.",
+  };
 }

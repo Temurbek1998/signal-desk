@@ -42,14 +42,16 @@ export async function logSignals(signals: Signal[]): Promise<LogResult> {
         : await ratePipsFromMemory(s.pair, strategy);
       const rows = await sql<{ inserted: boolean }>(
         `INSERT INTO signal_log (pair, category, timeframe, side, entry, tp1, tp2, sl, confidence, signal_time, status, result_r,
-                                 rating, memory_n, memory_winrate, strategy)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                                 rating, memory_n, memory_winrate, strategy, zeus)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
          ON CONFLICT (pair, timeframe, signal_time, strategy) DO UPDATE
            SET status = EXCLUDED.status, result_r = EXCLUDED.result_r, updated_at = now()
          WHERE signal_log.status = 'active' AND EXCLUDED.status <> 'active'
          RETURNING (xmax = 0) AS inserted`,
         [s.pair, s.category, s.timeframe, s.side, s.entry, s.tp1, s.tp2, s.sl, s.confidence,
-          new Date(s.candleTime), status, r_, r?.rating ?? null, r?.n ?? null, r?.est ?? null, strategy],
+          new Date(s.candleTime), status, r_, r?.rating ?? null, r?.n ?? null, r?.est ?? null, strategy,
+          // Zeus nimaga asoslandi: admin tahlil sahifasi uchun.
+          JSON.stringify({ reasons: s.reasons, rsi: s.rsi, trend: s.trend, context: s.context ?? null, newsRisk: s.newsRisk ?? null })],
       );
       if (rows[0]?.inserted && status === "active") {
         out.opened.push(s);

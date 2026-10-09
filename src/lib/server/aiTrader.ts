@@ -1,4 +1,5 @@
 import "server-only";
+import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis, type AiAnalysis } from "../aiAnalysis.ts";
 import { parseDecision, trackPlan, validatePlan, type AiPlan } from "../aiTrade.ts";
 import { analyze } from "../engine.ts";
 import { ALL_INSTRUMENTS } from "../instruments.ts";
@@ -18,6 +19,7 @@ const gold = () => ALL_INSTRUMENTS.find((i) => i.pair === PAIR)!;
 export type AiTrade = {
   id: number; at: Date; pair: string; action: string; status: string; entry: number | null; sl: number | null; tp1: number | null; tp2: number | null;
   confidence: number; reason: string; note: string; model: string; tp1_hit: boolean; result_r: number | null; closed_at: Date | null;
+  analysis: AiAnalysis | null;
 };
 
 export const aiTraderEnabled = () => process.env.AI_TRADER !== "0" && !!provider();
@@ -34,8 +36,9 @@ const SCHEMA = {
     sl: { type: "number" }, tp1: { type: "number" }, tp2: { type: "number" },
     confidence: { type: "integer" },
     reason: { type: "string" },
+    analysis: ANALYSIS_SCHEMA,
   },
-  required: ["action", "sl", "tp1", "tp2", "confidence", "reason"],
+  required: ["action", "sl", "tp1", "tp2", "confidence", "reason", "analysis"],
   additionalProperties: false,
 };
 
@@ -54,7 +57,8 @@ Qoidalar:
 - Aniq ustunlik bo'lmasa WAIT de. Yomon savdodan WAIT yaxshi. Oldingi savdolaringning natijasidan saboq ol.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
 - confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi.
-Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason"}.`;
+${ANALYSIS_PROMPT}
+Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
 
 export const round = (x: number) => Math.round(x * 100) / 100;
 const ohlc = (cs: Candle[]) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o), round(c.h), round(c.l), round(c.c)]);
@@ -127,7 +131,7 @@ export async function aiDecide(force = false): Promise<{ trade?: AiTrade; skippe
 
   const model = traderModel();
   const text = await complete(SYSTEM, [{ role: "user", content: JSON.stringify(f.data) }], {
-    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 8000 : 2000,
+    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 12000 : 3000,
   });
   const d = parseDecision(text);
   const modelName = model ?? process.env.LLM_MODEL ?? provider() ?? "";
@@ -140,12 +144,16 @@ export async function aiDecide(force = false): Promise<{ trade?: AiTrade; skippe
   }
   const v = validatePlan(d, f.price, f.atrH1);
   const p = v.plan;
+  let analysis = null;
+  try {
+    analysis = parseAnalysis(JSON.parse(text.match(/\{[\s\S]*\}/)![0]).analysis, f.price);
+  } catch { /* tahlil bo'lmasa ham qaror yoziladi */ }
   const status = p ? "open" : d.action === "WAIT" ? "wait" : "rejected";
   const [row] = await sql<AiTrade>(
-    `INSERT INTO ai_trades (pair, action, status, entry, sl, tp1, tp2, confidence, reason, note, model)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+    `INSERT INTO ai_trades (pair, action, status, entry, sl, tp1, tp2, confidence, reason, note, model, analysis)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [PAIR, d.action, status, f.price, p?.sl ?? d.sl ?? null, p?.tp1 ?? d.tp1 ?? null, p?.tp2 ?? d.tp2 ?? null,
-      d.confidence ?? 0, d.reason ?? "", status === "rejected" ? `Tekshiruvdan o'tmadi: ${v.error}` : "", modelName],
+      d.confidence ?? 0, d.reason ?? "", status === "rejected" ? `Tekshiruvdan o'tmadi: ${v.error}` : "", modelName, analysis ? JSON.stringify(analysis) : null],
   );
   if (p) {
     await notifyAdmin(`🤖 AI treyder (demo): ${p.side} ${PAIR}\nKirish ${round(p.entry)}, SL ${p.sl}, TP1 ${p.tp1}, TP2 ${p.tp2}, ishonch ${d.confidence}%\n${d.reason ?? ""}`);

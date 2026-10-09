@@ -1,6 +1,9 @@
 import { aiSummary, aiTraderEnabled } from "@/lib/server/aiTrader.ts";
 import { chartData } from "@/lib/server/analysis.ts";
 import { reviewStats } from "@/lib/server/aiReview.ts";
+import { sql } from "@/lib/server/db.ts";
+import { adminHref } from "@/lib/adminPath.ts";
+import Link from "next/link";
 import type { ChartSignal } from "../../components/RobotChart.tsx";
 import AiDecideButton from "../../components/AiDecideButton.tsx";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
@@ -12,7 +15,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const STATUS: Record<string, string> = {
-  open: "Ochiq", tp1: "TP1 urildi, ochiq", tp2: "TP2 urildi", sl: "SL urildi", be: "TP1, so'ng kirishda yopildi",
+  active: "Ochiq", close: "Vaqt bo'yicha yopildi", open: "Ochiq", tp1: "TP1 urildi, ochiq", tp2: "TP2 urildi", sl: "SL urildi", be: "TP1, so'ng kirishda yopildi",
   expired: "24 soatdan keyin yopildi", wait: "Kutish", rejected: "Rad etildi",
 };
 const r2 = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(2)}R`;
@@ -25,6 +28,11 @@ export default async function AiTraderPage() {
     chartData("XAU/USD", "H1", 120).catch(() => null),
     reviewStats().catch(() => []),
   ]);
+  const zeusRows = await sql<{ id: number; signal_time: Date; timeframe: string; side: string; status: string; result_r: number | null; ai_verdict: string | null; ai_confidence: number | null; ai_at: Date | null }>(
+    `SELECT id, signal_time, timeframe, side, status, result_r, ai_verdict, ai_confidence, ai_at FROM signal_log
+     WHERE pair = 'XAU/USD' ORDER BY signal_time DESC LIMIT 30`,
+  ).catch(() => []);
+  const detail = (k: "s" | "t", id: number) => `${adminHref("/ai/tahlil")}?${k}=${id}`;
   const revOf = (v: string) => {
     const r = rev.find((x) => x.verdict === v);
     const n = Number(r?.n ?? 0), w = Number(r?.wins ?? 0), t = Number(r?.total ?? 0);
@@ -73,14 +81,14 @@ export default async function AiTraderPage() {
       </section>
 
       <section className="panel">
-        <h2>Zeus + AI hamkorligi</h2>
+        <h2>Zeus + Claude hamkorligi</h2>
         <p className="muted" style={{ margin: 0 }}>
-          Zeus'ning har yangi oltin signalini AI mustaqil tahlil qilib &quot;tasdiq&quot; yoki &quot;ehtiyot&quot; deb baholaydi, izohi mijozga signal ostida ko&apos;rinadi.
-          Baho signalni to&apos;xtatmaydi. Har guruhda kamida 20 ta yopilgan signal yig&apos;ilgach, tasdiqlangan signallar aniq yaxshiroq bo&apos;lsa, &quot;ehtiyot&quot; signallarni mijozlarga bermaslik mumkin.
+          Zeus imkoniyat topadi, Claude uni mustaqil tahlil qilib yakuniy qaror chiqaradi: &quot;tasdiq&quot; bo&apos;lsa signal mijozlarga ochiladi,
+          &quot;ehtiyot&quot; bo&apos;lsa ushlab qolinadi. Ushlab qolingan signallar ham kuzatiladi, shuning uchun Claude to&apos;g&apos;ri rad etyaptimi, quyida ko&apos;rinadi.
         </p>
         <div className="stats">
-          <div className="stat"><b className={ok.t >= 0 ? "up" : "down"}>{ok.n ? r2(ok.t) : "—"}</b><span>AI tasdiqlagan: {ok.n} yopilgan, yutuq {pct(ok.w, ok.n)}</span></div>
-          <div className="stat"><b className={care.t >= 0 ? "up" : "down"}>{care.n ? r2(care.t) : "—"}</b><span>AI &quot;ehtiyot&quot; degan: {care.n} yopilgan, yutuq {pct(care.w, care.n)}</span></div>
+          <div className="stat"><b className={ok.t >= 0 ? "up" : "down"}>{ok.n ? r2(ok.t) : "—"}</b><span>Claude tasdiqlagan: {ok.n} yopilgan, yutuq {pct(ok.w, ok.n)}</span></div>
+          <div className="stat"><b className={care.t >= 0 ? "up" : "down"}>{care.n ? r2(care.t) : "—"}</b><span>Claude ushlab qolgan: {care.n} yopilgan, yutuq {pct(care.w, care.n)}</span></div>
         </div>
       </section>
 
@@ -89,6 +97,7 @@ export default async function AiTraderPage() {
           <h2>Oxirgi qaror: {latest.action} · {STATUS[latest.status] ?? latest.status}</h2>
           <p className="muted" style={{ margin: 0 }}><LocalTime at={latest.at} />{latest.confidence ? ` · ishonch ${latest.confidence}%` : ""}{latest.model ? ` · ${latest.model}` : ""}</p>
           {latest.reason && <p className="ai-box">{latest.reason}</p>}
+          <Link href={detail("t", latest.id)}>To&apos;liq tahlil va grafik →</Link>
           {latest.note && <p className="err">{latest.note}</p>}
         </section>
       )}
@@ -101,11 +110,34 @@ export default async function AiTraderPage() {
       )}
 
       <section className="panel">
+        <h2>Oltin signallari: Zeus va Claude qarori</h2>
+        {zeusRows.length === 0 ? <p className="muted">Hali signal yo&apos;q.</p> : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Vaqt</th><th>Signal</th><th>Claude</th><th>Holat</th><th>Natija</th><th /></tr></thead>
+              <tbody>
+                {zeusRows.map((r) => (
+                  <tr key={r.id}>
+                    <td><LocalTime at={r.signal_time} /></td>
+                    <td className={r.side === "BUY" ? "up" : "down"}>{r.side} {r.timeframe}</td>
+                    <td>{r.ai_verdict ? <span className={`an-verdict ${r.ai_verdict}`}>{r.ai_verdict === "tasdiq" ? "tasdiq" : "ushlab qoldi"} {r.ai_confidence}%</span> : r.ai_at ? "tekshirmoqda" : "—"}</td>
+                    <td>{STATUS[r.status] ?? r.status}</td>
+                    <td className={r.result_r == null ? "" : Number(r.result_r) >= 0 ? "up" : "down"}>{r.result_r == null ? "—" : r2(Number(r.result_r))}</td>
+                    <td><Link href={detail("s", r.id)}>Tahlil →</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
         <h2>AI qarorlari jurnali</h2>
         {rows.length === 0 ? <p className="muted">Hali qaror yo&apos;q.</p> : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Vaqt</th><th>Qaror</th><th>Kirish</th><th>SL</th><th>TP1</th><th>TP2</th><th>Holat</th><th>Natija</th><th>Sabab</th></tr></thead>
+              <thead><tr><th>Vaqt</th><th>Qaror</th><th>Kirish</th><th>SL</th><th>TP1</th><th>TP2</th><th>Holat</th><th>Natija</th><th>Sabab</th><th /></tr></thead>
               <tbody>
                 {rows.slice(0, 60).map((t) => (
                   <tr key={t.id}>
@@ -118,6 +150,7 @@ export default async function AiTraderPage() {
                     <td>{STATUS[t.status] ?? t.status}</td>
                     <td className={t.result_r == null ? "" : Number(t.result_r) >= 0 ? "up" : "down"}>{t.result_r == null ? "—" : r2(Number(t.result_r))}</td>
                     <td className="muted" style={{ minWidth: 260 }}>{t.note || t.reason}</td>
+                    <td><Link href={detail("t", t.id)}>Tahlil →</Link></td>
                   </tr>
                 ))}
               </tbody>

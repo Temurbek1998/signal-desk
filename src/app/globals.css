@@ -340,6 +340,25 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .robot-chart .mk-buy path { fill: var(--gold); filter: drop-shadow(0 0 4px var(--gold)); }
 .robot-chart .mk-sell path { fill: var(--sell); }
 .robot-chart .mk-buy text, .robot-chart .mk-sell text { font: 600 10px var(--f-body); fill: var(--fg); }
+.robot-chart .zone rect { stroke: none; opacity: .14; }
+.robot-chart .zone-demand rect { fill: var(--buy); } .robot-chart .zone-supply rect { fill: var(--sell); }
+.robot-chart .zone text, .robot-chart .lvl text { font: 600 10px var(--f-mono); fill: var(--muted); }
+.robot-chart .lvl line { stroke-width: 1; stroke-dasharray: 2 3; stroke: var(--ema50); }
+.robot-chart .lvl-support line, .robot-chart .lvl-demand line { stroke: var(--buy); }
+.robot-chart .lvl-resistance line, .robot-chart .lvl-supply line { stroke: var(--sell); }
+.robot-chart .lvl-invalidation line { stroke: var(--fg); stroke-dasharray: 8 3 2 3; }
+.sw.lvl { border-top: 2px dotted var(--ema50); height: 0; } .sw.zone { background: var(--buy); opacity: .3; height: 8px; }
+/* Admin: Claude tahlili sahifasi */
+.an-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.an-grid > * { min-width: 0; }
+.an-list { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.an-trends { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+.an-trends div { background: var(--fill); border-radius: 8px; padding: 8px 4px; }
+.an-trends b { display: block; font-size: .75rem; color: var(--muted); font-weight: 600; }
+.an-check { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.an-check li::before { content: "✓ "; color: var(--buy); font-weight: 700; }
+.an-verdict { display: inline-block; padding: 3px 10px; border-radius: 999px; font-weight: 700; font-size: .85rem; }
+.an-verdict.tasdiq { background: var(--buy-soft); color: var(--buy); } .an-verdict.ehtiyot { background: var(--sell-soft); color: var(--sell); }
 .chart-info .ema20, .chart-legend .ema20 { color: var(--gold); } .chart-info .ema50 { color: var(--ema50); }
 .chart-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
 .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }

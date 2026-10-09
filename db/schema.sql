@@ -278,3 +278,8 @@ ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_verdict text;
 ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_confidence int;
 ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_note text;
 ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_at timestamptz;
+
+-- Claude'ning to'liq tahlili (strategiya, darajalar, zonalar) va Zeus sabablari: faqat admin panel uchun.
+ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_analysis jsonb;
+ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS zeus jsonb;
+ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS analysis jsonb;

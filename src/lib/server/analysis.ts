@@ -54,3 +54,17 @@ export async function chartData(pair: string | undefined, tf: Timeframe, bars = 
     context: ctx,
   };
 }
+
+// Berilgan vaqt atrofidagi grafik (admin tahlil sahifasi): oldidan `before`, keyin ko'pi bilan `after` sham.
+// Ma'lumot oxirgi 260 sham bilan cheklangan: juda eski signal uchun grafik mavjud qismini ko'rsatadi.
+export async function windowChart(pair: string, minutes: number, at: number, before = 90, after = 60) {
+  const inst = pickInstrument(pair);
+  const all = await getCandles(inst, minutes, 260);
+  const closes = all.map((c) => c.c);
+  const e20 = ema(closes, 20), e50 = ema(closes, 50);
+  let i = all.findIndex((c) => c.t >= at);
+  if (i < 0) i = all.length - 1;
+  const from = Math.max(0, i - before), to = Math.min(all.length, i + after + 1);
+  const candles = all.slice(from, to);
+  return { candles, ema20: e20.slice(from, to), ema50: e50.slice(from, to), digits: digitsOf(inst.pair, all.at(-1)?.c ?? 0), covered: all.length > 0 && all[0].t <= at };
+}

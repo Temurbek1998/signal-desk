@@ -6,24 +6,30 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 export type ChartCandle = { t: number; o: number; h: number; l: number; c: number };
 export type ChartSignal = { t: number; side: "BUY" | "SELL"; entry: number; tp1: number; tp2: number; sl: number; status: string; label: string };
+// Claude tahlili: gorizontal darajalar va zonalar (faqat admin).
+export type ChartLevel = { price: number; kind: string; note: string };
+export type ChartZone = { from: number; to: number; kind: "demand" | "supply"; note: string };
+const KIND: Record<string, string> = { support: "Tayanch", resistance: "Qarshilik", demand: "Talab", supply: "Taklif", liquidity: "Likvidlik", invalidation: "Bekor" };
 
 const W = 1000, H = 440, PAD_L = 8, PAD_R = 78, PAD_T = 14, PLOT_H = 380;
 
-export default function RobotChart({ candles, ema20, ema50, signals, digits, tfMinutes }: {
+export default function RobotChart({ candles, ema20, ema50, signals, digits, tfMinutes, levels = [], zones = [], drawAll = false }: {
   candles: ChartCandle[]; ema20: number[]; ema50: number[]; signals: ChartSignal[]; digits: number; tfMinutes: number;
+  levels?: ChartLevel[]; zones?: ChartZone[]; drawAll?: boolean; // drawAll: yopilgan signal darajalari ham chiziladi
 }) {
   const [local, setLocal] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
   const svg = useRef<SVGSVGElement>(null);
   useEffect(() => setLocal(true), []);
 
-  const active = signals.filter((s) => s.status === "active");
+  const active = drawAll ? signals : signals.filter((s) => s.status === "active");
   const { lo, hi } = useMemo(() => {
     let lo = Math.min(...candles.map((c) => c.l)), hi = Math.max(...candles.map((c) => c.h));
     for (const s of active) for (const v of [s.entry, s.tp1, s.tp2, s.sl]) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    for (const v of [...levels.map((l) => l.price), ...zones.flatMap((z) => [z.from, z.to])]) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
     const pad = (hi - lo) * 0.06 || 1;
     return { lo: lo - pad, hi: hi + pad };
-  }, [candles, active]);
+  }, [candles, active, levels, zones]);
 
   if (candles.length < 2) return <p className="muted">Grafik uchun ma'lumot yo'q.</p>;
   const n = candles.length;
@@ -81,6 +87,18 @@ export default function RobotChart({ candles, ema20, ema50, signals, digits, tfM
           {candles.map((c, i) => i % every === 0 && (
             <text key={c.t} className="ax" x={x(i)} y={PAD_T + PLOT_H + 22} textAnchor={i === 0 ? "start" : "middle"}>{time(c.t, i === 0 || new Date(c.t).getDate() !== new Date(candles[i - every]?.t ?? c.t).getDate())}</text>
           ))}
+          {zones.map((z, k) => (
+            <g key={"z" + k} className={`zone zone-${z.kind}`}>
+              <rect x={PAD_L} width={W - PAD_R - PAD_L} y={y(z.to)} height={Math.max(2, y(z.from) - y(z.to))}><title>{`${KIND[z.kind]} zonasi ${fmt(z.from)}–${fmt(z.to)}: ${z.note}`}</title></rect>
+              <text x={PAD_L + 6} y={y(z.to) + 13}>{KIND[z.kind]} zonasi</text>
+            </g>
+          ))}
+          {levels.map((l, k) => (
+            <g key={"l" + k} className={`lvl lvl-${l.kind}`}>
+              <line x1={PAD_L} x2={W - PAD_R} y1={y(l.price)} y2={y(l.price)}><title>{`${KIND[l.kind] ?? l.kind} ${fmt(l.price)}: ${l.note}`}</title></line>
+              <text x={PAD_L + 6} y={y(l.price) - 4}>{KIND[l.kind] ?? l.kind} {fmt(l.price)}</text>
+            </g>
+          ))}
           {candles.map((c, i) => {
             const up = c.c >= c.o;
             const top = y(Math.max(c.o, c.c)), bot = y(Math.min(c.o, c.c));
@@ -127,7 +145,9 @@ export default function RobotChart({ candles, ema20, ema50, signals, digits, tfM
       </div>
       <p className="muted chart-legend">
         <span className="sw ema20" /> EMA20 <span className="sw ema50" /> EMA50 <span className="sw buy" /> BUY signal
-        <span className="sw sell" /> SELL signal · Vaqt qurilmangiz soatida ko'rsatilgan.
+        <span className="sw sell" /> SELL signal
+        {(levels.length > 0 || zones.length > 0) && <> <span className="sw lvl" /> Claude darajalari <span className="sw zone" /> zonalar</>}
+        {" "}· Vaqt qurilmangiz soatida ko'rsatilgan.
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import "server-only";
+import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis } from "../aiAnalysis.ts";
 import { facts, round } from "./aiTrader.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
@@ -19,8 +20,9 @@ const SCHEMA = {
     verdict: { type: "string", enum: ["tasdiq", "ehtiyot"] },
     confidence: { type: "integer" },
     note: { type: "string" },
+    analysis: ANALYSIS_SCHEMA,
   },
-  required: ["verdict", "confidence", "note"],
+  required: ["verdict", "confidence", "note", "analysis"],
   additionalProperties: false,
 };
 
@@ -34,7 +36,9 @@ Sening bahong yakuniy: "tasdiq" bo'lsa signal mijozlarga yuboriladi, "ehtiyot" b
 lekin har signalni bekorga rad etma: Zeus strategiyasi tarixiy sinovda ijobiy natija bergan.
 Qoidalar: faqat berilgan ma'lumotga tayan, daraja o'ylab topma. Kafolat va foiz va'da qilma. Yangi kirish/TP/SL berma.
 note: o'zbek tilida (lotin), 2-4 jumla, mijoz o'qiydi: asosiy sabab va kuzatish kerak bo'lgan aniq daraja.
-confidence: 0-100, bahongga ishonching. Javob faqat JSON.`;
+confidence: 0-100, bahongga ishonching.
+${ANALYSIS_PROMPT}
+Javob faqat JSON.`;
 
 type Row = { id: number; pair: string; timeframe: string; side: string; entry: number; tp1: number; tp2: number; sl: number; confidence: number; signal_time: Date };
 
@@ -56,7 +60,7 @@ export async function reviewNewSignals(limit = 2) {
     try {
       const zeus = { yonalish: r.side, taymfreym: r.timeframe, kirish: round(+r.entry), sl: round(+r.sl), tp1: round(+r.tp1), tp2: round(+r.tp2), ishonch: r.confidence, vaqt_utc: new Date(r.signal_time).toISOString() };
       const text = await complete(SYSTEM, [{ role: "user", content: JSON.stringify({ zeus_signali: zeus, bozor: f.data }) }], {
-        json: SCHEMA, model: process.env.AI_TRADER_MODEL || (provider() === "anthropic" ? "claude-opus-5-5" : undefined), maxTokens: provider() === "anthropic" ? 6000 : 1500,
+        json: SCHEMA, model: process.env.AI_TRADER_MODEL || (provider() === "anthropic" ? "claude-opus-5-5" : undefined), maxTokens: provider() === "anthropic" ? 12000 : 3000,
       });
       const m = text.match(/\{[\s\S]*\}/);
       const o = m ? JSON.parse(m[0]) : null;
@@ -64,7 +68,9 @@ export async function reviewNewSignals(limit = 2) {
       if (!verdict) throw new Error("javobda baho yo'q");
       const conf = Math.max(0, Math.min(100, Math.round(Number(o.confidence) || 0)));
       const note = String(o.note ?? "").slice(0, 800);
-      await sql("UPDATE signal_log SET ai_verdict = $2, ai_confidence = $3, ai_note = $4 WHERE id = $1", [r.id, verdict, conf, note]);
+      const analysis = parseAnalysis(o.analysis, f.price);
+      await sql("UPDATE signal_log SET ai_verdict = $2, ai_confidence = $3, ai_note = $4, ai_analysis = $5 WHERE id = $1",
+        [r.id, verdict, conf, note, analysis ? JSON.stringify(analysis) : null]);
       await notifyAdmin(`🤝 AI fikri (${r.side} ${r.pair} ${r.timeframe}): ${verdict === "tasdiq" ? "✅ tasdiq" : "⚠️ ehtiyot"} ${conf}%${gated(r.pair) ? (verdict === "tasdiq" ? ", mijozlarga ochildi" : ", mijozlarga yuborilmadi") : ""}\n${note}`);
       done++;
     } catch (e) {
