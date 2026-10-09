@@ -25,6 +25,19 @@ const STATUS: Record<string, string> = {
   active: "Ochiq", tp1: "TP1 urildi", tp2: "TP2 urildi", sl: "SL urildi", close: "Vaqt bo'yicha yopildi",
   open: "Ochiq", be: "TP1, so'ng kirishda yopildi", expired: "24 soatdan keyin yopildi", wait: "Kutish", rejected: "Rad etildi",
 };
+// Admin istalgan taymfreymda ko'radi: Claude darajalari narx bo'yicha, shuning uchun har birida bir xil chiziladi.
+const TFS: [string, number][] = [["M5", 5], ["M15", 15], ["M30", 30], ["H1", 60], ["H4", 240]];
+const tfMin = (tf: string | undefined, def: number) => TFS.find(([k]) => k === tf?.toUpperCase())?.[1] ?? def;
+const tfName = (m: number) => TFS.find(([, v]) => v === m)?.[0] ?? `${m}m`;
+
+function TfChips({ base, cur }: { base: string; cur: number }) {
+  return (
+    <nav className="chips" aria-label="Taymfreym">
+      {TFS.map(([k, m]) => <a key={k} href={`${base}&tf=${k}`} aria-current={m === cur}>{k}</a>)}
+    </nav>
+  );
+}
+
 const KIND: Record<string, string> = { support: "Tayanch", resistance: "Qarshilik", demand: "Talab", supply: "Taklif", liquidity: "Likvidlik" };
 
 // Zeus strategiyasi qoidalari: har signal shu shartlarning hammasi bajarilganda chiqadi.
@@ -37,7 +50,7 @@ const ZEUS_RULES = [
   "Xarajat filtri: spred va komissiya riskning 5% idan oshmasin",
 ];
 
-export default async function AiAnalysisPage({ searchParams }: { searchParams: Promise<{ s?: string; t?: string }> }) {
+export default async function AiAnalysisPage({ searchParams }: { searchParams: Promise<{ s?: string; t?: string; tf?: string }> }) {
   await requireAdmin();
   const q = await searchParams;
   const back = <Link href={adminHref("/ai")} className="muted">← AI treyder</Link>;
@@ -46,7 +59,8 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
     const [t] = await sql<AiTrade>("SELECT * FROM ai_trades WHERE id = $1", [Number(q.t) || 0]);
     if (!t) return <main className="wrap">{back}<p className="err">Qaror topilmadi.</p></main>;
     const at = new Date(t.at).getTime();
-    const chart = await windowChart(t.pair, 60, at, 90, 30).catch(() => null);
+    const tm = tfMin(q.tf, 60);
+    const chart = await windowChart(t.pair, tm, at, 90, Math.round(30 * 60 / tm)).catch(() => null);
     const sig: ChartSignal[] = t.action !== "WAIT" && t.entry && t.sl && t.tp1 && t.tp2
       ? [{ t: at, side: t.action as "BUY" | "SELL", entry: +t.entry, sl: +t.sl, tp1: +t.tp1, tp2: +t.tp2, status: t.status, label: `Claude ${t.action}` }]
       : [];
@@ -60,7 +74,8 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
               {t.result_r != null ? ` · natija ${Number(t.result_r) >= 0 ? "+" : ""}${Number(t.result_r).toFixed(2)}R` : ""}</p>
           </div>
         </header>
-        {chart && <Chart chart={chart} minutes={60} signals={sig} a={t.analysis} title="H1 grafik va Claude darajalari" />}
+        <TfChips base={`${adminHref("/ai/tahlil")}?t=${t.id}`} cur={tm} />
+        {chart && <Chart chart={chart} minutes={tm} signals={sig} a={t.analysis} title={`${tfName(tm)} grafik va Claude darajalari`} />}
         {t.reason && <section className="panel"><h2>Qaror sababi</h2><p className="ai-box" style={{ margin: 0 }}>{t.reason}</p>{t.note && <p className="err">{t.note}</p>}</section>}
         <Analysis a={t.analysis} digits={chart?.digits} />
       </main>
@@ -70,7 +85,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
   const [s] = await sql<SignalRow>("SELECT * FROM signal_log WHERE id = $1", [Number(q.s) || 0]);
   if (!s) return <main className="wrap">{back}<p className="err">Signal topilmadi.</p></main>;
   const at = new Date(s.signal_time).getTime();
-  const minutes = minutesOf(s.timeframe as Timeframe);
+  const minutes = tfMin(q.tf, minutesOf(s.timeframe as Timeframe));
   const chart = await windowChart(s.pair, minutes, at).catch(() => null);
   const sig: ChartSignal[] = [{ t: at, side: s.side, entry: +s.entry, sl: +s.sl, tp1: +s.tp1, tp2: +s.tp2, status: s.status, label: `Zeus ${s.side}` }];
   const z = s.zeus;
@@ -92,7 +107,8 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
           : <span className="an-verdict">{s.ai_at ? "Claude tekshirmoqda" : "Claude bahosi yo'q"}</span>}
       </header>
 
-      {chart && <Chart chart={chart} minutes={minutes} signals={sig} a={s.ai_analysis} title={`${s.timeframe} grafik: Zeus signali va Claude darajalari`} />}
+      <TfChips base={`${adminHref("/ai/tahlil")}?s=${s.id}`} cur={minutes} />
+      {chart && <Chart chart={chart} minutes={minutes} signals={sig} a={s.ai_analysis} title={`${tfName(minutes)} grafik: Zeus signali (${s.timeframe}) va Claude darajalari`} />}
 
       <div className="an-grid">
         <section className="panel">
