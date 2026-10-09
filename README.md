@@ -229,6 +229,7 @@ Sozlamalar ro'yxati: `.env.example`.
    `https://saytingiz/api/cron` ga `Authorization: Bearer <CRON_SECRET>` sarlavhasi bilan so'rov sozlang.
 6. Tekshirish: `https://saytingiz/api/health` bazaga ulanish holatini (`"db":"ok"` yoki xato sababini) va qaysi sozlamalar berilganini ko'rsatadi. Maxfiy qiymatlar hech qachon chiqmaydi.
    Vercel'da o'zgaruvchi o'zgartirilgach, kuchga kirishi uchun yangi deploy (Redeploy) kerak.
+   O'zgaruvchilarni loyihaning o'z Environment Variables sahifasiga qo'shing (Team darajasidagi sahifa loyihaga avtomatik ulanmaydi).
 
 ## Tuzilishi
 
