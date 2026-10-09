@@ -18,16 +18,18 @@ const TASKS = [
   { t: "Xotira va reyting", p: "Robot o'zining o'tgan signallarini eslab qoladi. Har yangi signalga o'xshash vaziyatlardagi natijaga qarab A, B yoki C reyting beradi. Biror rejim ketma-ket yomon natija bersa, u vaqtincha to'xtatiladi.", k: "A · B · C reyting" },
   { t: "Natijani ochiq yozish", p: "Har bir signal bazaga yoziladi va yopilguncha kuzatiladi: TP1, TP2, SL yoki kun oxirida yopilish. Natija avtomatik hisoblanadi va Natijalar sahifasida tanlab olinmasdan ko'rsatiladi.", k: "hammasi ochiq" },
   { t: "Demo hisobda o'zini sinash", p: "Robot o'z signallari bo'yicha virtual hisobda 1% risk bilan o'zi savdo qiladi. Bu haqiqiy pul emas, lekin strategiya amalda qanday ishlashini ko'rsatadi.", k: "virtual hisob · 1% risk" },
-  { t: "Signalni yetkazish", p: "Kuchli signal chiqqanda u obunachilarning kabinetida darhol ko'rinadi: kirish narxi, TP1, TP2, SL, reyting va sababi bilan. Savollar bo'lsa, AI operator javob beradi.", k: "kabinet · AI operator" },
+  { t: "Claude yakuniy qaror qiladi", p: "Zeus topgan har bir oltin signalini Claude (Anthropic sun'iy intellekti) mustaqil tahlil qiladi: katta trend, talab va taklif zonalari, yaqin qarshilik darajalari. Faqat Claude tasdiqlagan signal mijozga yuboriladi, xavfli deb topilgani ushlab qolinadi. Tasdiqlangan signal ostida Claude'ning qisqa izohi ko'rinadi.", k: "Claude · ikkinchi tekshiruv" },
+  { t: "Signalni yetkazish", p: "Claude tasdiqlagan signal chiqqanda u obunachilarning kabinetida darhol ko'rinadi: kirish narxi, TP1, TP2, SL, reyting va sababi bilan. Savollar bo'lsa, AI operator javob beradi.", k: "kabinet · AI operator" },
 ];
 
 const CYCLE = [
   { b: "1. Narx keldi", s: "Yangi sham yopildi, robot uyg'ondi." },
   { b: "2. Bozor holati", s: "Trend, uning kuchi va katta taymfreymlar tekshiriladi." },
   { b: "3. Kirish sharti", s: "Pullback tugadimi, xarajat me'yordami, yangilik yaqinmi." },
-  { b: "4. Qaror", s: "Hamma shart bajarilsa signal, bittasi bajarilmasa kutish. Kutish ham qaror." },
-  { b: "5. Kuzatuv", s: "Ochiq signal TP yoki SL ga yetguncha har 5 daqiqada tekshiriladi." },
-  { b: "6. Saboq", s: "Natija xotiraga yoziladi va keyingi signallar reytingiga ta'sir qiladi." },
+  { b: "4. Imkoniyat", s: "Hamma shart bajarilsa Zeus imkoniyat topadi, bittasi bajarilmasa kutadi. Kutish ham qaror." },
+  { b: "5. Claude qarori", s: "Claude imkoniyatni mustaqil tahlil qiladi: tasdiqlasa signal mijozga boradi, rad etsa ushlab qolinadi." },
+  { b: "6. Kuzatuv", s: "Ochiq signal TP yoki SL ga yetguncha har 5 daqiqada tekshiriladi." },
+  { b: "7. Saboq", s: "Natija xotiraga yoziladi va keyingi signallar reytingiga ta'sir qiladi." },
 ];
 
 const NOTS = [
@@ -58,7 +60,7 @@ export default function AboutRobot() {
 
       <section className="section">
         <h2>Robotning vazifalari</h2>
-        <p className="sub">Har bir signal ortida quyidagi 12 ta ish turadi. Ulardan biri ham bajarilmasa, signal chiqmaydi.</p>
+        <p className="sub">Har bir signal ortida quyidagi {TASKS.length} ta ish turadi. Ulardan biri ham bajarilmasa, signal chiqmaydi.</p>
         <div className="tasks">
           {TASKS.map((x) => (
             <div key={x.t} className="task">

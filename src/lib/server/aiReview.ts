@@ -5,8 +5,13 @@ import { complete, provider } from "./llm.ts";
 import { notifyAdmin } from "./telegram.ts";
 
 // Zeus + AI hamkorligi: Zeus bergan har yangi kuchli oltin signalini AI mustaqil tahlil qiladi
-// va "tasdiq" yoki "ehtiyot" deb baholaydi, sababini o'zbekcha yozadi. Izoh mijozga signal bilan birga ko'rinadi.
-// Baho signalni to'xtatmaydi: natijalar yig'ilgach tasdiqlangan va ehtiyot signallar solishtiriladi.
+// va "tasdiq" yoki "ehtiyot" deb baholaydi, sababini o'zbekcha yozadi.
+// Claude yakuniy qaror qiladi (aiGateOn): mijozga faqat "tasdiq" olgan oltin signali ko'rinadi, "ehtiyot" esa ushlab qolinadi.
+// AI_GATE=0 bo'lsa baho faqat izoh bo'lib qoladi va signalni to'xtatmaydi.
+
+export const aiGateOn = () => !!provider() && process.env.AI_REVIEW !== "0" && process.env.AI_GATE !== "0";
+// Claude tekshiruvidan o'tadigan signallar: oltinning asosiy (trend) strategiyasi.
+export const gated = (pair: string, strategy?: string | null) => aiGateOn() && pair === "XAU/USD" && (strategy ?? "trend") === "trend";
 
 const SCHEMA = {
   type: "object",
@@ -25,6 +30,8 @@ Vazifa: berilgan oltin (XAU/USD) shamlari va ko'rsatkichlarini mustaqil tahlil q
 likvidlik, yaqin qarshilik va qo'llab-quvvatlash) va Zeus signalini baholab ber:
 - "tasdiq": tahlilingiz signal yo'nalishini qo'llaydi va TP1 yo'lida kuchli to'siq yo'q.
 - "ehtiyot": signal yo'nalishiga qarshi muhim daraja, zaif tuzilma yoki katta trendga zid holat bor.
+Sening bahong yakuniy: "tasdiq" bo'lsa signal mijozlarga yuboriladi, "ehtiyot" bo'lsa ushlab qolinadi. Haqiqiy xavf ko'rsang ehtiyot de,
+lekin har signalni bekorga rad etma: Zeus strategiyasi tarixiy sinovda ijobiy natija bergan.
 Qoidalar: faqat berilgan ma'lumotga tayan, daraja o'ylab topma. Kafolat va foiz va'da qilma. Yangi kirish/TP/SL berma.
 note: o'zbek tilida (lotin), 2-4 jumla, mijoz o'qiydi: asosiy sabab va kuzatish kerak bo'lgan aniq daraja.
 confidence: 0-100, bahongga ishonching. Javob faqat JSON.`;
@@ -54,13 +61,15 @@ export async function reviewNewSignals(limit = 2) {
       const m = text.match(/\{[\s\S]*\}/);
       const o = m ? JSON.parse(m[0]) : null;
       const verdict = o?.verdict === "tasdiq" || o?.verdict === "ehtiyot" ? o.verdict : null;
-      if (!verdict) continue;
+      if (!verdict) throw new Error("javobda baho yo'q");
       const conf = Math.max(0, Math.min(100, Math.round(Number(o.confidence) || 0)));
       const note = String(o.note ?? "").slice(0, 800);
       await sql("UPDATE signal_log SET ai_verdict = $2, ai_confidence = $3, ai_note = $4 WHERE id = $1", [r.id, verdict, conf, note]);
-      await notifyAdmin(`🤝 AI fikri (${r.side} ${r.pair} ${r.timeframe}): ${verdict === "tasdiq" ? "✅ tasdiq" : "⚠️ ehtiyot"} ${conf}%\n${note}`);
+      await notifyAdmin(`🤝 AI fikri (${r.side} ${r.pair} ${r.timeframe}): ${verdict === "tasdiq" ? "✅ tasdiq" : "⚠️ ehtiyot"} ${conf}%${gated(r.pair) ? (verdict === "tasdiq" ? ", mijozlarga ochildi" : ", mijozlarga yuborilmadi") : ""}\n${note}`);
       done++;
     } catch (e) {
+      // Keyingi cron'da qayta so'raladi (3 soatlik oyna ichida); shu vaqtgacha signal mijozga ko'rinmaydi.
+      await sql("UPDATE signal_log SET ai_at = NULL WHERE id = $1", [r.id]);
       console.error("AI baho", e);
     }
   }

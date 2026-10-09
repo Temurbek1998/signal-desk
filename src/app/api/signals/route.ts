@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { publicCategories } from "@/lib/instruments.ts";
 import { allocate, TIER_RULES } from "@/lib/memory.ts";
 import { runRobot } from "@/lib/robot.ts";
+import { gated } from "@/lib/server/aiReview.ts";
 import { canSeeSignals, getAccess } from "@/lib/server/auth.ts";
 import { syncDemo } from "@/lib/server/demo.ts";
 import { logSignals, recentSignals, type RecentSignal } from "@/lib/server/track.ts";
@@ -35,9 +36,11 @@ export async function GET(req: Request) {
 
   // Kunlik limit: har kun uchun alohida, shu tarif ko'radigan signallar.
   const recent = await recentSignals().catch(() => [] as RecentSignal[]);
+  // Claude tasdiqlamagan oltin signali mijozga bormaydi va kunlik limitni ham egallamaydi.
+  const approved = recent.filter((r) => !gated(r.pair, r.strategy) || r.ai_verdict === "tasdiq");
   const byKey = new Map(recent.map((r) => [key(r.pair, r.timeframe, r.signal_time, r.strategy), r]));
   const days = [...new Set(recent.map((r) => r.day))];
-  const allowed = new Set(days.flatMap((d) => allocate(recent.filter((r) => r.day === d), access.tier!).map((r) => key(r.pair, r.timeframe, r.signal_time, r.strategy))));
+  const allowed = new Set(days.flatMap((d) => allocate(approved.filter((r) => r.day === d), access.tier!).map((r) => key(r.pair, r.timeframe, r.signal_time, r.strategy))));
   const today = todayTashkent();
 
   // Ekranda har bir juftlik va strategiyadan faqat oxirgisi; pips signallari esa faqat hali ochiq bo'lsa.
@@ -60,12 +63,15 @@ export async function GET(req: Request) {
       : s;
     if (access.tier === "admin") return withMemory;
     if (!logged) return hide(withMemory, false); // kuchsiz signal: faqat admin ko'radi
+    if (gated(s.pair, s.strategy) && logged.ai_verdict !== "tasdiq") {
+      return { ...hide(withMemory, false), aiHold: logged.ai_verdict === "ehtiyot" ? "rejected" : "checking" };
+    }
     if (allowed.has(k)) return withMemory;
     return hide(withMemory, true);
   });
 
   const rule = TIER_RULES[access.tier];
-  const used = allocate(recent.filter((r) => r.day === today), access.tier).length;
+  const used = allocate(approved.filter((r) => r.day === today), access.tier).length;
   return NextResponse.json({
     ...result,
     signals,

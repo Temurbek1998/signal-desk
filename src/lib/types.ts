@@ -61,6 +61,7 @@ export type Signal = {
   strategy?: Strategy; // berilmasa "trend"
   tp1Hit?: boolean; // TP1 urilgan, qolgan yarmi ochiq (oltinda SL narx ortidan ergashadi)
   trailStop?: number | null; // ergashuvchi SL ning joriy darajasi
+  aiHold?: "checking" | "rejected"; // Claude hali tekshirmoqda yoki signalni ushlab qoldi (mijozga ko'rinmaydi)
   ai?: { verdict: "tasdiq" | "ehtiyot"; confidence: number; note: string } | null; // AI hamkorning ikkinchi fikri
   resultR?: number | null; // pips rejimida natija R da (TP = 1.5R yoki 2R, kun oxirida yopilsa haqiqiy natija)
 };

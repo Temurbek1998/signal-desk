@@ -351,6 +351,14 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
         </div>
       )}
 
+      {s.aiHold && (
+        <p className="ai-take ehtiyot" style={{ margin: 0 }}>
+          {s.aiHold === "checking"
+            ? "Zeus imkoniyat topdi, Claude uni tekshirmoqda. Tasdiqlansa signal shu yerda paydo bo'ladi."
+            : "Claude bu imkoniyatni xavfli deb topdi va signal yuborilmadi."}
+        </p>
+      )}
+
       {s.side && s.memoryWinrate != null && (
         <p className="muted" style={{ margin: 0 }}>
           Robot xotirasi: {s.pair} {s.timeframe} da {s.memoryN ?? 0} ta yopilgan signal, kutilgan natija{" "}
@@ -364,7 +372,7 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
 
       {s.side && s.ai && (
         <div className={`ai-take ${s.ai.verdict}`}>
-          <b>{s.ai.verdict === "tasdiq" ? "✓ AI hamkor tasdiqladi" : "⚠ AI hamkor: ehtiyot bo'ling"}</b>
+          <b>{s.ai.verdict === "tasdiq" ? "✓ Claude tasdiqladi" : "⚠ Claude: ehtiyot bo'ling"}</b>
           <span>{s.ai.note}</span>
         </div>
       )}
