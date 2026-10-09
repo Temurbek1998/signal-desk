@@ -1,12 +1,15 @@
 import "server-only";
 import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis, type AiAnalysis } from "../aiAnalysis.ts";
 import { facts } from "./aiTrader.ts";
+import { activeInstruments } from "../instruments.ts";
+import { underBudget } from "./aiBudget.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
 
 // Robot + Claude: Claude robot (Zeus) hisoblarini va shamlarni o'qiydi, robot bilan rozimi yoki yo'qmi aytadi
 // va o'z tahlilini (strategiya, zonalar, darajalar) beradi. Faqat admin uchun; signal bermaydi.
-// Oltin uchun har soatda avtomatik (cron), boshqa juftliklar admin tugmasi bilan.
+// Oltin: AI treyder qarori bilan birga (aiTrader). Valyutalar: cron navbat bilan, har juftlik AI_VIEW_EVERY_H (standart 8) soatda.
+// Model: AI_VIEW_MODEL (standart Sonnet: arzonroq, chunki bu admin ko'rinishi; mijozga ta'sir qiladigan baho Opus'da).
 
 export type AiView = {
   id: number; pair: string; at: Date; bias: "BUY" | "SELL" | "WAIT"; confidence: number;
@@ -38,9 +41,9 @@ Qoidalar: faqat berilgan ma'lumotga tayan, daraja o'ylab topma. Kafolat va'da qi
 ${ANALYSIS_PROMPT}
 Javob faqat JSON.`;
 
-export async function claudeView(pair: string): Promise<AiView> {
-  const f = await facts(pair);
-  const model = process.env.AI_TRADER_MODEL || (provider() === "anthropic" ? "claude-opus-5-5" : undefined);
+export async function claudeView(pair: string, pre?: Awaited<ReturnType<typeof facts>>): Promise<AiView> {
+  const f = pre ?? await facts(pair);
+  const model = process.env.AI_VIEW_MODEL || (provider() === "anthropic" ? "claude-sonnet-5-5" : undefined);
   const text = await complete(SYSTEM, [{ role: "user", content: JSON.stringify(f.data) }], {
     json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 12000 : 3000,
   });
@@ -63,12 +66,19 @@ export async function latestView(pair: string): Promise<AiView | null> {
   return v ?? null;
 }
 
-// Cron: oltin uchun soatiga bir marta, bozor ochiq bo'lsa.
-export async function refreshGoldView() {
-  if (!provider() || process.env.AI_VIEW === "0") return;
-  const v = await latestView("XAU/USD");
-  if (v && Date.now() - new Date(v.at).getTime() < 58 * 60_000) return;
-  const f = await facts("XAU/USD");
-  if (!f.price || Date.now() - f.lastTime > 45 * 60_000) return;
-  await claudeView("XAU/USD");
+// Cron: eng eski ko'rinishga ega valyuta juftligini yangilaydi (bir aylanishda bittasi), bozor ochiq va chegara ichida bo'lsa.
+export async function refreshStaleView() {
+  if (!provider() || process.env.AI_VIEW === "0" || !(await underBudget())) return;
+  const every = Math.max(1, Number(process.env.AI_VIEW_EVERY_H ?? 8)) * 3600_000;
+  const pairs = activeInstruments().map((i) => i.pair).filter((p) => p !== "XAU/USD" && !p.includes("/USDT"));
+  if (!pairs.length) return;
+  const rows = await sql<{ pair: string; at: Date }>("SELECT pair, max(at) AS at FROM ai_views GROUP BY pair");
+  const last = new Map(rows.map((r) => [r.pair, new Date(r.at).getTime()]));
+  const due = pairs.map((p) => ({ p, at: last.get(p) ?? 0 })).filter((x) => Date.now() - x.at >= every).sort((a, b) => a.at - b.at);
+  for (const { p } of due) {
+    const f = await facts(p).catch(() => null);
+    if (!f?.price || Date.now() - f.lastTime > 3 * 3600_000) continue; // bozor yopiq
+    await claudeView(p, f);
+    return;
+  }
 }

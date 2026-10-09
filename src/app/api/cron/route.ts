@@ -3,7 +3,7 @@ import { lastMarketTest, saveMarketTest } from "@/lib/server/marketTest.ts";
 import { runCycle } from "@/lib/server/runner.ts";
 import { aiDecide, aiTraderEnabled, trackAiTrades } from "@/lib/server/aiTrader.ts";
 import { reviewNewSignals } from "@/lib/server/aiReview.ts";
-import { refreshGoldView } from "@/lib/server/aiView.ts";
+import { refreshStaleView } from "@/lib/server/aiView.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
       await trackAiTrades().catch((e) => console.error("AI kuzatuv", e));
       const d = await aiDecide().catch((e) => { console.error("AI qaror", e); return null; });
       // Robot + Claude ko'rinishi: qaror so'ralmagan aylanishda (vaqt chegarasiga sig'ishi uchun).
-      if (d?.skipped) await refreshGoldView().catch((e) => console.error("AI ko'rinish", e));
+      if (d?.skipped) await refreshStaleView().catch((e) => console.error("AI ko'rinish", e));
     }
     const last = await lastMarketTest().catch(() => null);
     if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});

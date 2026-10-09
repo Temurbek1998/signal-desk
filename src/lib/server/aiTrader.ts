@@ -6,13 +6,15 @@ import { ALL_INSTRUMENTS } from "../instruments.ts";
 import { getCandles } from "../market.ts";
 import type { Candle } from "../types.ts";
 import { digitsOf } from "./analysis.ts";
+import { underBudget } from "./aiBudget.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
 import { notifyAdmin } from "./telegram.ts";
 
 // AI treyder (faqat demo): har soatda oltin bozorini o'zi tahlil qilib BUY, SELL yoki WAIT qaror qiladi.
 // Qarorlar mijozlarga chiqmaydi: faqat admin panelda va adminga Telegram orqali, natijasi R da o'lchanadi.
-// O'chirish: AI_TRADER=0. Oraliq: AI_TRADER_EVERY_MIN (standart 60). Model: AI_TRADER_MODEL.
+// O'chirish: AI_TRADER=0. Oraliq: AI_TRADER_EVERY_MIN (standart 120). Model: AI_TRADER_MODEL.
+// Har qaror oltin uchun "Robot + Claude" ko'rinishi sifatida ham yoziladi (ai_views), alohida chaqiruv kerak emas.
 
 const PAIR = "XAU/USD";
 const gold = () => ALL_INSTRUMENTS.find((i) => i.pair === PAIR)!;
@@ -37,9 +39,10 @@ const SCHEMA = {
     sl: { type: "number" }, tp1: { type: "number" }, tp2: { type: "number" },
     confidence: { type: "integer" },
     reason: { type: "string" },
+    agree: { type: "string", enum: ["rozi", "qisman", "qarshi"] },
     analysis: ANALYSIS_SCHEMA,
   },
-  required: ["action", "sl", "tp1", "tp2", "confidence", "reason", "analysis"],
+  required: ["action", "sl", "tp1", "tp2", "confidence", "reason", "agree", "analysis"],
   additionalProperties: false,
 };
 
@@ -58,8 +61,9 @@ Qoidalar:
 - Aniq ustunlik bo'lmasa WAIT de. Yomon savdodan WAIT yaxshi. Oldingi savdolaringning natijasidan saboq ol.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
 - confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi.
+- agree: robot_zeus_fikri bilan rozimisan ("rozi", "qisman", "qarshi").
 ${ANALYSIS_PROMPT}
-Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
+Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","agree","analysis"}.`;
 
 export const round = (x: number, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
 const ohlc = (cs: Candle[], d = 2) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o, d), round(c.h, d), round(c.l, d), round(c.c, d)]);
@@ -125,9 +129,10 @@ export async function aiDecide(force = false): Promise<{ trade?: AiTrade; skippe
   const [busy] = await sql<{ n: string }>("SELECT count(*) AS n FROM ai_trades WHERE status IN ('open', 'tp1')");
   if (Number(busy.n) > 0) return { skipped: "Ochiq AI savdo bor" };
   if (!force) {
-    const every = Math.max(15, Number(process.env.AI_TRADER_EVERY_MIN ?? 60));
+    const every = Math.max(15, Number(process.env.AI_TRADER_EVERY_MIN ?? 120));
     const [last] = await sql<{ at: Date }>("SELECT at FROM ai_trades ORDER BY at DESC LIMIT 1");
     if (last && Date.now() - new Date(last.at).getTime() < (every - 2) * 60_000) return { skipped: "Hali vaqti emas" };
+    if (!(await underBudget())) return { skipped: "Kunlik AI chegarasi" };
   }
   const f = await facts();
   if (!f.price || Date.now() - f.lastTime > 45 * 60_000) return { skipped: "Bozor yopiq" };
@@ -147,9 +152,11 @@ export async function aiDecide(force = false): Promise<{ trade?: AiTrade; skippe
   }
   const v = validatePlan(d, f.price, f.atrH1);
   const p = v.plan;
-  let analysis = null;
+  let analysis = null, agree: string | null = null;
   try {
-    analysis = parseAnalysis(JSON.parse(text.match(/\{[\s\S]*\}/)![0]).analysis, f.price);
+    const o = JSON.parse(text.match(/\{[\s\S]*\}/)![0]);
+    analysis = parseAnalysis(o.analysis, f.price);
+    agree = ["rozi", "qisman", "qarshi"].includes(o.agree) ? o.agree : null;
   } catch { /* tahlil bo'lmasa ham qaror yoziladi */ }
   const status = p ? "open" : d.action === "WAIT" ? "wait" : "rejected";
   const [row] = await sql<AiTrade>(
@@ -157,6 +164,10 @@ export async function aiDecide(force = false): Promise<{ trade?: AiTrade; skippe
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [PAIR, d.action, status, f.price, p?.sl ?? d.sl ?? null, p?.tp1 ?? d.tp1 ?? null, p?.tp2 ?? d.tp2 ?? null,
       d.confidence ?? 0, d.reason ?? "", status === "rejected" ? `Tekshiruvdan o'tmadi: ${v.error}` : "", modelName, analysis ? JSON.stringify(analysis) : null],
+  );
+  await sql(
+    "INSERT INTO ai_views (pair, bias, confidence, agree, summary, analysis, model) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+    [PAIR, d.action, d.confidence ?? 0, agree, d.reason ?? "", analysis ? JSON.stringify(analysis) : null, modelName],
   );
   if (p) {
     await notifyAdmin(`🤖 AI treyder (demo): ${p.side} ${PAIR}\nKirish ${round(p.entry)}, SL ${p.sl}, TP1 ${p.tp1}, TP2 ${p.tp2}, ishonch ${d.confidence}%\n${d.reason ?? ""}`);

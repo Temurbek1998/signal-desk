@@ -109,7 +109,7 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
           </div>
         </div>
         {view?.summary && <p className="ai-box" style={{ margin: 0 }}>{view.summary}</p>}
-        <p className="muted" style={{ margin: 0 }}>Oltin uchun Claude har soatda o&apos;zi yangilaydi, boshqa juftliklar tugma bilan. Bu faqat admin uchun.</p>
+        <p className="muted" style={{ margin: 0 }}>Claude o&apos;zi yangilaydi: oltin har 2 soatda (AI treyder qarori bilan), valyutalar navbat bilan har 8 soatda, bozor ochiq paytda. Tugma bilan istalgan payt so&apos;rash mumkin. Faqat admin uchun.</p>
       </section>
 
       {ca && <AiAnalysisView a={ca} digits={d?.digits} />}

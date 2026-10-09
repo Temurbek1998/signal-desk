@@ -22,14 +22,16 @@ export async function GET() {
     const runs = await sql<{ at: Date; trigger: string; analyzed: number; failed: number; strong: number; weak: number; errors: string }>(
       "SELECT started_at AS at, trigger, analyzed, failed, strong, weak, left(errors, 600) AS errors FROM robot_runs ORDER BY started_at DESC LIMIT 3",
     );
-    const [counts] = await sql<{ signals: string; open_signals: string; demo: string; demo_open: string; states: string; ai_trades: string; ai_decisions: string }>(
+    const [counts] = await sql<{ signals: string; open_signals: string; demo: string; demo_open: string; states: string; ai_trades: string; ai_decisions: string; ai_views: string; ai_reviews: string }>(
       `SELECT (SELECT count(*) FROM signal_log) AS signals,
               (SELECT count(*) FROM signal_log WHERE status = 'active') AS open_signals,
               (SELECT count(*) FROM demo_trades) AS demo,
               (SELECT count(*) FROM demo_trades WHERE status = 'open') AS demo_open,
               (SELECT count(*) FROM robot_state) AS states,
               (SELECT count(*) FROM ai_trades WHERE status NOT IN ('wait', 'rejected')) AS ai_trades,
-              (SELECT count(*) FROM ai_trades) AS ai_decisions`,
+              (SELECT count(*) FROM ai_trades) AS ai_decisions,
+              (SELECT count(*) FROM ai_views) AS ai_views,
+              (SELECT count(*) FROM signal_log WHERE ai_verdict IS NOT NULL) AS ai_reviews`,
     );
     // Bozorlar sinovi: faqat umumiy tarixiy natija (savdolar soni, o'rtacha R, xulosa), signal tafsilotlari emas.
     const [mt] = await sql<{ at: Date; rows: { pair: string; tf: string; days: number; trades: number; avgR: number; half1: number; half2: number; verdict: string }[]; errors: string }>(
