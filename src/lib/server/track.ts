@@ -72,7 +72,8 @@ export async function logSignals(signals: Signal[]): Promise<LogResult> {
 
 export type Stats = { timeframe: Timeframe | "ALL"; closed: number; wins: number; winRate: number; profitFactor: number | null; totalR: number };
 
-export async function trackRecord(days = 90): Promise<Stats[]> {
+// Ochiq natijalar faqat mijozlarga ochiq bozorlar bo'yicha (standart: PUBLIC_CATEGORIES).
+export async function trackRecord(days = 90, categories: string[] = publicCategories()): Promise<Stats[]> {
   const rows = await sql<{ timeframe: string; closed: string; wins: string; gain: number | null; loss: number | null; total: number | null }>(
     `SELECT coalesce(timeframe, 'ALL') AS timeframe,
             count(*) AS closed,
@@ -81,9 +82,9 @@ export async function trackRecord(days = 90): Promise<Stats[]> {
             -sum(result_r) FILTER (WHERE result_r < 0) AS loss,
             sum(result_r) AS total
      FROM signal_log
-     WHERE status <> 'active' AND signal_time > now() - make_interval(days => $1)
+     WHERE status <> 'active' AND signal_time > now() - make_interval(days => $1) AND category = ANY($2)
      GROUP BY ROLLUP (timeframe)`,
-    [days],
+    [days, categories],
   );
   return rows.map((r) => {
     const closed = Number(r.closed);
@@ -104,11 +105,11 @@ export type LoggedSignal = {
   signal_time: Date; status: string; result_r: number | null;
 };
 
-export async function recentClosed(limit = 30): Promise<LoggedSignal[]> {
+export async function recentClosed(limit = 30, categories: string[] = publicCategories()): Promise<LoggedSignal[]> {
   return sql<LoggedSignal>(
     `SELECT id, pair, timeframe, strategy, side, entry, tp1, tp2, sl, signal_time, status, result_r
-     FROM signal_log WHERE status <> 'active' ORDER BY signal_time DESC LIMIT $1`,
-    [limit],
+     FROM signal_log WHERE status <> 'active' AND category = ANY($2) ORDER BY signal_time DESC LIMIT $1`,
+    [limit, categories],
   );
 }
 

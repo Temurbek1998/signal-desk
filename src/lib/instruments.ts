@@ -42,7 +42,8 @@ export function activeCategories(env: Record<string, string | undefined> = proce
 // ishlaydi (reyting C), toki natijasi yetarli bo'lmaguncha:  PUBLIC_CATEGORIES=gold  (standart)
 export function publicCategories(env: Record<string, string | undefined> = process.env): Category[] {
   const want = (env.PUBLIC_CATEGORIES ?? "gold").split(",").map((s) => s.trim().toLowerCase());
-  return ALL_CATEGORIES.filter((c) => want.includes(c));
+  const cats = ALL_CATEGORIES.filter((c) => want.includes(c));
+  return cats.length ? cats : ["gold"];
 }
 
 export function activeInstruments(env: Record<string, string | undefined> = process.env): Instrument[] {

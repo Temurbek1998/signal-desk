@@ -4,7 +4,7 @@ import { formatUsdt, listPlans } from "./billing.ts";
 import { sql } from "./db.ts";
 import { recentSignals, trackRecord } from "./track.ts";
 import { allocate, TIER_NAME } from "../memory.ts";
-import { activeInstruments } from "../instruments.ts";
+import { activeInstruments, publicCategories } from "../instruments.ts";
 
 // AI operator uchun tizim ko'rsatmasi: sayt haqidagi faktlar va qat'iy qoidalar.
 export async function operatorPrompt(access: Access | null): Promise<string> {
@@ -29,7 +29,8 @@ export async function operatorPrompt(access: Access | null): Promise<string> {
       : "Hozir bu foydalanuvchi uchun faol signal yo'q.";
   }
 
-  const inst = activeInstruments();
+  const pub = publicCategories();
+  const inst = activeInstruments().filter((i) => pub.includes(i.category));
   const onlyGold = inst.every((i) => i.category === "gold");
   const market = onlyGold ? "oltin (XAU/USD)" : "kripto, oltin (XAU/USD) va valyuta juftliklari";
   const pairs = inst.map((i) => i.pair).join(", ");

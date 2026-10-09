@@ -4,7 +4,7 @@ import { PAID_TIERS, TIER_NAME } from "@/lib/memory.ts";
 
 const CHAT_LIMIT = { standard: 30, pro: 45, vip: 60 } as const;
 import { trackRecord } from "@/lib/server/track.ts";
-import { activeCategories } from "@/lib/instruments.ts";
+import { publicCategories } from "@/lib/instruments.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default async function Home() {
   const [plans, record] = await Promise.all([listPlans().catch(() => []), trackRecord(90).catch(() => [])]);
   const all = record.find((r) => r.timeframe === "ALL");
   const live = all && all.closed >= MIN_LIVE;
-  const cats = activeCategories();
+  const cats = publicCategories();
   const goldOnly = cats.length === 1 && cats[0] === "gold";
   const marketLine = goldOnly ? "XAU/USD, M15" : `${cats.map((c) => ({ gold: "Oltin", forex: "Valyuta", crypto: "Kripto" })[c]).join(", ")}, M15 va M30`;
 

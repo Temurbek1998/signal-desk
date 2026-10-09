@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicCategories } from "@/lib/instruments.ts";
 import { allocate, TIER_RULES } from "@/lib/memory.ts";
 import { runRobot } from "@/lib/robot.ts";
 import { canSeeSignals, getAccess } from "@/lib/server/auth.ts";
@@ -40,7 +41,9 @@ export async function GET(req: Request) {
   const today = todayTashkent();
 
   // Ekranda har bir juftlik va strategiyadan faqat oxirgisi; pips signallari esa faqat hali ochiq bo'lsa.
+  const pub = publicCategories();
   const shown = result.signals.filter((s, i, all) => {
+    if (access.tier !== "admin" && !pub.includes(s.category)) return false; // yopiq bozorlar faqat admin uchun
     if (!s.strategy || s.strategy === "trend") return true;
     const last = all.filter((x) => x.pair === s.pair && x.strategy === s.strategy).at(-1);
     return last === s && s.status === "active";
