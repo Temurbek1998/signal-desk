@@ -1,7 +1,7 @@
 import "server-only";
 import { bucket, simulate, summarize, type Trade } from "../../../scripts/backtest.ts";
 import { SL_ATR, TP1_R, TP2_R } from "../engine.ts";
-import { activeInstruments } from "../instruments.ts";
+import { ALL_INSTRUMENTS } from "../instruments.ts";
 import type { Candle, Category, Instrument } from "../types.ts";
 
 // Bozorlar sinovi: robotning joriy qoidalarini (trend, M15 va M30) har bir valyuta va kripto juftligining
@@ -72,7 +72,8 @@ async function testInstrument(inst: Instrument): Promise<TestRow[]> {
 }
 
 export async function testMarkets(): Promise<{ rows: TestRow[]; errors: string[] }> {
-  const insts = activeInstruments().filter((i) => i.category !== "gold");
+  // Robotda o'chirilgan bozorlar ham sinaladi: qayta yoqishga arziydimi, shu yerda ko'rinadi.
+  const insts = ALL_INSTRUMENTS.filter((i) => i.category !== "gold");
   const res = await Promise.allSettled(insts.map(testInstrument));
   const rows: TestRow[] = [];
   const errors: string[] = [];

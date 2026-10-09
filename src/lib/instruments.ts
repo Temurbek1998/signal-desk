@@ -27,13 +27,15 @@ export const ALL_INSTRUMENTS: Instrument[] = [
   fx("USD/CAD", "forex", "CAD=X"),
 ];
 
-// Robot qaysi bozorlarda ishlaydi (standart: hammasi). Mijozlarga qaysilari ko'rinishini PUBLIC_CATEGORIES belgilaydi.
-//   ROBOT_MARKETS=gold,forex,crypto   (standart)
+// Robot qaysi bozorlarda ishlaydi. Mijozlarga qaysilari ko'rinishini PUBLIC_CATEGORIES belgilaydi.
+// Kripto standartdan chiqarildi: 2026-10-09 bozorlar sinovida (62 kun, komissiyadan keyin) 35 savdoda o'rtacha −0.38R.
+//   ROBOT_MARKETS=gold,forex          (standart)
+//   ROBOT_MARKETS=gold,forex,crypto   (kripto bilan)
 //   ROBOT_MARKETS=gold                (faqat oltin)
 const ALL_CATEGORIES: Category[] = ["gold", "forex", "crypto"];
 
 export function activeCategories(env: Record<string, string | undefined> = process.env): Category[] {
-  const want = (env.ROBOT_MARKETS ?? "gold,forex,crypto").split(",").map((s) => s.trim().toLowerCase());
+  const want = (env.ROBOT_MARKETS ?? "gold,forex").split(",").map((s) => s.trim().toLowerCase());
   const cats = ALL_CATEGORIES.filter((c) => want.includes(c));
   return cats.length ? cats : ["gold"];
 }

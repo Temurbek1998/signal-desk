@@ -175,7 +175,7 @@ Email yuborish `MAIL_PROVIDER` bilan tanlanadi:
 ## Bozorlar va narx manbalari
 
 Hozircha robot faqat **oltinni (XAU/USD)** kuzatadi. Kripto va valyuta juftliklari kodda saqlangan, lekin o'chirilgan;
-robot standart holatda hammasida ishlaydi (`ROBOT_MARKETS=gold,forex,crypto`). Mijozlar faqat `PUBLIC_CATEGORIES` dagi bozorlarni ko'radi (standart `gold`), qolganlari admin va demo hisob uchun.
+robot standart holatda oltin va valyutada ishlaydi (`ROBOT_MARKETS=gold,forex`); kripto bozorlar sinovida zarar ko'rsatgani uchun o'chirilgan, `gold,forex,crypto` bilan yoqiladi. Natijalar admin paneldagi "Bozorlar sinovi" sahifasida. Mijozlar faqat `PUBLIC_CATEGORIES` dagi bozorlarni ko'radi (standart `gold`), qolganlari admin va demo hisob uchun.
 Sayt matnlari, signallar sahifasi va AI operator shu sozlamaga moslashadi.
 
 - **Oltin**: [Twelve Data](https://twelvedata.com) orqali spot XAU/USD, `TWELVEDATA_API_KEY` bilan. **Oltin uchun bu
