@@ -15,7 +15,8 @@ async function open(): Promise<Db> {
   if (process.env.DATABASE_URL) {
     const { Pool } = await import("pg");
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      // Neon qatoridagi sslmode=require pg'da baribir verify-full degani; aniq yozilsa ogohlantirish chiqmaydi.
+      connectionString: process.env.DATABASE_URL.replace(/([?&]sslmode=)(prefer|require|verify-ca)\b/, "$1verify-full"),
       ssl: process.env.DATABASE_SSL === "0" ? undefined : { rejectUnauthorized: false },
       max: 5,
     });
