@@ -1,6 +1,7 @@
 import "server-only";
 import { TP1_R, TP2_R } from "../engine.ts";
 import type { Signal, Timeframe } from "../types.ts";
+import { publicCategories } from "../instruments.ts";
 import { sql } from "./db.ts";
 import { rateFromMemory, ratePipsFromMemory } from "./memory.ts";
 import { closedMessage, signalMessage } from "../telegram.ts";
@@ -29,6 +30,7 @@ export async function logSignals(signals: Signal[]): Promise<LogResult> {
       // Reyting faqat yangi signal yozilayotganda xotiradan hisoblanadi; mavjud qatorda o'zgarmaydi.
       const exists = await sql("SELECT 1 FROM signal_log WHERE pair = $1 AND timeframe = $2 AND signal_time = $3 AND strategy = $4", [s.pair, s.timeframe, new Date(s.candleTime), strategy]);
       const r = exists.length ? null
+        : !publicCategories().includes(s.category) ? { rating: "C" as const, n: null, est: null }
         : strategy === "trend" ? await rateFromMemory(s.pair, s.timeframe, s.side, s.confidence)
         // Gerakl sinovi kichik (30 kun, 29 savdo): GERAKL_PUBLIC=1 qilinmaguncha faqat admin va demo hisob (C).
         : strategy.startsWith("scalp") && process.env.GERAKL_PUBLIC !== "1" ? { rating: "C" as const, n: null, est: null }

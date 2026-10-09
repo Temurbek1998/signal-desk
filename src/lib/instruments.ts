@@ -5,8 +5,9 @@ import type { Category, Instrument } from "./types.ts";
 // olinadi, u spot XAU/USD dan bir necha dollar farq qilishi mumkin.
 const useTwelve = !!process.env.TWELVEDATA_API_KEY;
 
+// Twelve Data bepul tarifi kuniga 800 so'rov: u faqat oltinga ishlatiladi, valyutalar doim Yahoo'dan olinadi.
 function fx(pair: string, category: "gold" | "forex", yahoo: string): Instrument {
-  return useTwelve
+  return useTwelve && category === "gold"
     ? { pair, category, source: "twelvedata", symbol: pair }
     : { pair, category, source: "yahoo", symbol: yahoo };
 }
@@ -36,6 +37,13 @@ export function activeCategories(env: Record<string, string | undefined> = proce
   const want = (env.ACTIVE_CATEGORIES ?? "gold").split(",").map((s) => s.trim().toLowerCase());
   const cats = ALL_CATEGORIES.filter((c) => want.includes(c));
   return cats.length ? cats : ["gold"];
+}
+
+// Mijozlarga ochiq bozorlar. Qolgan faol bozorlar (masalan valyuta, kripto) faqat admin, Telegram va demo hisobda
+// ishlaydi (reyting C), toki natijasi yetarli bo'lmaguncha:  PUBLIC_CATEGORIES=gold  (standart)
+export function publicCategories(env: Record<string, string | undefined> = process.env): Category[] {
+  const want = (env.PUBLIC_CATEGORIES ?? "gold").split(",").map((s) => s.trim().toLowerCase());
+  return ALL_CATEGORIES.filter((c) => want.includes(c));
 }
 
 export function activeInstruments(env: Record<string, string | undefined> = process.env): Instrument[] {
