@@ -1,6 +1,6 @@
 // Demo hisob hisob-kitobi: sof funksiyalar, bazasiz sinash mumkin.
 
-export type DemoConfig = { startBalance: number; riskPct: number; feeCryptoPct: number; feeFxPct: number; ratings: string[] };
+export type DemoConfig = { startBalance: number; riskPct: number; leverage: number; feeCryptoPct: number; feeFxPct: number; ratings: string[] };
 
 export function demoConfig(env: Record<string, string | undefined> = process.env): DemoConfig {
   const num = (v: string | undefined, d: number, min: number, max: number) => {
@@ -10,6 +10,7 @@ export function demoConfig(env: Record<string, string | undefined> = process.env
   return {
     startBalance: num(env.DEMO_START_BALANCE, 10_000, 100, 10_000_000),
     riskPct: num(env.DEMO_RISK_PCT, 1, 0.1, 5),
+    leverage: num(env.DEMO_LEVERAGE, 1000, 1, 3000), // plecho 1:N (Bek qarori: 1:1000)
     feeCryptoPct: num(env.DEMO_FEE_CRYPTO_PCT, 0.04, 0, 1),
     feeFxPct: num(env.DEMO_FEE_FX_PCT, 0.005, 0, 1),
     ratings: (env.DEMO_RATINGS ?? "A,B,C").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean),
@@ -20,11 +21,13 @@ export function demoConfig(env: Record<string, string | undefined> = process.env
 export function position(balance: number, cfg: DemoConfig, category: string, entry: number, sl: number) {
   const risk = (balance * cfg.riskPct) / 100;
   const dist = Math.abs(entry - sl);
-  const size = dist > 0 ? risk / dist : 0;
+  // Plecho garov (marja) hajmini belgilaydi: marja = pozitsiya qiymati / plecho. Marja balansdan oshmasin.
+  const lev = cfg.leverage ?? 1;
+  const size = dist > 0 ? Math.min(risk / dist, (balance * lev) / entry) : 0;
   const notional = size * entry;
   const feePct = category === "crypto" ? cfg.feeCryptoPct : cfg.feeFxPct;
   const fee = (notional * feePct * 2) / 100;
-  return { risk, size, notional, fee };
+  return { risk: size * dist, size, notional, fee, margin: notional / lev };
 }
 
 export const pnlOf = (resultR: number, risk: number, fee: number) => resultR * risk - fee;

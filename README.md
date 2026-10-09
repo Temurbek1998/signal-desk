@@ -148,7 +148,7 @@ sof natija), ochiq pozitsiyalar va to'liq savdolar tarixi: lot, kirish, TP1, TP2
 Oltinda 1 lot = 100 unsiya, forexda 100 000. Bozor yopiq paytda (dam olish kunlari, har kuni 21:00–22:00 UTC)
 robot oltin va forexni tahlil qilmaydi va yangi savdo ochmaydi; kripto 24/7.
 Bu haqiqiy pul emas: boshlang'ich balans `DEMO_START_BALANCE` (standart 10 000 USDT), har savdoda balansning
-`DEMO_RISK_PCT` foizi xavf ostiga qo'yiladi (standart 1%, ruxsat 0.1–5%). Pozitsiya hajmi shunga qarab SL masofasidan
+Plecho `DEMO_LEVERAGE` (standart 1:1000) faqat garov (marja) hajmini belgilaydi: marja = pozitsiya qiymati / plecho. `DEMO_RISK_PCT` foizi xavf ostiga qo'yiladi (standart 1%, ruxsat 0.1–5%). Pozitsiya hajmi shunga qarab SL masofasidan
 hisoblanadi; TP1 da yarmi yopiladi, qolgani kirishda yoki TP2 da. Kirish va chiqish komissiyasi ayiriladi
 (kripto `DEMO_FEE_CRYPTO_PCT` = 0.04%, oltin va forex `DEMO_FEE_FX_PCT` = 0.005%).
 

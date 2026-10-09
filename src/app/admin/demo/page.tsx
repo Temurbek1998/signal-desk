@@ -93,7 +93,7 @@ export default async function DemoAccountPage() {
 
       <p className="notice warn">
         <b>Bu demo hisob, haqiqiy pul emas.</b> Savdolar robot signallari bo'yicha avtomatik hisoblanadi: boshlang'ich balans {usdt(d.start)},
-        har savdoda balansning {d.riskPct}% i xavf ostiga qo'yiladi, birja komissiyasi ham hisobga olinadi. Haqiqiy savdoda sirpanish va
+        plecho 1:{d.leverage}, har savdoda balansning {d.riskPct}% i xavf ostiga qo'yiladi, birja komissiyasi ham hisobga olinadi. Haqiqiy savdoda sirpanish va
         boshqa xarajatlar natijani o'zgartirishi mumkin. O'tgan natija kelajakni kafolatlamaydi.
       </p>
 
@@ -102,6 +102,7 @@ export default async function DemoAccountPage() {
         <div className="stat"><b className={d.returnPct >= 0 ? "up" : "down"}>{d.returnPct >= 0 ? "+" : ""}{d.returnPct.toFixed(2)}%</b><span>Daromadlilik{d.since ? `, ${when(d.since).split(",")[0]} dan` : ""}</span></div>
         <div className="stat"><b>{winRate == null ? "—" : `${winRate}%`}</b><span>Yutuq ulushi, {d.trades} savdo</span></div>
         <div className="stat"><b>{d.maxDd.toFixed(2)}%</b><span>Eng katta pasayish</span></div>
+        <div className="stat"><b>1:{d.leverage}</b><span>Plecho</span></div>
       </div>
 
       <section className="panel">
@@ -172,7 +173,7 @@ export default async function DemoAccountPage() {
         ) : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Ochilgan</th><th>Juftlik</th><th>Yo'nalish</th><th>Reyting</th><th className="num">Lot</th><th className="num">Kirish</th><th className="num">TP 1</th><th className="num">TP 2</th><th className="num">SL</th><th className="num">Risk</th></tr></thead>
+              <thead><tr><th>Ochilgan</th><th>Juftlik</th><th>Yo'nalish</th><th>Reyting</th><th className="num">Lot</th><th className="num">Kirish</th><th className="num">TP 1</th><th className="num">TP 2</th><th className="num">SL</th><th className="num">Risk</th><th className="num">Marja</th></tr></thead>
               <tbody>
                 {d.open.map((t) => (
                   <tr key={t.id}>
@@ -186,6 +187,7 @@ export default async function DemoAccountPage() {
                     <td className="num">{px(t.tp2)}</td>
                     <td className="num">{px(t.sl)}</td>
                     <td className="num">{usdt(Number(t.risk_usdt))}</td>
+                    <td className="num">{usdt(Number(t.notional) / d.leverage)}</td>
                   </tr>
                 ))}
               </tbody>
