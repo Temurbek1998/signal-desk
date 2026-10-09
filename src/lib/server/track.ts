@@ -1,4 +1,5 @@
 import "server-only";
+import { geraklEnabled } from "../scalp.ts";
 import { TP1_R, TP2_R } from "../engine.ts";
 import type { Signal, Timeframe } from "../types.ts";
 import { publicCategories } from "../instruments.ts";
@@ -29,6 +30,8 @@ export async function logSignals(signals: Signal[]): Promise<LogResult> {
     if (s.quality === "strong") {
       // Reyting faqat yangi signal yozilayotganda xotiradan hisoblanadi; mavjud qatorda o'zgarmaydi.
       const exists = await sql("SELECT 1 FROM signal_log WHERE pair = $1 AND timeframe = $2 AND signal_time = $3 AND strategy = $4", [s.pair, s.timeframe, new Date(s.candleTime), strategy]);
+      // Gerakl o'chiq: yangi signal yozilmaydi, avval ochilgani esa yopilguncha yangilanadi.
+      if (!exists.length && strategy.startsWith("scalp") && !geraklEnabled()) continue;
       const r = exists.length ? null
         : !publicCategories().includes(s.category) ? { rating: "C" as const, n: null, est: null }
         : strategy === "trend" ? await rateFromMemory(s.pair, s.timeframe, s.side, s.confidence)

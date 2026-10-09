@@ -7,6 +7,10 @@ import { atr } from "./indicators.ts";
 import { isDayEnd, PIP, trackFixed, tradingDay } from "./pips.ts";
 import type { Candle, Side, Signal } from "./types.ts";
 
+// Gerakl yoqilganmi. Bek qarori: hozircha o'chiq; GERAKL_ENABLED=1 qilinsa qayta yoqiladi.
+// O'chiq bo'lsa yangi savdo ochilmaydi, ochiq qolgan savdolar esa o'z qoidasi bo'yicha yopilguncha kuzatiladi.
+export const geraklEnabled = (env = process.env) => env.GERAKL_ENABLED === "1";
+
 export const SCALP = { burstAtr: 3, edge: 0.25, slPips: 80, tpPips: 150, maxBars: 24 } as const;
 const M5 = 5 * 60_000;
 

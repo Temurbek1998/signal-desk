@@ -5,6 +5,7 @@ import { PAID_TIERS, TIER_NAME } from "@/lib/memory.ts";
 const CHAT_LIMIT = { standard: 30, pro: 45, vip: 60 } as const;
 import { trackRecord } from "@/lib/server/track.ts";
 import { publicCategories } from "@/lib/instruments.ts";
+import { geraklEnabled } from "@/lib/scalp.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -102,10 +103,10 @@ export default async function Home() {
       </section>
 
       <section className="section">
-        <h2>Ikki robot</h2>
+        <h2>{geraklEnabled() ? "Ikki robot" : "Robot"}</h2>
         <div className="steps">
           <div className="step"><h3>Zeus</h3><p>Asosiy robot. Trend ichidagi aniq kirishlar (M15) va 300–400 pips maqsadli rejim: pullback va London ochilishidagi yorib o'tish.</p></div>
-          <div className="step"><h3>Gerakl</h3><p>Skalping va razgon roboti (M5). Oltin keskin impuls bilan harakatlanganda qisqa savdo: TP 150, SL 80 pips, 2 soat ichida yopiladi. Hozir sinov bosqichida, demo hisobda ishlaydi.</p></div>
+          {geraklEnabled() && <div className="step"><h3>Gerakl</h3><p>Skalping va razgon roboti (M5). Oltin keskin impuls bilan harakatlanganda qisqa savdo: TP 150, SL 80 pips, 2 soat ichida yopiladi. Hozir sinov bosqichida, demo hisobda ishlaydi.</p></div>}
         </div>
       </section>
 
