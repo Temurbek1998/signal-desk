@@ -35,6 +35,7 @@ export function closedMessage(s: Signal): string {
   const pips = s.strategy && s.strategy !== "trend";
   const head = pips
     ? s.status === "tp2" ? "✅ TP urildi" : s.status === "close" ? `⏹ Kun oxirida yopildi (${(s.resultR ?? 0) >= 0 ? "+" : ""}${(s.resultR ?? 0).toFixed(2)}R)` : RESULT[s.status ?? ""] ?? s.status
-    : RESULT[s.status ?? ""] ?? s.status;
-  return `${head}: <b>${s.side} ${esc(s.pair)} · ${s.timeframe} · ${signalLabel(s.strategy)}</b> (kirish ${s.entry})`;
+    : s.status === "close" ? "⏹ 8 soatdan keyin yopildi" : RESULT[s.status ?? ""] ?? s.status;
+  const r = s.resultR != null && !pips ? ` (${s.resultR >= 0 ? "+" : ""}${s.resultR.toFixed(2)}R)` : "";
+  return `${head}${r}: <b>${s.side} ${esc(s.pair)} · ${s.timeframe} · ${signalLabel(s.strategy)}</b> (kirish ${s.entry})`;
 }

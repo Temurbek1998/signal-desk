@@ -46,7 +46,7 @@ export default async function ResultsPage() {
         )}
         <p className="muted">
           Win rate: TP1 ga Stop Loss dan oldin yetgan signallar ulushi. R: risk birligidagi natija (SL = −1R). TP1 da
-          pozitsiyaning yarmi yopiladi va SL kirish narxiga ko'chiriladi.
+          pozitsiyaning yarmi yopiladi, oltinda qolgan yarmi uchun SL narx ortidan 1 ATR masofada ergashadi va savdo ko'pi bilan 8 soatda yopiladi.
         </p>
       </section>
 

@@ -48,7 +48,7 @@ export type Signal = {
   trend: "up" | "down" | "flat";
   candleTime: number; // signal hisoblangan yopilgan sham vaqti (ms)
   price: number; // oxirgi narx
-  status: "active" | "tp1" | "tp2" | "sl" | "close" | null; // signal berilgandan keyingi natija ("close": kun oxirida yopildi)
+  status: "active" | "tp1" | "tp2" | "sl" | "close" | null; // signal berilgandan keyingi natija ("close": vaqt bo'yicha yopildi: pips rejimida kun oxirida, oltin trendida 8 soatdan keyin)
   barsAgo: number; // signal necha sham oldin berilgan
   rejected?: string | null; // signal berilmagan sabab (faqat signal yo'q bo'lsa)
   quality?: "strong" | "weak";
@@ -59,6 +59,8 @@ export type Signal = {
   newsRisk?: { title: string; currency: string; time: number } | null; // yaqin orada muhim yangilik
   context?: MarketContext; // H4, D1, W1, MN trendi (faqat ma'lumot, reytingga ta'sir qilmaydi)
   strategy?: Strategy; // berilmasa "trend"
+  tp1Hit?: boolean; // TP1 urilgan, qolgan yarmi ochiq (oltinda SL narx ortidan ergashadi)
+  trailStop?: number | null; // ergashuvchi SL ning joriy darajasi
   ai?: { verdict: "tasdiq" | "ehtiyot"; confidence: number; note: string } | null; // AI hamkorning ikkinchi fikri
   resultR?: number | null; // pips rejimida natija R da (TP = 1.5R yoki 2R, kun oxirida yopilsa haqiqiy natija)
 };

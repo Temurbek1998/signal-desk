@@ -340,3 +340,22 @@ test("Gerakl: razgon shami, SL 80 / TP 150 pips va 2 soatlik vaqt to'xtashi", as
   assert.equal(signalLabel("trend"), "Zeus");
   assert.equal(signalLabel("pips-london"), "Zeus · Pips: London");
 });
+
+import { walkTrailing } from "../src/lib/engine.ts";
+
+test("oltin: TP1 dan keyin SL narx ortidan ergashadi, 8 soatda yopiladi", () => {
+  // BUY: kirish 100, SL 75 (2.5 ATR, ATR = 10), TP1 112.5 (0.5R), TP2 137.5 (1.5R).
+  const s = { side: "BUY", entry: 100, sl: 75, tp1: 112.5, tp2: 137.5 } as Parameters<typeof walkTrailing>[0];
+  const k = (h: number, l: number, c = (h + l) / 2) => ({ t: 0, o: c, h, l, c });
+  const rule = { trailAtr: 1, maxBars: 32 };
+  assert.deepEqual(walkTrailing(s, [k(105, 74)], rule, 2.5), { status: "sl", resultR: -1, tp1Hit: false, stop: 75 });
+  // TP1 urildi, eng yuqori 130 -> SL 120 ga ko'tarildi, keyin 119 ga tushdi: 0.25 + 0.5 * 0.8 = 0.65R
+  const o = walkTrailing(s, [k(113, 101), k(130, 118), k(125, 119)], rule, 2.5);
+  assert.equal(o.status, "tp1");
+  assert.ok(Math.abs(o.resultR! - 0.65) < 1e-9);
+  assert.equal(walkTrailing(s, [k(113, 101), k(138, 120)], rule, 2.5).status, "tp2");
+  const t = walkTrailing(s, Array.from({ length: 32 }, () => k(105, 95, 104)), rule, 2.5);
+  assert.equal(t.status, "close");
+  assert.ok(Math.abs(t.resultR! - 0.16) < 1e-9);
+  assert.equal(walkTrailing(s, [k(105, 95)], rule, 2.5).status, "active");
+});

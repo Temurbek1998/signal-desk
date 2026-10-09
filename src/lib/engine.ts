@@ -197,7 +197,43 @@ export function generateSignal(
 
 // So'nggi `lookback` sham ichidagi eng yangi signalni topadi va undan keyingi
 // shamlarda TP yoki SL ga yetganini tekshiradi. Signal bo'lmasa joriy tahlilni qaytaradi.
-export const LOOKBACK = 20;
+export const LOOKBACK = 40;
+
+// Chiqish boshqaruvi (faqat oltin). Tarixiy sinov (GOLD_BACKTEST.md, "Chiqish qoidalari"): TP1 dan keyin SL ni kirishga
+// qo'yish o'rniga narx ortidan 1 ATR masofada ergashtirish va 8 soatdan keyin yopish natijani ikkala yarim davrda ham yaxshiladi.
+export type ExitRule = { trailAtr: number; maxBars: number };
+export const EXIT_BY_CATEGORY: Partial<Record<Category, ExitRule>> = { gold: { trailAtr: 1, maxBars: 32 } };
+
+// Signal ochilgandan keyingi shamlar bo'yicha natija. Tartib sinovdagidek: avval SL, keyin TP1, TP2, so'ng SL ergashadi, oxirida vaqt.
+export function walkTrailing(s: Signal, after: Candle[], rule: ExitRule, slAtr: number) {
+  const d = s.side === "BUY" ? 1 : -1;
+  const risk = Math.abs(s.entry - s.sl!);
+  const atr = risk / slAtr;
+  let stop = s.sl!, best = s.entry, tp1Hit = false;
+  const half = 0.5 * TP1_R;
+  for (let i = 0; i < after.length; i++) {
+    const c = after[i];
+    const lo = d > 0 ? c.l : c.h, hi = d > 0 ? c.h : c.l;
+    if ((lo - stop) * d <= 0) {
+      const part = ((stop - s.entry) * d) / risk;
+      return tp1Hit
+        ? { status: (part > 0 ? "tp1" : "sl") as Signal["status"], resultR: half + 0.5 * part, tp1Hit, stop }
+        : { status: "sl" as Signal["status"], resultR: -1, tp1Hit, stop };
+    }
+    if (!tp1Hit && (hi - s.tp1!) * d >= 0) tp1Hit = true;
+    if (tp1Hit && (hi - s.tp2!) * d >= 0) return { status: "tp2" as Signal["status"], resultR: half + 0.5 * TP2_R, tp1Hit, stop };
+    if ((hi - best) * d > 0) best = hi;
+    if (tp1Hit) {
+      const trail = best - d * rule.trailAtr * atr;
+      if ((trail - stop) * d > 0) stop = trail;
+    }
+    if (i + 1 >= rule.maxBars) {
+      const open = ((c.c - s.entry) * d) / risk;
+      return { status: "close" as Signal["status"], resultR: tp1Hit ? half + 0.5 * open : open, tp1Hit, stop };
+    }
+  }
+  return { status: "active" as Signal["status"], resultR: null, tp1Hit, stop };
+}
 
 export function latestSignal(
   pair: string,
@@ -217,6 +253,12 @@ export function latestSignal(
     if (!s?.side) continue;
     const buy = s.side === "BUY";
     let status: Signal["status"] = "active";
+    const exit = EXIT_BY_CATEGORY[category];
+    if (exit) {
+      // Oltin: TP1 da yarmi yopiladi, qolgani narx ortidan ergashuvchi SL bilan boshqariladi (scripts/gold-exits.ts).
+      const o = walkTrailing(s, candles.slice(n), exit, SL_ATR_BY_CATEGORY[category]);
+      return { ...s, status: o.status, resultR: o.resultR, tp1Hit: o.tp1Hit, trailStop: o.stop, barsAgo: candles.length - n, price: last };
+    }
     for (const c of candles.slice(n)) {
       const hitSl = buy ? c.l <= s.sl! : c.h >= s.sl!;
       const hitTp1 = buy ? c.h >= s.tp1! : c.l <= s.tp1!;

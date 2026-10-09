@@ -128,3 +128,22 @@ hisobda ishlaydi (reyting C). Demo natijasi yaxshi chiqsa `GERAKL_PUBLIC=1` bila
 ```
 node --experimental-strip-types scripts/gold-backtest.ts paxg_15m.csv
 ```
+
+## Chiqish qoidalari (2026-10-09, `scripts/gold-exits.ts`)
+
+Kirishlar o'zgarmadi (M15, ADX≥20, H1 tasdig'i, RSI pullback), faqat savdodan chiqish sinaldi: SL (1.5–3 ATR) × TP1 (0.5–1R)
+× TP1 da yopiladigan ulush (0, 1/3, 1/2) × TP2 (1.5R, 2R, 3R, yo'q) × TP1 dan keyingi SL (kirishga, joyida, 1–2 ATR ergashuvchi)
+× vaqt bo'yicha yopish (yo'q, 8 soat, 24 soat): 2 088 variant. Xarajat har tomonga 0.01%.
+
+| Sozlama | Savdo | Win | O'rtacha yutuq / zarar | O'rtacha R | PF | Maks. pasayish | 1-yarim | 2-yarim |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Oldingi: TP1 da yarmi, SL kirishga | 38 | 87% | +0.42 / −1.04 | +0.224 | 2.64 | 1.9R | +0.357 | +0.092 |
+| TP1 da yarmi, SL 1 ATR ergashadi | 39 | 87% | +0.53 / −1.04 | +0.332 | 3.49 | 1.5R | +0.435 | +0.222 |
+| **+ 8 soatda yopish (tanlandi)** | 39 | 90% | +0.52 / −1.04 | **+0.359** | 4.37 | 1.5R | +0.490 | +0.222 |
+
+- Ergashuvchi SL ikkala yarim davrda ham yaxshiladi, eng ko'p 2-yarimda (+0.09 → +0.22). TP2 qiymati (1.5R, 2R, 3R) deyarli ta'sir qilmadi,
+  shuning uchun TP2 1.5R qoldi.
+- SL ni kichraytirish (1.5–2 ATR) yoki TP1 ni uzoqlashtirish (0.75–1R) 2-yarimda natijani yomonlashtirdi.
+- Signal soni o'zgarmaydi (kuniga ~0.3): bu foydani oshiradi, signalni ko'paytirmaydi.
+- Jonli robot shu qoidani `walkTrailing` (src/lib/engine.ts) bilan qo'llaydi; u sinov bilan bir xil natija beradi (39 savdo, +0.359R).
+- Namuna kichik (39 savdo, 123 kun), jonli natija bilan qayta tekshiriladi.

@@ -6,7 +6,7 @@ import { sql } from "./db.ts";
 import { logSignals } from "./track.ts";
 import { syncDemo } from "./demo.ts";
 
-const STATUS_TEXT: Record<string, string> = { tp1: "TP 1 urildi", tp2: "TP 2 urildi", sl: "SL urildi", close: "kun oxirida yopildi" };
+const STATUS_TEXT: Record<string, string> = { tp1: "TP 1 urildi", tp2: "TP 2 urildi", sl: "SL urildi", close: "vaqt bo'yicha yopildi" };
 const label = (s: Signal) => `${signalLabel(s.strategy)}: `;
 
 function reasonOf(s: Signal): string {

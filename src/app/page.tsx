@@ -86,7 +86,7 @@ export default async function Home() {
           {live
             ? "Robot bergan har bir signal bazaga yoziladi va natijasi avtomatik hisoblanadi. Hech narsa tanlab olinmaydi."
             : goldOnly
-              ? "Oltin uchun robot 2026-yil iyun–oktabr narxlarida (123 kun) sinovdan o'tkazilgan: M15 da 38 ta signal, 87% i foyda bilan yopilgan. Bu kichik namuna, jonli natija har doim muhimroq; jonli natijalar shu yerda ko'rinadi."
+              ? "Oltin uchun robot 2026-yil iyun–oktabr narxlarida (123 kun) sinovdan o'tkazilgan: M15 da 39 ta signal, 90% i foyda bilan yopilgan (TP1 dan keyin ergashuvchi SL bilan). Bu kichik namuna, jonli natija har doim muhimroq; jonli natijalar shu yerda ko'rinadi."
               : "Robot 10 ta kripto juftligining 2018-yil yanvar narxlarida sinovdan o'tkazilgan (M15 va M30). Bu kichik sinov, jonli natija har doim muhimroq. Jonli natijalar yig'ilgach shu yerda ko'rinadi."}
         </p>
         <div className="stats">
@@ -102,9 +102,9 @@ export default async function Home() {
               {goldOnly ? (
                 // GOLD_BACKTEST.md: oltin M15, 123 kun, tanlangan sozlama.
                 <>
-                  <div className="stat"><b>87%</b><span>M15 win rate (TP1 gacha)</span></div>
-                  <div className="stat"><b>2.64</b><span>Profit factor</span></div>
-                  <div className="stat"><b>38</b><span>Sinov savdolari</span></div>
+                  <div className="stat"><b>90%</b><span>M15 win rate (TP1 gacha)</span></div>
+                  <div className="stat"><b>4.37</b><span>Profit factor</span></div>
+                  <div className="stat"><b>39</b><span>Sinov savdolari</span></div>
                   <div className="stat"><b>123</b><span>Sinov kunlari</span></div>
                 </>
               ) : (
@@ -137,7 +137,7 @@ export default async function Home() {
           <div className="step"><h3>Trend kuchi</h3><p>ADX 20 dan past bo'lsa, bozor yon harakatda deb hisoblanadi va signal berilmaydi.</p></div>
           <div className="step"><h3>Yuqori taymfreym</h3><p>M15 signali H1 trendi bilan tasdiqlanishi shart.</p></div>
           <div className="step"><h3>Kirish nuqtasi</h3><p>Trend ichidagi qaytish (pullback) tugaganini RSI orqali kutadi, cho'qqida sotib olmaydi.</p></div>
-          <div className="step"><h3>Risk</h3><p>Stop Loss bozor tebranishiga (ATR) qarab qo'yiladi, TP1 dan keyin SL kirish nuqtasiga ko'chiriladi.</p></div>
+          <div className="step"><h3>Risk</h3><p>Stop Loss bozor tebranishiga (ATR) qarab qo'yiladi, TP1 da yarmi yopiladi, qolgani uchun SL narx ortidan ergashiriladi.</p></div>
           <div className="step"><h3>Yangiliklar</h3><p>NFP, CPI, FOMC kabi yangiliklardan oldin tegishli juftliklarda ogohlantirish chiqadi.</p></div>
         </div>
       </section>

@@ -19,7 +19,7 @@ const STATUS: Record<NonNullable<Signal["status"]>, string> = {
   tp1: "TP 1 urildi",
   tp2: "TP 2 urildi",
   sl: "SL urildi",
-  close: "Kun oxirida yopildi",
+  close: "Vaqt bo'yicha yopildi",
 };
 const isPips = (s: Signal) => !!s.strategy && s.strategy !== "trend";
 
@@ -358,6 +358,10 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
         </p>
       )}
 
+      {s.side && s.status === "active" && s.tp1Hit && s.trailStop != null && (
+        <p className="okmsg">TP1 urildi: yarmini yoping. Qolgan yarmi uchun SL endi {fmt(s, s.trailStop)} da (narx ortidan ergashadi).</p>
+      )}
+
       {s.side && s.ai && (
         <div className={`ai-take ${s.ai.verdict}`}>
           <b>{s.ai.verdict === "tasdiq" ? "✓ AI hamkor tasdiqladi" : "⚠ AI hamkor: ehtiyot bo'ling"}</b>
@@ -374,7 +378,7 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
         <span>
           {s.side ? `Signal: ${time(s.candleTime)}${s.barsAgo ? ` (${s.barsAgo} sham oldin)` : ""}` : `Tahlil: ${time(s.candleTime)}`}
         </span>
-        {s.status && <span className={`pill ${s.status}`}>{STATUS[s.status]}</span>}
+        {s.status && <span className={`pill ${s.status === "active" && s.tp1Hit ? "tp1" : s.status}`}>{s.status === "active" && s.tp1Hit ? "TP 1 urildi, yarmi ochiq" : STATUS[s.status]}</span>}
       </div>
     </article>
   );
