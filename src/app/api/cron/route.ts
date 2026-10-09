@@ -6,6 +6,7 @@ export const maxDuration = 60;
 
 // Robotning bitta aylanishi. Har 5 daqiqada chaqirilishi kerak (Vercel Cron yoki cron-job.org):
 //   GET /api/cron  bilan  Authorization: Bearer <CRON_SECRET>
+// Kalit Vercel'da "Secret" turida bo'lsa qayta ko'rinmaydi: almashtirilsa cron-job.org dagi qiymat ham yangilanadi.
 // O'z serveringizda (VPS) ROBOT_SELF_SCHEDULE=1 bo'lsa bu shart emas: robot o'zi ishlaydi.
 export async function GET(req: Request) {
   // Nusxalashda tushib qolgan probel, qo'shtirnoq yoki "bearer" harflari katta-kichikligi xalaqit bermasin.
