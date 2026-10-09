@@ -5,6 +5,7 @@ import { analyze } from "../engine.ts";
 import { ALL_INSTRUMENTS } from "../instruments.ts";
 import { getCandles } from "../market.ts";
 import type { Candle } from "../types.ts";
+import { digitsOf } from "./analysis.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
 import { notifyAdmin } from "./telegram.ts";
@@ -60,34 +61,36 @@ Qoidalar:
 ${ANALYSIS_PROMPT}
 Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
 
-export const round = (x: number) => Math.round(x * 100) / 100;
-const ohlc = (cs: Candle[]) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o), round(c.h), round(c.l), round(c.c)]);
-function ind(cs: Candle[]) {
+export const round = (x: number, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
+const ohlc = (cs: Candle[], d = 2) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o, d), round(c.h, d), round(c.l, d), round(c.c, d)]);
+function ind(cs: Candle[], d = 2) {
   const a = analyze(cs.slice(-200));
-  return a && { trend: a.trend, ema20: round(a.ema20), ema50: round(a.ema50), rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: round(a.atr) };
+  return a && { trend: a.trend, ema20: round(a.ema20, d), ema50: round(a.ema50, d), rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: round(a.atr, d + 1) };
 }
 
-export async function facts() {
-  const inst = gold();
+// Bozor ma'lumoti (shamlar, ko'rsatkichlar, Zeus fikri). Standart: oltin; Claude bahosi valyutalar uchun ham chaqiradi.
+export async function facts(pair = PAIR) {
+  const inst = ALL_INSTRUMENTS.find((i) => i.pair === pair) ?? gold();
   const [m15, h1, h4] = await Promise.all([getCandles(inst, 15, 260), getCandles(inst, 60, 260), getCandles(inst, 240, 260)]);
   const [states, ctx, past] = await Promise.all([
-    sql<{ timeframe: string; side: string | null; quality: string | null; reason: string }>("SELECT timeframe, side, quality, reason FROM robot_state WHERE pair = $1", [PAIR]),
-    sql<{ timeframe: string; trend: string }>("SELECT timeframe, trend FROM market_context WHERE pair = $1", [PAIR]),
-    sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [PAIR]),
+    sql<{ timeframe: string; side: string | null; quality: string | null; reason: string }>("SELECT timeframe, side, quality, reason FROM robot_state WHERE pair = $1", [inst.pair]),
+    sql<{ timeframe: string; trend: string }>("SELECT timeframe, trend FROM market_context WHERE pair = $1", [inst.pair]),
+    sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [inst.pair]),
   ]);
   const h1a = analyze(h1.slice(-200));
+  const d = digitsOf(inst.pair, m15.at(-1)?.c ?? 0);
   return {
     price: m15.at(-1)?.c ?? 0,
     lastTime: m15.at(-1)?.t ?? 0,
     atrH1: h1a?.atr ?? 0,
     data: {
-      juftlik: PAIR, hozir_utc: new Date().toISOString(), joriy_narx: round(m15.at(-1)?.c ?? 0),
+      juftlik: inst.pair, hozir_utc: new Date().toISOString(), joriy_narx: round(m15.at(-1)?.c ?? 0, d),
       katta_trend: Object.fromEntries(ctx.map((c) => [c.timeframe, c.trend])),
-      ko_rsatkichlar: { M15: ind(m15), H1: ind(h1), H4: ind(h4) },
+      ko_rsatkichlar: { M15: ind(m15, d), H1: ind(h1, d), H4: ind(h4, d) },
       shamlar_ustunlari: "vaqt_utc, open, high, low, close",
-      H4_shamlar: ohlc(h4.slice(-40)),
-      H1_shamlar: ohlc(h1.slice(-72)),
-      M15_shamlar: ohlc(m15.slice(-64)),
+      H4_shamlar: ohlc(h4.slice(-40), d),
+      H1_shamlar: ohlc(h1.slice(-72), d),
+      M15_shamlar: ohlc(m15.slice(-64), d),
       robot_zeus_fikri: states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, sabab: s.reason })),
       oldingi_savdolaring: past.map((t) => ({ vaqt: t.at, yonalish: t.action, kirish: t.entry, sl: t.sl, tp1: t.tp1, tp2: t.tp2, holat: t.status, natija_R: t.result_r })),
     },

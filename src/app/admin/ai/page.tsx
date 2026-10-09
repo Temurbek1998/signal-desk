@@ -28,9 +28,16 @@ export default async function AiTraderPage() {
     chartData("XAU/USD", "H1", 120).catch(() => null),
     reviewStats().catch(() => []),
   ]);
-  const zeusRows = await sql<{ id: number; signal_time: Date; timeframe: string; side: string; status: string; result_r: number | null; ai_verdict: string | null; ai_confidence: number | null; ai_at: Date | null }>(
-    `SELECT id, signal_time, timeframe, side, status, result_r, ai_verdict, ai_confidence, ai_at FROM signal_log
-     WHERE pair = 'XAU/USD' ORDER BY signal_time DESC LIMIT 30`,
+  const zeusRows = await sql<{ id: number; pair: string; signal_time: Date; timeframe: string; side: string; status: string; result_r: number | null; ai_verdict: string | null; ai_confidence: number | null; ai_at: Date | null }>(
+    `SELECT id, pair, signal_time, timeframe, side, status, result_r, ai_verdict, ai_confidence, ai_at FROM signal_log
+     WHERE category IN ('gold', 'forex') AND coalesce(strategy, 'trend') = 'trend' ORDER BY signal_time DESC LIMIT 40`,
+  ).catch(() => []);
+  const byPair = await sql<{ pair: string; n: string; wins: string; total: number | null; ok_n: string; ok_total: number | null }>(
+    `SELECT pair, count(*) AS n, count(*) FILTER (WHERE result_r > 0) AS wins, sum(result_r) AS total,
+            count(*) FILTER (WHERE ai_verdict = 'tasdiq') AS ok_n, sum(result_r) FILTER (WHERE ai_verdict = 'tasdiq') AS ok_total
+     FROM signal_log WHERE category IN ('gold', 'forex') AND coalesce(strategy, 'trend') = 'trend' AND status <> 'active'
+       AND result_r IS NOT NULL AND signal_time > now() - interval '30 days'
+     GROUP BY pair ORDER BY (pair = 'XAU/USD') DESC, sum(result_r) DESC`,
   ).catch(() => []);
   const detail = (k: "s" | "t", id: number) => `${adminHref("/ai/tahlil")}?${k}=${id}`;
   const revOf = (v: string) => {
@@ -110,7 +117,34 @@ export default async function AiTraderPage() {
       )}
 
       <section className="panel">
-        <h2>Oltin signallari: Zeus va Claude qarori</h2>
+        <h2>Juftliklar bo&apos;yicha natija, 30 kun</h2>
+        <p className="muted" style={{ marginTop: 0 }}>Valyuta mijozlarga ochilishi uchun: kamida 20 ta yopilgan signal va ijobiy jami natija (Claude tasdiqlaganlari bo&apos;yicha).</p>
+        {byPair.length === 0 ? <p className="muted">Hali yopilgan signal yo&apos;q.</p> : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Juftlik</th><th>Yopilgan</th><th>Yutuq</th><th>Jami</th><th>Claude tasdiqlagan</th><th>Holat</th></tr></thead>
+              <tbody>
+                {byPair.map((p) => {
+                  const n = Number(p.n), okN = Number(p.ok_n), okT = Number(p.ok_total ?? 0);
+                  const ready = p.pair !== "XAU/USD" && okN >= 20 && okT > 0;
+                  return (
+                    <tr key={p.pair}>
+                      <td>{p.pair}</td><td>{n}</td><td>{pct(Number(p.wins), n)}</td>
+                      <td className={Number(p.total ?? 0) >= 0 ? "up" : "down"}>{r2(Number(p.total ?? 0))}</td>
+                      <td className={okT >= 0 ? "up" : "down"}>{okN ? `${r2(okT)} (${okN})` : "—"}</td>
+                      <td>{p.pair === "XAU/USD" ? "Mijozlarga ochiq" : ready ? "Ochishga tayyor" : "Sinovda"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <h2>Signallar: Zeus va Claude qarori</h2>
+        <p className="muted" style={{ marginTop: 0 }}>Oltin mijozlarga Claude tasdig&apos;i bilan chiqadi. Valyutalar faqat admin uchun sinovda: foydasi isbotlangan juftliklar keyin ochiladi.</p>
         {zeusRows.length === 0 ? <p className="muted">Hali signal yo&apos;q.</p> : (
           <div className="table-wrap">
             <table>
@@ -119,7 +153,7 @@ export default async function AiTraderPage() {
                 {zeusRows.map((r) => (
                   <tr key={r.id}>
                     <td><LocalTime at={r.signal_time} /></td>
-                    <td className={r.side === "BUY" ? "up" : "down"}>{r.side} {r.timeframe}</td>
+                    <td className={r.side === "BUY" ? "up" : "down"}>{r.pair} {r.side} {r.timeframe}{r.pair !== "XAU/USD" ? " · sinov" : ""}</td>
                     <td>{r.ai_verdict ? <span className={`an-verdict ${r.ai_verdict}`}>{r.ai_verdict === "tasdiq" ? "tasdiq" : "ushlab qoldi"} {r.ai_confidence}%</span> : r.ai_at ? "tekshirmoqda" : "—"}</td>
                     <td>{STATUS[r.status] ?? r.status}</td>
                     <td className={r.result_r == null ? "" : Number(r.result_r) >= 0 ? "up" : "down"}>{r.result_r == null ? "—" : r2(Number(r.result_r))}</td>

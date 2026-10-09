@@ -33,7 +33,7 @@ const ZEUS_RULES = [
   "Trend kuchi: ADX ≥ 20 (flet bozorda signal yo'q)",
   "Katta taymfreym tasdig'i: M15 uchun H1, H1 uchun H4 trendi bir xil",
   "Kirish: trend ichidagi pullback tugashi (RSI BUY uchun 45, SELL uchun 55 dan qaytadi)",
-  "Risk: SL 2.5 ATR, TP1 0.5R da yarmi yopiladi, so'ng SL 1 ATR masofada ergashadi, 8 soatda yopiladi",
+  "Risk: SL ATR bo'yicha, TP1 da yarmi yopiladi (oltinda so'ng SL 1 ATR masofada ergashadi, 8 soatda yopiladi)",
   "Xarajat filtri: spred va komissiya riskning 5% idan oshmasin",
 ];
 
@@ -62,7 +62,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
         </header>
         {chart && <Chart chart={chart} minutes={60} signals={sig} a={t.analysis} title="H1 grafik va Claude darajalari" />}
         {t.reason && <section className="panel"><h2>Qaror sababi</h2><p className="ai-box" style={{ margin: 0 }}>{t.reason}</p>{t.note && <p className="err">{t.note}</p>}</section>}
-        <Analysis a={t.analysis} />
+        <Analysis a={t.analysis} digits={chart?.digits} />
       </main>
     );
   }
@@ -74,6 +74,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
   const chart = await windowChart(s.pair, minutes, at).catch(() => null);
   const sig: ChartSignal[] = [{ t: at, side: s.side, entry: +s.entry, sl: +s.sl, tp1: +s.tp1, tp2: +s.tp2, status: s.status, label: `Zeus ${s.side}` }];
   const z = s.zeus;
+  const fx = (v: number) => v.toFixed(chart?.digits ?? 2);
   return (
     <main className="wrap">
       {back}
@@ -87,7 +88,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
           </p>
         </div>
         {s.ai_verdict
-          ? <span className={`an-verdict ${s.ai_verdict}`}>{s.ai_verdict === "tasdiq" ? "Claude tasdiqladi, mijozlarga ochildi" : "Claude ushlab qoldi"} · {s.ai_confidence}%</span>
+          ? <span className={`an-verdict ${s.ai_verdict}`}>{s.pair !== "XAU/USD" ? `Claude: ${s.ai_verdict === "tasdiq" ? "tasdiq" : "ehtiyot"} (admin sinovi)` : s.ai_verdict === "tasdiq" ? "Claude tasdiqladi, mijozlarga ochildi" : "Claude ushlab qoldi"} · {s.ai_confidence}%</span>
           : <span className="an-verdict">{s.ai_at ? "Claude tekshirmoqda" : "Claude bahosi yo'q"}</span>}
       </header>
 
@@ -114,17 +115,17 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
           <div className="table-wrap">
             <table>
               <tbody>
-                <tr><th>Kirish</th><td>{(+s.entry).toFixed(2)}</td></tr>
-                <tr><th>SL</th><td className="down">{(+s.sl).toFixed(2)} ({Math.abs(s.entry - s.sl).toFixed(2)})</td></tr>
-                <tr><th>TP1</th><td className="up">{(+s.tp1).toFixed(2)} (yarmi yopiladi)</td></tr>
-                <tr><th>TP2</th><td className="up">{(+s.tp2).toFixed(2)}</td></tr>
+                <tr><th>Kirish</th><td>{fx(+s.entry)}</td></tr>
+                <tr><th>SL</th><td className="down">{fx(+s.sl)} ({fx(Math.abs(s.entry - s.sl))})</td></tr>
+                <tr><th>TP1</th><td className="up">{fx(+s.tp1)} (yarmi yopiladi)</td></tr>
+                <tr><th>TP2</th><td className="up">{fx(+s.tp2)}</td></tr>
               </tbody>
             </table>
           </div>
           {s.ai_note && <><h3>Claude izohi (mijoz ko&apos;radi)</h3><p className="ai-box" style={{ margin: 0 }}>{s.ai_note}</p></>}
         </section>
       </div>
-      <Analysis a={s.ai_analysis} />
+      <Analysis a={s.ai_analysis} digits={chart?.digits} />
     </main>
   );
 }
@@ -144,7 +145,8 @@ function Chart({ chart, minutes, signals, a, title }: {
   );
 }
 
-function Analysis({ a }: { a: AiAnalysis | null }) {
+function Analysis({ a, digits = 2 }: { a: AiAnalysis | null; digits?: number }) {
+  const fx = (v: number) => v.toFixed(digits);
   if (!a) return <section className="panel"><h2>Claude tahlili</h2><p className="muted" style={{ margin: 0 }}>To&apos;liq tahlil hali yo&apos;q. Yangi signal va qarorlarda Claude tahlili shu yerda chiziladi.</p></section>;
   return (
     <>
@@ -168,9 +170,9 @@ function Analysis({ a }: { a: AiAnalysis | null }) {
           <div className="table-wrap">
             <table>
               <tbody>
-                {a.zones.map((z, i) => <tr key={"z" + i}><th>{KIND[z.kind]} zonasi</th><td className="mono">{z.from.toFixed(2)}–{z.to.toFixed(2)}</td><td className="muted">{z.note}</td></tr>)}
-                {[...a.levels].sort((x, y) => y.price - x.price).map((l, i) => <tr key={"l" + i}><th>{KIND[l.kind] ?? l.kind}</th><td className="mono">{l.price.toFixed(2)}</td><td className="muted">{l.note}</td></tr>)}
-                {a.invalidation != null && <tr><th>Bekor bo&apos;lish</th><td className="mono">{a.invalidation.toFixed(2)}</td><td className="muted">G&apos;oya shu narxda bekor</td></tr>}
+                {a.zones.map((z, i) => <tr key={"z" + i}><th>{KIND[z.kind]} zonasi</th><td className="mono">{fx(z.from)}–{fx(z.to)}</td><td className="muted">{z.note}</td></tr>)}
+                {[...a.levels].sort((x, y) => y.price - x.price).map((l, i) => <tr key={"l" + i}><th>{KIND[l.kind] ?? l.kind}</th><td className="mono">{fx(l.price)}</td><td className="muted">{l.note}</td></tr>)}
+                {a.invalidation != null && <tr><th>Bekor bo&apos;lish</th><td className="mono">{fx(a.invalidation)}</td><td className="muted">G&apos;oya shu narxda bekor</td></tr>}
               </tbody>
             </table>
           </div>

@@ -1,13 +1,15 @@
 import "server-only";
 import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis } from "../aiAnalysis.ts";
 import { facts, round } from "./aiTrader.ts";
+import { digitsOf } from "./analysis.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
 import { notifyAdmin } from "./telegram.ts";
 
-// Zeus + AI hamkorligi: Zeus bergan har yangi kuchli oltin signalini AI mustaqil tahlil qiladi
+// Zeus + AI hamkorligi: Zeus bergan har yangi kuchli signalni (oltin va valyutalar) AI mustaqil tahlil qiladi
 // va "tasdiq" yoki "ehtiyot" deb baholaydi, sababini o'zbekcha yozadi.
 // Claude yakuniy qaror qiladi (aiGateOn): mijozga faqat "tasdiq" olgan oltin signali ko'rinadi, "ehtiyot" esa ushlab qolinadi.
+// Valyutalar hozircha faqat admin uchun sinovda: baho va tahlil yoziladi, mijozga chiqmaydi.
 // AI_GATE=0 bo'lsa baho faqat izoh bo'lib qoladi va signalni to'xtatmaydi.
 
 export const aiGateOn = () => !!provider() && process.env.AI_REVIEW !== "0" && process.env.AI_GATE !== "0";
@@ -28,7 +30,7 @@ const SCHEMA = {
 
 const SYSTEM = `Sen Signal Desk'da Zeus robotining hamkori bo'lgan AI tahlilchisan. Zeus qoidaga asoslangan robot: EMA20/EMA50 trendi, ADX >= 20,
 H1 tasdig'i va RSI pullback bo'yicha signal beradi. Sen unga ikkinchi fikr berasan.
-Vazifa: berilgan oltin (XAU/USD) shamlari va ko'rsatkichlarini mustaqil tahlil qil (D1/H4 trendi, H1 tuzilmasi, M15, talab/taklif zonalari,
+Vazifa: berilgan juftlik (oltin yoki valyuta) shamlari va ko'rsatkichlarini mustaqil tahlil qil (D1/H4 trendi, H1 tuzilmasi, M15, talab/taklif zonalari,
 likvidlik, yaqin qarshilik va qo'llab-quvvatlash) va Zeus signalini baholab ber:
 - "tasdiq": tahlilingiz signal yo'nalishini qo'llaydi va TP1 yo'lida kuchli to'siq yo'q.
 - "ehtiyot": signal yo'nalishiga qarshi muhim daraja, zaif tuzilma yoki katta trendga zid holat bor.
@@ -46,19 +48,21 @@ export async function reviewNewSignals(limit = 2) {
   if (!provider() || process.env.AI_REVIEW === "0") return 0;
   const rows = await sql<Row>(
     `SELECT id, pair, timeframe, side, entry, tp1, tp2, sl, confidence, signal_time FROM signal_log
-     WHERE pair = 'XAU/USD' AND status = 'active' AND ai_at IS NULL AND signal_time > now() - interval '3 hours'
-     ORDER BY signal_time LIMIT $1`,
+     WHERE category IN ('gold', 'forex') AND coalesce(strategy, 'trend') = 'trend' AND status = 'active' AND ai_at IS NULL
+       AND signal_time > now() - interval '3 hours'
+     ORDER BY (pair = 'XAU/USD') DESC, signal_time LIMIT $1`,
     [limit],
   );
   if (!rows.length) return 0;
-  const f = await facts();
   let done = 0;
   for (const r of rows) {
     // Bir signal ikki marta so'ralmasin (parallel cron chaqiruvlari).
     const claimed = await sql("UPDATE signal_log SET ai_at = now() WHERE id = $1 AND ai_at IS NULL RETURNING id", [r.id]);
     if (!claimed.length) continue;
     try {
-      const zeus = { yonalish: r.side, taymfreym: r.timeframe, kirish: round(+r.entry), sl: round(+r.sl), tp1: round(+r.tp1), tp2: round(+r.tp2), ishonch: r.confidence, vaqt_utc: new Date(r.signal_time).toISOString() };
+      const f = await facts(r.pair);
+      const d = digitsOf(r.pair, +r.entry);
+      const zeus = { juftlik: r.pair, yonalish: r.side, taymfreym: r.timeframe, kirish: round(+r.entry, d), sl: round(+r.sl, d), tp1: round(+r.tp1, d), tp2: round(+r.tp2, d), ishonch: r.confidence, vaqt_utc: new Date(r.signal_time).toISOString() };
       const text = await complete(SYSTEM, [{ role: "user", content: JSON.stringify({ zeus_signali: zeus, bozor: f.data }) }], {
         json: SCHEMA, model: process.env.AI_TRADER_MODEL || (provider() === "anthropic" ? "claude-opus-5-5" : undefined), maxTokens: provider() === "anthropic" ? 12000 : 3000,
       });
