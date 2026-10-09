@@ -118,12 +118,15 @@ export async function recentClosed(limit = 30, categories: string[] = publicCate
   );
 }
 
-export type RecentSignal = { pair: string; timeframe: string; strategy: string; signal_time: Date; day: string; rating: string | null; memory_n: number | null; memory_winrate: number | null };
+export type RecentSignal = {
+  pair: string; timeframe: string; strategy: string; signal_time: Date; day: string; rating: string | null; memory_n: number | null; memory_winrate: number | null;
+  ai_verdict: string | null; ai_confidence: number | null; ai_note: string | null;
+};
 
 // So'nggi 2 kunning kuchli signallari, Toshkent kuni bilan, vaqt tartibida (kunlik limit shu ro'yxatdan hisoblanadi).
 export async function recentSignals(): Promise<RecentSignal[]> {
   return sql<RecentSignal>(
-    `SELECT pair, timeframe, strategy, signal_time, rating, memory_n, memory_winrate,
+    `SELECT pair, timeframe, strategy, signal_time, rating, memory_n, memory_winrate, ai_verdict, ai_confidence, ai_note,
             to_char(signal_time AT TIME ZONE 'Asia/Tashkent', 'YYYY-MM-DD') AS day
      FROM signal_log WHERE signal_time > now() - interval '48 hours'
      ORDER BY signal_time, id`,

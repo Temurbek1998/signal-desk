@@ -1,5 +1,6 @@
 import { aiSummary, aiTraderEnabled } from "@/lib/server/aiTrader.ts";
 import { chartData } from "@/lib/server/analysis.ts";
+import { reviewStats } from "@/lib/server/aiReview.ts";
 import type { ChartSignal } from "../../components/RobotChart.tsx";
 import AiDecideButton from "../../components/AiDecideButton.tsx";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
@@ -19,10 +20,17 @@ const pct = (w: number, n: number) => (n ? `${Math.round((w / n) * 100)}%` : "�
 
 export default async function AiTraderPage() {
   const enabled = aiTraderEnabled();
-  const [{ rows, ai, zeus }, chart] = await Promise.all([
+  const [{ rows, ai, zeus }, chart, rev] = await Promise.all([
     aiSummary(30),
     chartData("XAU/USD", "H1", 120).catch(() => null),
+    reviewStats().catch(() => []),
   ]);
+  const revOf = (v: string) => {
+    const r = rev.find((x) => x.verdict === v);
+    const n = Number(r?.n ?? 0), w = Number(r?.wins ?? 0), t = Number(r?.total ?? 0);
+    return { n, w, t };
+  };
+  const ok = revOf("tasdiq"), care = revOf("ehtiyot");
   const trades = rows.filter((r) => r.status !== "wait" && r.status !== "rejected");
   const since = chart?.candles[0]?.t ?? 0;
   const aiSignals: ChartSignal[] = trades
@@ -62,6 +70,18 @@ export default async function AiTraderPage() {
           R: risk birligi (−1 = to&apos;liq SL). Ikkalasi bir xil o&apos;lchanadi: TP1 da yarmi yopiladi, SL kirishga ko&apos;chadi.
           AI qarorlari mijozlarga chiqmaydi. Kamida 30 ta yopilgan savdoda Zeus&apos;dan yaxshi bo&apos;lsa, keyin mijozlarga ochish mumkin.
         </p>
+      </section>
+
+      <section className="panel">
+        <h2>Zeus + AI hamkorligi</h2>
+        <p className="muted" style={{ margin: 0 }}>
+          Zeus'ning har yangi oltin signalini AI mustaqil tahlil qilib &quot;tasdiq&quot; yoki &quot;ehtiyot&quot; deb baholaydi, izohi mijozga signal ostida ko&apos;rinadi.
+          Baho signalni to&apos;xtatmaydi. Har guruhda kamida 20 ta yopilgan signal yig&apos;ilgach, tasdiqlangan signallar aniq yaxshiroq bo&apos;lsa, &quot;ehtiyot&quot; signallarni mijozlarga bermaslik mumkin.
+        </p>
+        <div className="stats">
+          <div className="stat"><b className={ok.t >= 0 ? "up" : "down"}>{ok.n ? r2(ok.t) : "—"}</b><span>AI tasdiqlagan: {ok.n} yopilgan, yutuq {pct(ok.w, ok.n)}</span></div>
+          <div className="stat"><b className={care.t >= 0 ? "up" : "down"}>{care.n ? r2(care.t) : "—"}</b><span>AI &quot;ehtiyot&quot; degan: {care.n} yopilgan, yutuq {pct(care.w, care.n)}</span></div>
+        </div>
       </section>
 
       {latest && (

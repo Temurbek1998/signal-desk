@@ -358,6 +358,13 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
         </p>
       )}
 
+      {s.side && s.ai && (
+        <div className={`ai-take ${s.ai.verdict}`}>
+          <b>{s.ai.verdict === "tasdiq" ? "✓ AI hamkor tasdiqladi" : "⚠ AI hamkor: ehtiyot bo'ling"}</b>
+          <span>{s.ai.note}</span>
+        </div>
+      )}
+
       <ul className="reasons">
         {s.reasons.map((r) => (
           <li key={r}>{r}</li>

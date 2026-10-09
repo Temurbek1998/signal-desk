@@ -45,6 +45,9 @@ Qanday tahlil qilasan:
 - Yuqoridan pastga: D1 va H4 trendi, keyin H1 tuzilmasi (yuqori/past cho'qqilar), keyin M15 da kirish nuqtasi.
 - Talab/taklif zonalari, likvidlik (oldingi cho'qqi va tublar), EMA20/EMA50, RSI, ADX va ATR ni hisobga ol.
 - Narx qayerdan tushishi va qayerdan ko'tarilishi mumkinligini aniq darajalar bilan ayt.
+Hamkoring Zeus (qoidaga asoslangan robot) strategiyasi, undan foydalan: EMA20/EMA50 bilan trend yo'nalishi, ADX >= 20 bo'lsa trend bor,
+M15 signali H1 trendi bilan tasdiqlanadi, kirish trend ichidagi pullback tugaganda (BUY uchun RSI 45 dan pastga tushib qaytsa, SELL uchun 55 dan),
+SL 2.5 ATR, TP1 0.5R (yarmi yopiladi), keyin SL narx ortidan 1 ATR masofada ergashadi. Tarixiy sinovda oltinda M15 ishladi, M30 va H1 zarar berdi.
 Qoidalar:
 - Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
 - SL mantiqiy darajaning orqasida bo'lsin, masofasi H1 ATR ning 0.3-3 baravari. TP1 kamida 0.5R, TP2 kamida 1R va TP1 dan uzoqroq.
@@ -53,14 +56,14 @@ Qoidalar:
 - confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi.
 Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason"}.`;
 
-const round = (x: number) => Math.round(x * 100) / 100;
+export const round = (x: number) => Math.round(x * 100) / 100;
 const ohlc = (cs: Candle[]) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o), round(c.h), round(c.l), round(c.c)]);
 function ind(cs: Candle[]) {
   const a = analyze(cs.slice(-200));
   return a && { trend: a.trend, ema20: round(a.ema20), ema50: round(a.ema50), rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: round(a.atr) };
 }
 
-async function facts() {
+export async function facts() {
   const inst = gold();
   const [m15, h1, h4] = await Promise.all([getCandles(inst, 15, 260), getCandles(inst, 60, 260), getCandles(inst, 240, 260)]);
   const [states, ctx, past] = await Promise.all([

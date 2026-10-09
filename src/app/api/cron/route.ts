@@ -2,6 +2,7 @@ import { after, NextResponse } from "next/server";
 import { lastMarketTest, saveMarketTest } from "@/lib/server/marketTest.ts";
 import { runCycle } from "@/lib/server/runner.ts";
 import { aiDecide, aiTraderEnabled, trackAiTrades } from "@/lib/server/aiTrader.ts";
+import { reviewNewSignals } from "@/lib/server/aiReview.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -28,6 +29,8 @@ export async function GET(req: Request) {
   after(async () => {
     // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror soatda bir marta.
     if (aiTraderEnabled()) {
+      // Zeus'ning yangi signallariga AI ikkinchi fikri (mijozga signal bilan birga ko'rinadi).
+      await reviewNewSignals().catch((e) => console.error("AI baho", e));
       await trackAiTrades().catch((e) => console.error("AI kuzatuv", e));
       await aiDecide().catch((e) => console.error("AI qaror", e));
     }

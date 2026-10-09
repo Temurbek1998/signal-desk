@@ -30,6 +30,7 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
 
   if (p === "mock") {
     const last = messages[messages.length - 1]?.content ?? "";
+    if (opts.json && "verdict" in ((opts.json.properties as object) ?? {})) return JSON.stringify({ verdict: "tasdiq", confidence: 60, note: "Sinov javobi: H1 tuzilmasi signal yo'nalishini qo'llaydi." });
     if (opts.json) return JSON.stringify({ action: "WAIT", sl: 0, tp1: 0, tp2: 0, confidence: 40, reason: "Sinov javobi: aniq ustunlik yo'q." });
     return `Sinov javobi: "${last.slice(0, 80)}" savolingizni oldim.`;
   }

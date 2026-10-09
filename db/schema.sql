@@ -271,3 +271,10 @@ UPDATE plans SET name = 'Standart · 1 oy', price_usdt = 19, sort = 1, active = 
 UPDATE plans SET name = 'PRO · 1 oy', price_usdt = 39, sort = 2, active = true WHERE id = 'pro_month';
 UPDATE plans SET name = 'VIP · 1 oy', price_usdt = 79, sort = 3, active = true WHERE id = 'vip_month';
 UPDATE plans SET active = false WHERE id IN ('quarter', 'year', 'pro_quarter', 'pro_year', 'vip_quarter', 'vip_year');
+
+-- Zeus + AI hamkorligi: har kuchli oltin signalini AI mustaqil tahlil qilib baholaydi (tasdiq / ehtiyot) va izoh yozadi.
+-- Hozircha signalni to'xtatmaydi: yetarli natija yig'ilgach tasdiqlangan va ehtiyot signallar solishtiriladi.
+ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_verdict text;
+ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_confidence int;
+ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_note text;
+ALTER TABLE signal_log ADD COLUMN IF NOT EXISTS ai_at timestamptz;

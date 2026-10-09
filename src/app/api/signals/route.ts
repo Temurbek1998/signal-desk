@@ -16,7 +16,7 @@ const todayTashkent = () => new Date(Date.now() + 5 * 3600_000).toISOString().sl
 function hide(s: Signal, locked: boolean): Signal {
   return {
     ...s, side: locked ? s.side : null, entry: s.price, tp1: null, tp2: null, sl: null, confidence: 0,
-    status: locked ? s.status : null, locked, reasons: locked ? [] : s.reasons, rating: locked ? s.rating : null,
+    status: locked ? s.status : null, locked, reasons: locked ? [] : s.reasons, rating: locked ? s.rating : null, ai: null,
   };
 }
 
@@ -53,7 +53,10 @@ export async function GET(req: Request) {
     const k = key(s.pair, s.timeframe, s.candleTime, s.strategy);
     const logged = byKey.get(k);
     const withMemory: Signal = logged
-      ? { ...s, rating: logged.rating as Signal["rating"], memoryN: logged.memory_n, memoryWinrate: logged.memory_winrate }
+      ? {
+        ...s, rating: logged.rating as Signal["rating"], memoryN: logged.memory_n, memoryWinrate: logged.memory_winrate,
+        ai: logged.ai_verdict ? { verdict: logged.ai_verdict as "tasdiq" | "ehtiyot", confidence: logged.ai_confidence ?? 0, note: logged.ai_note ?? "" } : null,
+      }
       : s;
     if (access.tier === "admin") return withMemory;
     if (!logged) return hide(withMemory, false); // kuchsiz signal: faqat admin ko'radi

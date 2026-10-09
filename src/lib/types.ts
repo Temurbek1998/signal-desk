@@ -59,5 +59,6 @@ export type Signal = {
   newsRisk?: { title: string; currency: string; time: number } | null; // yaqin orada muhim yangilik
   context?: MarketContext; // H4, D1, W1, MN trendi (faqat ma'lumot, reytingga ta'sir qilmaydi)
   strategy?: Strategy; // berilmasa "trend"
+  ai?: { verdict: "tasdiq" | "ehtiyot"; confidence: number; note: string } | null; // AI hamkorning ikkinchi fikri
   resultR?: number | null; // pips rejimida natija R da (TP = 1.5R yoki 2R, kun oxirida yopilsa haqiqiy natija)
 };

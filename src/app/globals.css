@@ -514,3 +514,10 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .nots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
 .nots div { background: var(--sell-soft); color: var(--fg); border-radius: 14px; padding: 12px 14px; font-size: .92rem; }
 .nots div b { color: var(--sell); }
+
+/* Signal ostida AI hamkorning fikri */
+.ai-take { border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; font-size: .9rem; background: var(--buy-soft); }
+.ai-take b { color: var(--buy); font-size: .85rem; }
+.ai-take.ehtiyot { background: var(--sell-soft); }
+.ai-take.ehtiyot b { color: var(--sell); }
+.ai-take span { color: var(--fg); }
