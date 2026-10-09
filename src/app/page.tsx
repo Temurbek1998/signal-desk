@@ -41,15 +41,15 @@ export default async function Home() {
           <div className="top">
             <div>
               <div className="pair">XAU/USD</div>
-              <div className="cat">Oltin · M30 · namuna</div>
+              <div className="cat">Zeus · M15 · namuna</div>
             </div>
             <span className="side buy">BUY</span>
           </div>
           <div className="levels">
-            <span className="k">KIRISH</span><span>2 664.20</span><span className="d" />
-            <span className="k">TP 1</span><span className="up">2 668.70</span><span className="d">45 pip</span>
-            <span className="k">TP 2</span><span className="up">2 677.70</span><span className="d">135 pip</span>
-            <span className="k">SL</span><span className="down">2 655.20</span><span className="d">90 pip</span>
+            <span className="k">KIRISH</span><span>4 187.40</span><span className="d" />
+            <span className="k">TP 1</span><span className="up">4 197.40</span><span className="d">100 pip</span>
+            <span className="k">TP 2</span><span className="up">4 217.40</span><span className="d">300 pip</span>
+            <span className="k">SL</span><span className="down">4 167.40</span><span className="d">200 pip</span>
           </div>
           <ul className="reasons">
             <li>EMA20 &gt; EMA50, trend yuqoriga</li>
