@@ -227,6 +227,8 @@ Sozlamalar ro'yxati: `.env.example`.
 4. Saytda `ADMIN_EMAIL` bilan ro'yxatdan o'ting: bu hisob admin bo'ladi.
 5. Signallar jurnali to'xtovsiz yozilishi uchun cron-job.org da har 5 daqiqada
    `https://saytingiz/api/cron` ga `Authorization: Bearer <CRON_SECRET>` sarlavhasi bilan so'rov sozlang.
+6. Tekshirish: `https://saytingiz/api/health` bazaga ulanish holatini (`"db":"ok"` yoki xato sababini) va qaysi sozlamalar berilganini ko'rsatadi. Maxfiy qiymatlar hech qachon chiqmaydi.
+   Vercel'da o'zgaruvchi o'zgartirilgach, kuchga kirishi uchun yangi deploy (Redeploy) kerak.
 
 ## Tuzilishi
 
