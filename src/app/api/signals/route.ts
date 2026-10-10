@@ -3,6 +3,7 @@ import { publicCategories } from "@/lib/instruments.ts";
 import { allocate, TIER_RULES } from "@/lib/memory.ts";
 import { runRobot } from "@/lib/robot.ts";
 import { gated } from "@/lib/server/aiReview.ts";
+import { claudeSource, clientCards, PAIR as GOLD, todayIds, toSignal } from "@/lib/server/clientSignals.ts";
 import { canSeeSignals, getAccess } from "@/lib/server/auth.ts";
 import { syncDemo } from "@/lib/server/demo.ts";
 import { logSignals, recentSignals, type RecentSignal } from "@/lib/server/track.ts";
@@ -71,6 +72,25 @@ export async function GET(req: Request) {
   });
 
   const rule = TIER_RULES[access.tier];
+  if (claudeSource()) {
+    // Oltin signali endi Claude treyderning o'z qaroridan (kirish, SL, TP Claude'dan). Zeus oltin kartalari faqat adminga.
+    const [cards, ids] = await Promise.all([clientCards(), todayIds()]).catch(() => [[], []] as [Awaited<ReturnType<typeof clientCards>>, number[]]);
+    const zeus = result.signals.find((s) => s.pair === GOLD && (!s.strategy || s.strategy === "trend"));
+    const price = zeus?.price ?? Number(cards[0]?.entry ?? 0);
+    const limit = Number.isFinite(rule.daily) ? rule.daily : Infinity;
+    const gold = cards.map((t) => {
+      const sig = toSignal(t, tf, price, zeus);
+      const idx = ids.indexOf(Number(t.id));
+      return access.tier === "admin" || idx < 0 || idx < limit ? sig : hide(sig, true);
+    });
+    if (!gold.length && zeus) gold.push({ ...hide(zeus, false), reasons: [], rejected: "Bozor tahlil qilinmoqda: aniq imkoniyat bo'lmaguncha signal berilmaydi." });
+    const rest = access.tier === "admin" ? signals : signals.filter((s) => s.category !== "gold");
+    return NextResponse.json({
+      ...result,
+      signals: [...gold, ...rest],
+      quota: { tier: access.tier, used: Math.min(ids.length, limit), limit: Number.isFinite(rule.daily) ? rule.daily : null },
+    });
+  }
   const used = allocate(approved.filter((r) => r.day === today), access.tier).length;
   return NextResponse.json({
     ...result,

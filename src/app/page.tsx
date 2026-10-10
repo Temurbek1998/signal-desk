@@ -4,11 +4,12 @@ import { PAID_TIERS, TIER_NAME } from "@/lib/memory.ts";
 
 const CHAT_LIMIT = { standard: 30, pro: 45, vip: 60 } as const;
 const TIER_FEATURES = {
-  standard: { lead: "Barcha signallar bitta tarifda", count: "Kuniga 6 tagacha signal", rating: "A va B reytingli kuchli signallar, ikki bosqichli maxsus tekshiruvdan o'tgan", extra: ["Adminga murojaat orqali yordam"] as string[] },
+  standard: { lead: "Barcha signallar bitta tarifda", count: "Kuniga 6 tagacha signal", rating: "Zeus Number One tahlil tizimining kuchli signallari", extra: ["Adminga murojaat orqali yordam"] as string[] },
   pro: { lead: "Faol treyder uchun", count: "Kuniga 12 tagacha signal", rating: "A va B reytingli kuchli signallar", extra: [] as string[] },
   vip: { lead: "Hammasi va shaxsiy yordam", count: "Cheklovsiz: robotning barcha kuchli signallari", rating: "A va B reytingli kuchli signallar", extra: ["Ustuvor shaxsiy yordam"] },
 };
 import { trackRecord } from "@/lib/server/track.ts";
+import { claudeSource, clientRecord } from "@/lib/server/clientSignals.ts";
 import { publicCategories } from "@/lib/instruments.ts";
 import { geraklEnabled } from "@/lib/scalp.ts";
 import Candles3D from "./components/Candles3D.tsx";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 const MIN_LIVE = 20; // shuncha yopilgan signal bo'lgach jonli statistika ko'rsatiladi
 
 export default async function Home() {
-  const [plans, record] = await Promise.all([listPlans().catch(() => []), trackRecord(90).catch(() => [])]);
+  const [plans, record] = await Promise.all([listPlans().catch(() => []), (claudeSource() ? clientRecord(90) : trackRecord(90)).catch(() => [])]);
   const all = record.find((r) => r.timeframe === "ALL");
   const live = all && all.closed >= MIN_LIVE;
   const cats = publicCategories();
@@ -72,9 +73,9 @@ export default async function Home() {
             <span className="k">SL</span><span className="down">4 167.40</span><span className="d">200 pip</span>
           </div>
           <ul className="reasons">
-            <li>EMA20 &gt; EMA50, trend yuqoriga</li>
-            <li>ADX 27: trend kuchli</li>
-            <li>H1 trendi tasdiqlaydi, pullback tugadi</li>
+            <li>H4 va H1 trendi yuqoriga, narx talab zonasidan qaytdi</li>
+            <li>Yaqin qarshilik TP 2 dan yuqorida</li>
+            <li>SL zona ortida, xavf va foyda nisbati 1:1.5</li>
           </ul>
           <p className="newsflag">Yangilik xavfi: USD Non-Farm Payrolls 40 daqiqadan keyin</p>
         </div>
@@ -83,14 +84,18 @@ export default async function Home() {
       <section className="section">
         <h2>{live ? "So'nggi 90 kunlik natija" : "Tarixiy sinov natijasi"}</h2>
         <p className="sub">
-          {live
+          {claudeSource() && !live
+            ? "Oltin signallarini 2026-yil oktabrdan Zeus Number One'ning yangi tahlil tizimi beradi. Har bir signal bazaga yoziladi va natijasi avtomatik hisoblanadi; 20 ta signal yopilgach jonli natija shu yerda ko'rinadi."
+            : live
             ? "Robot bergan har bir signal bazaga yoziladi va natijasi avtomatik hisoblanadi. Hech narsa tanlab olinmaydi."
             : goldOnly
               ? "Oltin uchun robot 2026-yil iyun–oktabr narxlarida (123 kun) sinovdan o'tkazilgan: M15 da 39 ta signal, 90% i foyda bilan yopilgan (TP1 dan keyin ergashuvchi SL bilan). Bu kichik namuna, jonli natija har doim muhimroq; jonli natijalar shu yerda ko'rinadi."
               : "Robot 10 ta kripto juftligining 2018-yil yanvar narxlarida sinovdan o'tkazilgan (M15 va M30). Bu kichik sinov, jonli natija har doim muhimroq. Jonli natijalar yig'ilgach shu yerda ko'rinadi."}
         </p>
         <div className="stats">
-          {live ? (
+          {claudeSource() && !live ? (
+            <div className="stat"><b>{all?.closed ?? 0}</b><span>Yopilgan signallar (jonli)</span></div>
+          ) : live ? (
             <>
               <div className="stat"><b>{Math.round(all.winRate * 100)}%</b><span>Win rate (TP1 gacha)</span></div>
               <div className="stat"><b>{all.profitFactor?.toFixed(2) ?? "—"}</b><span>Profit factor</span></div>
@@ -124,7 +129,7 @@ export default async function Home() {
       <section className="section">
         <h2>{geraklEnabled() ? "Ikki robot" : "Robot"}</h2>
         <div className="steps">
-          <div className="step"><h3>Zeus</h3><p>Asosiy robot: qoidalar imkoniyat topadi, har biri alohida tahlil tizimida qayta tekshiriladi. Trend ichidagi aniq kirishlar (M15) va 300–400 pips maqsadli rejim: pullback va London ochilishidagi yorib o'tish.</p></div>
+          <div className="step"><h3>Zeus</h3><p>Oltin bozorini har soatda o'zi tahlil qiladi: bir nechta taymfreym, trend, talab va taklif zonalari, darajalar va yangiliklar. Kirish, Stop Loss va Take Profit ni o'zi belgilaydi, ochiq savdoni ham kuzatib boradi.</p></div>
           {geraklEnabled() && <div className="step"><h3>Gerakl</h3><p>Skalping va razgon roboti (M5). Oltin keskin impuls bilan harakatlanganda qisqa savdo: TP 150, SL 80 pips, 2 soat ichida yopiladi. Hozir sinov bosqichida, demo hisobda ishlaydi.</p></div>}
         </div>
       </section>
@@ -133,11 +138,11 @@ export default async function Home() {
         <h2>Zeus qanday tahlil qiladi</h2>
         <p className="sub"><Link href="/robot-haqida">Robot haqida batafsil: barcha vazifalari va 3D ko&apos;rinishi</Link></p>
         <div className="steps">
-          <div className="step"><h3>Trend</h3><p>EMA20 va EMA50 orqali bozor yo'nalishini aniqlaydi. Trendga qarshi signal berilmaydi.</p></div>
-          <div className="step"><h3>Trend kuchi</h3><p>ADX 20 dan past bo'lsa, bozor yon harakatda deb hisoblanadi va signal berilmaydi.</p></div>
-          <div className="step"><h3>Yuqori taymfreym</h3><p>M15 signali H1 trendi bilan tasdiqlanishi shart.</p></div>
-          <div className="step"><h3>Kirish nuqtasi</h3><p>Trend ichidagi qaytish (pullback) tugaganini RSI orqali kutadi, cho'qqida sotib olmaydi.</p></div>
-          <div className="step"><h3>Risk</h3><p>Stop Loss bozor tebranishiga (ATR) qarab qo'yiladi, TP1 da yarmi yopiladi, qolgani uchun SL narx ortidan ergashiriladi.</p></div>
+          <div className="step"><h3>Katta manzara</h3><p>D1, H4 va H1 trendini ko'radi: asosiy yo'nalishga qarshi shoshilmaydi.</p></div>
+          <div className="step"><h3>Zonalar va darajalar</h3><p>Talab va taklif zonalari, yaqin qo'llab-quvvatlash va qarshilik darajalarini topadi.</p></div>
+          <div className="step"><h3>Kirish nuqtasi</h3><p>M15 va M5 da narx zonaga qaytib, reaksiya berganini kutadi, cho'qqida sotib olmaydi.</p></div>
+          <div className="step"><h3>Risk</h3><p>Stop Loss zona ortiga qo'yiladi. TP1 da yarmi yopiladi va SL kirishga ko'chadi, qolgani TP2 gacha boradi.</p></div>
+          <div className="step"><h3>Kuzatuv</h3><p>Ochiq savdo har soatda qayta ko'riladi: kerak bo'lsa SL yaqinlashtiriladi yoki savdo erta yopiladi.</p></div>
           <div className="step"><h3>Yangiliklar</h3><p>NFP, CPI, FOMC kabi yangiliklardan oldin tegishli juftliklarda ogohlantirish chiqadi.</p></div>
         </div>
       </section>

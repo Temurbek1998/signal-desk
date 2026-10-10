@@ -3,6 +3,7 @@ import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis, type AiAnalysis } from
 import { parseDecision, SWING_LIMITS, trackPlan, validatePlan, type AiPlan, type PlanLimits, type StopMove } from "../aiTrade.ts";
 import { analyze } from "../engine.ts";
 import { activeInstruments, ALL_INSTRUMENTS } from "../instruments.ts";
+import { describe as newsUz, getCalendar } from "../news.ts";
 import { getCandles, getContextCandles } from "../market.ts";
 import { marketOpen } from "../sessions.ts";
 import type { Candle } from "../types.ts";
@@ -17,7 +18,8 @@ import { notifyAdmin } from "./telegram.ts";
 // (standart 120), AI_FX_TRADER_MODEL (Sonnet). Valyutalarni o'chirish: AI_FX_TRADER=0. Bir cron aylanishida bitta qaror.
 // Bir juftlikda bir vaqtda AI_MAX_OPEN (standart 2) tagacha kun ichidagi savdo ochiq bo'lishi mumkin.
 // Ochiq savdolarni Claude har soatda qayta ko'radi: aiManager.ts.
-// Qarorlar mijozlarga chiqmaydi: faqat admin panelda va adminga Telegram orqali, natijasi R da o'lchanadi.
+// Oltin kun ichidagi qarorlari (ishonch >= AI_DEMO_MIN_CONF) mijozlarga "Zeus" signali sifatida chiqadi (clientSignals.ts, 2026-10-10).
+// Claude Zeus fikrini olmaydi: o'zi tahlil qiladi, xotira (o'z natijalari, demo izohlari) va yangiliklar beriladi.
 // O'chirish: AI_TRADER=0. Oraliq: AI_TRADER_EVERY_MIN (standart 60). Model: AI_TRADER_MODEL.
 // Har qaror oltin uchun "Robot + Claude" ko'rinishi sifatida ham yoziladi (ai_views), alohida chaqiruv kerak emas.
 
@@ -65,36 +67,40 @@ const SCHEMA = {
     sl: { type: "number" }, tp1: { type: "number" }, tp2: { type: "number" },
     confidence: { type: "integer" },
     reason: { type: "string" },
-    agree: { type: "string", enum: ["rozi", "qisman", "qarshi"] },
     analysis: ANALYSIS_SCHEMA,
   },
-  required: ["action", "sl", "tp1", "tp2", "confidence", "reason", "agree", "analysis"],
+  required: ["action", "sl", "tp1", "tp2", "confidence", "reason", "analysis"],
   additionalProperties: false,
 };
 
-const systemFor = (pair: string) => `Sen Signal Desk'ning AI treyderisan va ${pair} bilan demo hisobda savdo qilasan. Natijang haqqoniy o'lchanadi va robot (Zeus) bilan solishtiriladi.
-Har soatda bitta qaror: BUY, SELL yoki WAIT. Kirish doim joriy narxda (bozor buyrug'i).
-Qanday tahlil qilasan:
-- Yuqoridan pastga: D1 va H4 trendi, keyin H1 tuzilmasi (yuqori/past cho'qqilar), keyin M15 da kirish nuqtasi.
-- Talab/taklif zonalari, likvidlik (oldingi cho'qqi va tublar), EMA20/EMA50, RSI, ADX va ATR ni hisobga ol.
+const NEWS_RULES = `Yangiliklar (yangiliklar, yangilik_reaksiyalari, keskin_harakatlar):
+- Kuchli (High) yangilikka 45 daqiqadan kam qolgan bo'lsa yangi savdo ochma (WAIT), sababini ayt.
+- Yangilik chiqqandan keyingi 15 daqiqada birinchi impulsga sakrama: bozor yo'nalishni tanlaganini ko'r, keyin kir.
+- Yangilik va keskin harakatlardan keyin ATR kengayadi: SL ni shunga moslab kengroq qo'y yoki kut.`;
+const MEMORY_RULES = `Xotira (xotira, oldingi_savdolaring):
+- xotira.statistika: so'nggi 30 kundagi o'z natijang. xotira.saboqlar: yopilgan savdolaring, natijasi va nima uchun shunday bo'lgani.
+- Yutqazgan holatlaringni takrorlama (masalan, bir xil sharoitda ketma-ket SL bo'lsa, o'sha setupga ehtiyot bo'l), yutgan setuplaringni tani.`;
+
+const systemFor = (pair: string) => `Sen Zeus Number One'ning bosh treyderisan va ${pair} bo'yicha mustaqil qaror qilasan. ${pair === PAIR ? "Oltindagi aniq qarorlaring obunachilarga signal bo'lib boradi: ular pul to'laydi, shuning uchun sifat birinchi o'rinda." : "Bu juftlik hozircha demo hisobda sinovda."}
+Natijang haqqoniy R da o'lchanadi. Har soatda bitta qaror: BUY, SELL yoki WAIT. Kirish doim joriy narxda (bozor buyrug'i).
+Qanday tahlil qilasan (boshqa robot maslahatini kutmaysan, hammasini o'zing qilasan):
+- Yuqoridan pastga: katta_trend (D1, W1), H4 trendi, H1 tuzilmasi (yuqori/past cho'qqilar, sinishlar), keyin M15 da aniq kirish nuqtasi.
+- Talab/taklif zonalari, likvidlik (oldingi cho'qqi va tublar, kunlik high/low), sessiya (Osiyo, London, Nyu-York), EMA20/EMA50, RSI, ADX va ATR.
 - Narx qayerdan tushishi va qayerdan ko'tarilishi mumkinligini aniq darajalar bilan ayt.
-Hamkoring Zeus (qoidaga asoslangan robot) strategiyasi, undan foydalan: EMA20/EMA50 bilan trend yo'nalishi, ADX >= 20 bo'lsa trend bor,
-M15 signali H1 trendi bilan tasdiqlanadi, kirish trend ichidagi pullback tugaganda (BUY uchun RSI 45 dan pastga tushib qaytsa, SELL uchun 55 dan),
-${pair === PAIR ? "SL 2.5 ATR, TP1 0.5R (yarmi yopiladi), keyin SL narx ortidan 1 ATR masofada ergashadi. Tarixiy sinovda oltinda M15 ishladi, M30 va H1 zarar berdi."
-    : isCrypto(pair) ? "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu kripto juftlik, bozor 24/7 ochiq va valyutadan keskinroq: tun va dam olish kunlari likvidlik past, soxta sinishlar ko'p. Tarixiy sinovda Zeus kriptoda kuchsiz chiqqan, shuning uchun uning signaliga ko'r-ko'rona ergashma. Bu juftlik sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi."
-    : "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu juftlik hali sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi."}
-Ochiq savdolaringni har soatda qayta ko'rib, SL ni yaqinlashtirish yoki erta yopish imkoning bor: shuning uchun mantiqiy setup bo'lsa kirishdan qo'rqma.
+Savdo boshqaruvi: TP1 da yarmi yopiladi va SL kirishga ko'chadi, qolgani TP2 gacha boradi; savdo ko'pi bilan 24 soatda yopiladi.
+${isCrypto(pair) ? "Bu kripto juftlik: bozor 24/7, tun va dam olish kunlari likvidlik past, soxta sinishlar ko'p.\n" : ""}Ochiq savdolaringni har soatda qayta ko'rib, SL ni yaqinlashtirish yoki erta yopish imkoning bor.
+${NEWS_RULES}
+${MEMORY_RULES}
 Qoidalar:
 - Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
 - SL mantiqiy darajaning orqasida bo'lsin, masofasi H1 ATR ning 0.3-3 baravari. TP1 kamida 0.5R, TP2 kamida 1R va TP1 dan uzoqroq.
-- Bozorda faol bo'l: trend, daraja va kirish nuqtasi mantiqiy bo'lsa BUY yoki SELL de, ishonch 50-60% bo'lsa ham.
-  WAIT faqat bozor haqiqatan noaniq bo'lsa: yon harakat va ADX past, ko'rsatkichlar bir-biriga qarshi, narx SL qo'yib bo'lmaydigan joyda.
-- Shu juftlikda ochiq savdong bo'lsa (oldingi_savdolaring, holat "open" yoki "tp1"), unga qarshi yo'nalishda kirma. Oldingi savdolaringdan saboq ol.
+- Trend, daraja va kirish nuqtasi mantiqiy bo'lsa BUY yoki SELL de. Aniq ustunlik bo'lmasa WAIT: yon harakat, ko'rsatkichlar bir-biriga qarshi,
+  narx SL qo'yib bo'lmaydigan joyda yoki yangilik yaqin. Yomon savdodan WAIT yaxshi.
+- Shu juftlikda ochiq savdong bo'lsa (oldingi_savdolaring, holat "open" yoki "tp1"), unga qarshi yo'nalishda kirma.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
-- confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi.
-- agree: robot_zeus_fikri bilan rozimisan ("rozi", "qisman", "qarshi").
+- confidence 0-100 (50 dan pasti obunachiga bormaydi). reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi. reason da o'zingni yoki model nomini tilga olma.
 ${ANALYSIS_PROMPT}
-Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","agree","analysis"}.`;
+Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
 
 const swingSystemFor = (pair: string) => `Sen Zeus Number One'ning swing treyderisan va ${pair} bilan demo hisobda 3-5 kunlik savdo qilasan.
 Natijang haqqoniy R da o'lchanadi. Kuniga bitta qaror: BUY, SELL yoki WAIT. Kirish doim joriy narxda (bozor buyrug'i).
@@ -109,11 +115,11 @@ Qoidalar:
 - Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
 - SL mantiqiy D1/H4 darajasining orqasida, masofasi D1 ATR ning 0.3-2 baravari. TP1 kamida 1R (yarmi yopiladi, SL kirishga ko'chadi), TP2 kamida 2R.
 - Aniq ustunlik bo'lmasa WAIT de. Yomon savdodan WAIT yaxshi. Oldingi swing savdolaringdan saboq ol.
+- Kuchli (High) yangiliklar oldidan (yangiliklar) shoshilma: SL yangilik shovqinidan tashqarida bo'lsin yoki WAIT.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
 - confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: haftalik va kunlik trend, muhim darajalar, kirish sababi, necha kunda maqsadga yetishi va qaysi holatda g'oya bekor bo'lishi.
-- agree: robot_zeus_fikri bilan rozimisan ("rozi", "qisman", "qarshi").
 ${ANALYSIS_PROMPT}
-Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","agree","analysis"}.`;
+Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
 
 export const round = (x: number, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
 export const ohlc = (cs: Candle[], d = 2) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o, d), round(c.h, d), round(c.l, d), round(c.c, d)]);
@@ -122,8 +128,52 @@ export function ind(cs: Candle[], d = 2) {
   return a && { trend: a.trend, ema20: round(a.ema20, d), ema50: round(a.ema50, d), rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: round(a.atr, d + 1) };
 }
 
-// Bozor ma'lumoti (shamlar, ko'rsatkichlar, Zeus fikri). Standart: oltin; Claude bahosi valyutalar uchun ham chaqiradi.
-export async function facts(pair = PAIR) {
+// Yangiliklar konteksti: 3 soat oldin va 12 soat keyingi High/Medium yangiliklar, so'nggi M1 reaksiya tahlillari va keskin harakatlar.
+export async function newsContext(pair: string) {
+  const now = Date.now();
+  const [cal, reactions, spikes] = await Promise.all([
+    getCalendar().catch(() => []),
+    sql<{ at: Date; direction: string; reason: string; result_pips: number | null; events: { title: string }[] }>(
+      "SELECT at, direction, reason, result_pips, events FROM news_reactions WHERE pair = $1 AND at > now() - interval '24 hours' ORDER BY at DESC LIMIT 3", [pair],
+    ).catch(() => []),
+    sql<{ at: Date; side: string; move_pips: number; peak_pips: number; news: string; note: string | null }>(
+      "SELECT at, side, move_pips, peak_pips, news, note FROM price_spikes WHERE pair = $1 AND at > now() - interval '24 hours' ORDER BY at DESC LIMIT 3", [pair],
+    ).catch(() => []),
+  ]);
+  return {
+    yangiliklar: cal.filter((e) => (e.impact === "High" || e.impact === "Medium") && e.pairs.includes(pair) && e.time > now - 3 * 3600_000 && e.time < now + 12 * 3600_000)
+      .slice(0, 12).map((e) => ({ nomi: e.title, uz: newsUz(e.title), valyuta: e.currency, kuch: e.impact, vaqt_utc: new Date(e.time).toISOString(),
+        daqiqa: Math.round((e.time - now) / 60_000), prognoz: e.forecast, oldingi: e.previous })),
+    yangilik_reaksiyalari: reactions.map((x) => ({ vaqt: x.at, yangilik: x.events?.map((e) => e.title).join(", "), yonalish: x.direction, sabab: x.reason, natija_pips: x.result_pips })),
+    keskin_harakatlar: spikes.map((x) => ({ vaqt: x.at, yonalish: x.side, pips: x.move_pips, eng_katta_pips: x.peak_pips, yangilik: x.news, xulosa: x.note })),
+  };
+}
+
+// Xotira: so'nggi 30 kunlik kun ichidagi natija va yopilgan savdolar saboqlari (demo izohi bilan).
+export async function memoryOf(pair: string) {
+  const [[st], closed] = await Promise.all([
+    sql<{ n: string; wins: string; total: number | null; buy_r: number | null; sell_r: number | null }>(
+      `SELECT count(*) AS n, count(*) FILTER (WHERE result_r > 0) AS wins, sum(result_r) AS total,
+              sum(result_r) FILTER (WHERE action = 'BUY') AS buy_r, sum(result_r) FILTER (WHERE action = 'SELL') AS sell_r
+       FROM ai_trades WHERE pair = $1 AND mode = 'intraday' AND result_r IS NOT NULL AND at > now() - interval '30 days'`, [pair],
+    ),
+    sql<{ at: Date; action: string; confidence: number; status: string; result_r: number; reason: string; review: string | null }>(
+      `SELECT t.at, t.action, t.confidence, t.status, t.result_r, left(t.reason, 300) AS reason, d.review
+       FROM ai_trades t LEFT JOIN demo_trades d ON d.ai_trade_id = t.id
+       WHERE t.pair = $1 AND t.mode = 'intraday' AND t.result_r IS NOT NULL ORDER BY t.at DESC LIMIT 12`, [pair],
+    ),
+  ]);
+  const n = Number(st?.n ?? 0);
+  return {
+    statistika: { yopilgan: n, yutuq_ulushi: n ? Math.round((Number(st.wins) / n) * 100) : null, jami_R: round(Number(st?.total ?? 0)),
+      BUY_R: round(Number(st?.buy_r ?? 0)), SELL_R: round(Number(st?.sell_r ?? 0)) },
+    saboqlar: closed.map((t) => ({ vaqt: t.at, yonalish: t.action, ishonch: t.confidence, holat: t.status, natija_R: round(Number(t.result_r)), sabab: t.reason, xulosa: t.review })),
+  };
+}
+
+// Bozor ma'lumoti (shamlar, ko'rsatkichlar). zeus=true bo'lsa Zeus fikri ham (Claude bahosi uchun);
+// treyder Zeus fikrini olmaydi, o'rniga xotira va yangiliklar beriladi.
+export async function facts(pair = PAIR, opts: { zeus?: boolean; trader?: boolean } = { zeus: true }) {
   const inst = ALL_INSTRUMENTS.find((i) => i.pair === pair) ?? gold();
   const [m15, h1, h4] = await Promise.all([getCandles(inst, 15, 260), getCandles(inst, 60, 260), getCandles(inst, 240, 260)]);
   const [states, ctx, past] = await Promise.all([
@@ -131,6 +181,7 @@ export async function facts(pair = PAIR) {
     sql<{ timeframe: string; trend: string }>("SELECT timeframe, trend FROM market_context WHERE pair = $1", [inst.pair]),
     sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [inst.pair]),
   ]);
+  const [news, memory] = opts.trader ? await Promise.all([newsContext(inst.pair), memoryOf(inst.pair)]) : [{}, {}];
   const h1a = analyze(h1.slice(-200));
   const d = digitsOf(inst.pair, m15.at(-1)?.c ?? 0);
   return {
@@ -145,7 +196,8 @@ export async function facts(pair = PAIR) {
       H4_shamlar: ohlc(h4.slice(-40), d),
       H1_shamlar: ohlc(h1.slice(-72), d),
       M15_shamlar: ohlc(m15.slice(-64), d),
-      robot_zeus_fikri: states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, sabab: s.reason })),
+      ...(opts.zeus ? { robot_zeus_fikri: states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, sabab: s.reason })) } : {}),
+      ...(opts.trader ? { ...news, xotira: memory } : {}),
       oldingi_savdolaring: past.map((t) => ({ vaqt: t.at, yonalish: t.action, kirish: t.entry, sl: t.sl, tp1: t.tp1, tp2: t.tp2, holat: t.status, natija_R: t.result_r })),
     },
   };
@@ -155,10 +207,7 @@ export async function facts(pair = PAIR) {
 async function swingFacts(pair: string) {
   const inst = ALL_INSTRUMENTS.find((i) => i.pair === pair) ?? gold();
   const [d1, h4, h1] = await Promise.all([getContextCandles(inst, "D1"), getCandles(inst, 240, 260), getCandles(inst, 60, 260)]);
-  const [states, past] = await Promise.all([
-    sql<{ timeframe: string; side: string | null; quality: string | null; reason: string }>("SELECT timeframe, side, quality, reason FROM robot_state WHERE pair = $1", [inst.pair]),
-    sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND mode = 'swing' AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [inst.pair]),
-  ]);
+  const past = await sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND mode = 'swing' AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [inst.pair]);
   const price = h1.at(-1)?.c ?? 0;
   const d = digitsOf(inst.pair, price);
   const d1a = analyze(d1.slice(-200));
@@ -171,7 +220,7 @@ async function swingFacts(pair: string) {
       D1_shamlar: ohlc(d1.slice(-120), d),
       H4_shamlar: ohlc(h4.slice(-60), d),
       H1_shamlar: ohlc(h1.slice(-48), d),
-      robot_zeus_fikri: states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, sabab: s.reason })),
+      ...(await newsContext(inst.pair)),
       oldingi_swing_savdolaring: past.map((t) => ({ vaqt: t.at, yonalish: t.action, kirish: t.entry, sl: t.sl, tp1: t.tp1, tp2: t.tp2, holat: t.status, natija_R: t.result_r })),
     },
   };
@@ -225,7 +274,7 @@ export async function aiDecide(force = false, onlyPair?: string): Promise<{ trad
     if (!pair) return { skipped: "Hali vaqti emas" };
     if (!(await underBudget())) return { skipped: "Kunlik AI chegarasi" };
   }
-  const f = await facts(pair);
+  const f = await facts(pair, { trader: true });
   if (!f.price || Date.now() - f.lastTime > 45 * 60_000) return { skipped: "Bozor yopiq" };
 
   const model = traderModel(pair);
