@@ -4,6 +4,35 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.13.0 (2026-10-10): keskin harakatlar (2-3 daqiqada 180+ pips)
+
+- Yangilikdan qat'i nazar oltin M1 har daqiqada tekshiriladi (`/api/news-watch`, zaxira: asosiy cron oxirgi 5 sham bo'yicha).
+  2-3 daqiqada `SPIKE_PIPS` (180 = 18 $) va undan ko'p harakat bo'lsa darhol Telegram xabari va `price_spikes` jadvaliga yoziladi.
+- Keyingi 60 daqiqada qancha yurgani o'lchanadi: shu tomonga eng uzoq, teskari, 5/15/30/60 daqiqadagi holat (pips), so'ng
+  Telegram'ga natija va Claude (Sonnet, `SPIKE_MODEL`) qisqa xulosasi.
+- Alohida admin sahifa "Keskin harakatlar": statistika, oxirgi harakat M1 grafigi, barcha harakatlar jadvali.
+- Manba: Binance PAXG/USDT (real vaqt, limitsiz; Twelve Data kunlik limiti har daqiqaga yetmaydi), `SPIKE_SOURCE=twelvedata`
+  bilan almashtirish mumkin. O'chirish: `SPIKE_WATCH=0`.
+
+## v1.12.0 (2026-10-10): yangilik efiri impulslari
+
+- Yangilik (kuchli va o'rta, `NEWS_WATCH_IMPACT`) chiqishidan 1 daqiqa oldin boshlab 20 daqiqa (`NEWS_WATCH_MIN`),
+  nutqlarda 60 daqiqa oltin M1 har daqiqada kuzatiladi. Ketma-ket 2-3 ta katta M1 sham bir tomonga ketsa (kamida 60 pips,
+  `NEWS_IMPULSE_PIPS`, shamlar chiqishdan oldingi o'rtachadan 1.5x katta) darhol Telegram xabari. Haqiqiy hajm yo'q
+  (oltin/forex), shuning uchun sham kattaligi olinadi; manba hajm bersa u ham tekshiriladi.
+- Alohida admin sahifa "Yangilik impulslari": kuzatuv holati, jonli M1 grafigi, impulslar va 15 daqiqadan keyingi natija.
+- Yangi manzil `/api/news-watch`: cron-job.org da har daqiqada (kalit asosiy cron bilan bir xil). O'chirish: `NEWS_WATCH=0`.
+
+## v1.11.0 (2026-10-10): yangiliklar bo'yicha M1 tahlil
+
+- Kuchli yangilik (NFP, CPI, FOMC va boshqalar, Forex Factory kalendari bo'yicha "High") chiqqach, 3 daqiqadan keyin
+  (`NEWS_WAIT_MIN`) Claude oltinning M1 reaksiyasini tahlil qiladi: savdo yo'nalishi (BUY/SELL/WAIT), taxminiy pips maqsadi,
+  bekor bo'lish narxi va muddat. Bir vaqtda chiqqan yangiliklar (NFP va ishsizlik) bitta tahlil.
+- Natija admin "Yangiliklar M1" sahifasida (M1 grafigi, qarorlar, kelayotgan kuchli yangiliklar) va Telegram'da.
+  Keyin har 5 daqiqada M1 bo'yicha o'lchanadi: maqsad, bekor narxi yoki muddat oxiri, eng yaxshi va eng yomon harakat.
+- Savdo ochilmaydi va mijozlarga chiqmaydi. Juftliklar: `NEWS_PAIRS` (standart `XAU/USD`), o'chirish: `NEWS_AI=0`.
+  Model oltin treyderi bilan bir xil (Opus), haftasiga bir necha chaqiruv. "Oxirgi yangilikni hozir tahlil qil" tugmasi.
+
 ## v1.10.2 (2026-10-10): valyutalarda Claude ishlamasligi tuzatildi
 
 - Yahoo 4 soatlik shamni bermaydi ("240m" ga 400 xato): shu sabab valyutalar uchun Claude treyder, tahlil va qayta ko'rish

@@ -6,8 +6,8 @@ const REVALIDATE = 30; // soniya: bir xil so'rovlar shu vaqt ichida keshdan olin
 
 type FetchInit = RequestInit & { next?: { revalidate: number } };
 
-async function getJson(url: string, init: FetchInit = {}) {
-  const res = await fetch(url, { ...init, next: { revalidate: REVALIDATE } } as FetchInit);
+async function getJson(url: string, init: FetchInit = {}, revalidate = REVALIDATE) {
+  const res = await fetch(url, (revalidate ? { ...init, next: { revalidate } } : { ...init, cache: "no-store" }) as FetchInit);
   if (!res.ok) throw new Error(`${new URL(url).host} ${res.status}`);
   return res.json();
 }
@@ -110,7 +110,7 @@ const DEMO_BASE: Record<string, number> = {
   BTCUSDT: 62000, ETHUSDT: 2450, SOLUSDT: 145, BNBUSDT: 580, XRPUSDT: 0.53,
   "GC=F": 2660, "XAU/USD": 2660, "EURUSD=X": 1.095, "EUR/USD": 1.095, "GBPUSD=X": 1.31, "GBP/USD": 1.31,
   "JPY=X": 149.3, "USD/JPY": 149.3, "AUDUSD=X": 0.674, "AUD/USD": 0.674, "CHF=X": 0.858, "USD/CHF": 0.858,
-  "CAD=X": 1.372, "USD/CAD": 1.372,
+  "CAD=X": 1.372, "USD/CAD": 1.372, PAXGUSDT: 2665,
 };
 function demo(symbol: string, minutes: number, limit = LIMIT): Candle[] {
   let seed = [...symbol + minutes].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7) >>> 0;
@@ -127,6 +127,37 @@ function demo(symbol: string, minutes: number, limit = LIMIT): Candle[] {
     const l = Math.min(o, p) * (1 - rnd() * 0.0015);
     return { t: end - (limit - i) * step, o, h, l, c: p };
   });
+}
+
+// M1 shamlari (yangilik reaksiyasi tahlili uchun): keshsiz, chunki har daqiqa muhim. Twelve Data'da bitta so'rov.
+export async function getM1(inst: Instrument, limit = 120): Promise<Candle[]> {
+  if (process.env.DEMO_DATA === "1") return demo(inst.symbol, 1, limit);
+  let raw: Candle[];
+  if (inst.source === "binance") {
+    const rows: unknown[][] = await getJson(`https://data-api.binance.vision/api/v3/klines?symbol=${inst.symbol}&interval=1m&limit=${limit}`, {}, 0);
+    raw = rows.map((r) => ({ t: Number(r[0]), o: +String(r[1]), h: +String(r[2]), l: +String(r[3]), c: +String(r[4]), v: +String(r[5]) }));
+  } else if (inst.source === "twelvedata") {
+    const data = await getJson(
+      `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(inst.symbol)}&interval=1min&outputsize=${limit}&order=asc&timezone=UTC&apikey=${process.env.TWELVEDATA_API_KEY}`,
+      {}, 0,
+    );
+    if (data.status === "error") throw new Error(`Twelve Data: ${data.message}`);
+    raw = data.values.map((v: Record<string, string>) => ({ t: Date.parse(v.datetime.replace(" ", "T") + "Z"), o: +v.open, h: +v.high, l: +v.low, c: +v.close, ...(v.volume ? { v: +v.volume } : {}) }));
+  } else {
+    const data = await getJson(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(inst.symbol)}?interval=1m&range=1d`,
+      { headers: { "User-Agent": "Mozilla/5.0 (signal-desk)" } }, 0,
+    );
+    const r = data?.chart?.result?.[0];
+    if (!r) throw new Error("Yahoo: ma'lumot yo'q");
+    const q = r.indicators.quote[0];
+    raw = [];
+    r.timestamp.forEach((ts: number, i: number) => {
+      if ([q.open[i], q.high[i], q.low[i], q.close[i]].some((v) => v == null)) return;
+      raw.push({ t: ts * 1000, o: q.open[i], h: q.high[i], l: q.low[i], c: q.close[i], ...(q.volume?.[i] ? { v: q.volume[i] } : {}) });
+    });
+  }
+  return closedOnly(raw, 1).slice(-limit);
 }
 
 // limit: kerakli sham soni (standart 200). Oltin pips rejimi kun boshidan kuzatish uchun ko'proq oladi.

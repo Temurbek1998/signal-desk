@@ -1,4 +1,4 @@
-export type Candle = { t: number; o: number; h: number; l: number; c: number };
+export type Candle = { t: number; o: number; h: number; l: number; c: number; v?: number }; // v: hajm (faqat M1 da, manba bersa)
 
 export type Category = "crypto" | "gold" | "forex";
 export type Timeframe = "M5" | "M15" | "M30" | "H1";

@@ -210,6 +210,20 @@ export async function claudeViewNow(_prev: { msg?: string } | null, form: FormDa
   }
 }
 
+// Oxirgi kuchli yangilikning M1 reaksiyasini Claude hozir tahlil qilsin (admin).
+export async function newsAnalyzeNow(_prev: { msg?: string } | null): Promise<{ msg?: string }> {
+  const admin = await requireAdmin();
+  await logAdmin(admin, "Yangilik tahlili qo'lda so'raldi");
+  const { newsNow } = await import("@/lib/server/newsTrader.ts");
+  try {
+    const msg = await newsNow();
+    revalidatePath("/admin/yangiliklar");
+    return { msg };
+  } catch (e) {
+    return { msg: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // Qo'llab-quvvatlash murojaatini yopish (admin).
 export async function closeTicket(form: FormData) {
   const admin = await requireAdmin();

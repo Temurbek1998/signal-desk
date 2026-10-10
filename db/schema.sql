@@ -356,3 +356,85 @@ CREATE TABLE IF NOT EXISTS ai_trade_reviews (
 );
 CREATE INDEX IF NOT EXISTS ai_trade_reviews_at ON ai_trade_reviews (at DESC);
 CREATE INDEX IF NOT EXISTS ai_trade_reviews_trade ON ai_trade_reviews (trade_id, at DESC);
+
+-- Yangilik reaksiyasi (egasining talabi, 2026-10-10): kuchli yangilik (masalan NFP) chiqqach Claude M1 reaksiyasini
+-- ko'rib savdo yo'nalishi va taxminiy pips maqsadini aytadi. Faqat admin va Telegram, savdo ochilmaydi.
+-- status: open (kuzatilmoqda), target, stop, expired, wait (yo'nalish yo'q), error. Natija pips da.
+CREATE TABLE IF NOT EXISTS news_reactions (
+  id           bigserial PRIMARY KEY,
+  at           timestamptz NOT NULL DEFAULT now(),
+  event_time   timestamptz NOT NULL,
+  pair         text NOT NULL,
+  events       jsonb NOT NULL DEFAULT '[]',
+  stats        jsonb,
+  price        double precision,
+  direction    text NOT NULL DEFAULT 'WAIT',
+  confidence   int NOT NULL DEFAULT 0,
+  target_pips  double precision,
+  invalidation double precision,
+  horizon_min  int NOT NULL DEFAULT 60,
+  entry_note   text NOT NULL DEFAULT '',
+  reason       text NOT NULL DEFAULT '',
+  model        text NOT NULL DEFAULT '',
+  status       text NOT NULL DEFAULT 'open',
+  result_pips  double precision,
+  mfe_pips     double precision,
+  mae_pips     double precision,
+  closed_at    timestamptz,
+  UNIQUE (event_time, pair)
+);
+CREATE INDEX IF NOT EXISTS news_reactions_at ON news_reactions (at DESC);
+
+-- Yangilik efiri impulslari (egasining talabi, 2026-10-10): yangilik chiqqach M1 har daqiqada kuzatiladi, 2-3 daqiqa
+-- kuchli bir tomonga harakat bo'lsa adminga xabar. after_pips: 15 daqiqadan keyin narx impuls yo'nalishida necha pips.
+CREATE TABLE IF NOT EXISTS news_impulses (
+  id          bigserial PRIMARY KEY,
+  at          timestamptz NOT NULL DEFAULT now(),
+  event_time  timestamptz NOT NULL,
+  events      jsonb NOT NULL DEFAULT '[]',
+  pair        text NOT NULL,
+  side        text NOT NULL,
+  bars        int NOT NULL,
+  move_pips   double precision NOT NULL,
+  range_x     double precision,
+  price       double precision NOT NULL,
+  candle_time timestamptz NOT NULL,
+  after_pips  double precision,
+  UNIQUE (pair, candle_time)
+);
+CREATE INDEX IF NOT EXISTS news_impulses_at ON news_impulses (at DESC);
+-- Har daqiqalik kuzatuvning oxirgi ishlagan vaqti (sahifada "kuzatuv ishlayaptimi" ko'rsatish uchun).
+CREATE TABLE IF NOT EXISTS news_watch_pings (
+  id  int PRIMARY KEY DEFAULT 1,
+  at  timestamptz NOT NULL DEFAULT now(),
+  note text NOT NULL DEFAULT ''
+);
+
+-- Keskin harakatlar (egasining talabi, 2026-10-10): yangilikdan qat'i nazar M1 da 2-3 daqiqada 180+ pips.
+-- status: tracking (60 daqiqa kuzatilmoqda), done. Pips harakat oxiridagi narxdan: mfe shu tomonga, mae teskari.
+CREATE TABLE IF NOT EXISTS price_spikes (
+  id          bigserial PRIMARY KEY,
+  at          timestamptz NOT NULL DEFAULT now(),
+  pair        text NOT NULL,
+  source      text NOT NULL DEFAULT '',
+  side        text NOT NULL,
+  bars        int NOT NULL,
+  move_pips   double precision NOT NULL,
+  peak_pips   double precision NOT NULL,
+  from_price  double precision NOT NULL,
+  price       double precision NOT NULL,
+  candle_time timestamptz NOT NULL,
+  news        text NOT NULL DEFAULT '',
+  status      text NOT NULL DEFAULT 'tracking',
+  minutes     int NOT NULL DEFAULT 0,
+  mfe_pips    double precision,
+  mae_pips    double precision,
+  after5      double precision,
+  after15     double precision,
+  after30     double precision,
+  after60     double precision,
+  note        text NOT NULL DEFAULT '',
+  note_at     timestamptz,
+  UNIQUE (pair, candle_time)
+);
+CREATE INDEX IF NOT EXISTS price_spikes_time ON price_spikes (candle_time DESC);
