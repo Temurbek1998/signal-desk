@@ -1,4 +1,5 @@
 import { db, sql } from "@/lib/server/db.ts";
+import { isDemoData } from "@/lib/demoMode.ts";
 import { activeCategories } from "@/lib/instruments.ts";
 import { refreshMarkets } from "@/lib/server/markets.ts";
 import { APP_COMMIT, APP_VERSION } from "@/lib/version.ts";
@@ -16,6 +17,7 @@ export async function GET() {
     MAIL_PROVIDER: process.env.MAIL_PROVIDER ?? null,
     TWELVEDATA_API_KEY: Boolean(process.env.TWELVEDATA_API_KEY),
     ROBOT_MARKETS: process.env.ROBOT_MARKETS ?? null,
+    DEMO_DATA: process.env.DEMO_DATA === "1" ? (isDemoData() ? "yoqilgan (soxta narxlar)" : "production'da e'tiborsiz") : null,
     markets: activeCategories().join(","),
     AI_KEY: process.env.ANTHROPIC_API_KEY ? "anthropic" : process.env.GEMINI_API_KEY ? "gemini" : process.env.DEEPSEEK_API_KEY ? "deepseek" : null,
   };

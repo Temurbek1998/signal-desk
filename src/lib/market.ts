@@ -1,3 +1,4 @@
+import { isDemoData } from "./demoMode.ts";
 import type { Candle, ContextTf, Instrument, Timeframe } from "./types.ts";
 
 const MINUTES: Record<Timeframe, number> = { M5: 5, M15: 15, M30: 30, H1: 60 };
@@ -131,7 +132,7 @@ function demo(symbol: string, minutes: number, limit = LIMIT): Candle[] {
 
 // M1 shamlari (yangilik reaksiyasi tahlili uchun): keshsiz, chunki har daqiqa muhim. Twelve Data'da bitta so'rov.
 export async function getM1(inst: Instrument, limit = 120): Promise<Candle[]> {
-  if (process.env.DEMO_DATA === "1") return demo(inst.symbol, 1, limit);
+  if (isDemoData()) return demo(inst.symbol, 1, limit);
   let raw: Candle[];
   if (inst.source === "binance") {
     const rows: unknown[][] = await getJson(`https://data-api.binance.vision/api/v3/klines?symbol=${inst.symbol}&interval=1m&limit=${limit}`, {}, 0);
@@ -162,7 +163,7 @@ export async function getM1(inst: Instrument, limit = 120): Promise<Candle[]> {
 
 // limit: kerakli sham soni (standart 200). Oltin pips rejimi kun boshidan kuzatish uchun ko'proq oladi.
 export async function getCandles(inst: Instrument, minutes: number, limit = LIMIT): Promise<Candle[]> {
-  if (process.env.DEMO_DATA === "1") return demo(inst.symbol, minutes, limit);
+  if (isDemoData()) return demo(inst.symbol, minutes, limit);
   const raw =
     inst.source === "binance"
       ? await binance(inst.symbol, minutes, limit)
@@ -175,7 +176,7 @@ export async function getCandles(inst: Instrument, minutes: number, limit = LIMI
 // Jonli narx (admin "Jonli savdolar"): shakllanayotgan oxirgi M5 sham bilan. So'rov manzili getCandles(inst, 5) bilan bir xil,
 // shuning uchun cron bilan bitta keshni bo'lishadi (Twelve Data kunlik limiti tejaladi).
 export async function getLastPrice(inst: Instrument): Promise<{ price: number; t: number } | null> {
-  const raw = process.env.DEMO_DATA === "1" ? demo(inst.symbol, 5, 3)
+  const raw = isDemoData() ? demo(inst.symbol, 5, 3)
     : inst.source === "binance" ? await binance(inst.symbol, 5, 3)
     : inst.source === "twelvedata" ? await twelvedata(inst.symbol, 5, 3)
     : await yahoo(inst.symbol, 5, 3);
@@ -200,7 +201,7 @@ const ctxCache = new Map<string, { at: number; p: Promise<Candle[]> }>();
 
 // H4 manzarasi: Yahoo 4 soatlik bermaydi, shuning uchun 3 oylik H1 dan yig'iladi (60 dan ortiq H4 sham kerak).
 export async function getH4Context(inst: Instrument): Promise<Candle[]> {
-  if (process.env.DEMO_DATA === "1" || inst.source !== "yahoo") return getCandles(inst, 240);
+  if (isDemoData() || inst.source !== "yahoo") return getCandles(inst, 240);
   return closedOnly(aggregate(await yahoo(inst.symbol, 60, 2000), 4), 240);
 }
 
@@ -217,7 +218,7 @@ export function getContextCandles(inst: Instrument, tf: Exclude<ContextTf, "H4">
 async function fetchContext(inst: Instrument, tf: Exclude<ContextTf, "H4">): Promise<Candle[]> {
   const c = CTX[tf];
   let raw: Candle[];
-  if (process.env.DEMO_DATA === "1") raw = demo(inst.symbol, c.minutes);
+  if (isDemoData()) raw = demo(inst.symbol, c.minutes);
   else if (inst.source === "binance") {
     const rows: unknown[][] = await getJson(`https://data-api.binance.vision/api/v3/klines?symbol=${inst.symbol}&interval=${c.binance}&limit=${LIMIT}`);
     raw = rows.map((r) => ({ t: Number(r[0]), o: +String(r[1]), h: +String(r[2]), l: +String(r[3]), c: +String(r[4]) }));

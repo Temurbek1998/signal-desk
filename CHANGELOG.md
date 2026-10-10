@@ -4,6 +4,12 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.17.1 (2026-10-10): production'da sun'iy narxlar o'chirildi
+
+- Admin grafigida oltin ~2500 da va shanba kuni ham shamlar bor edi: Vercel'da `DEMO_DATA=1` turgani uchun robot va Claude
+  sun'iy shamlarni tahlil qilgan. Endi `DEMO_DATA` faqat lokal ishlaydi, Vercel production'da e'tiborsiz (`src/lib/demoMode.ts`).
+- Admin panelda ogohlantirish va `/api/health` da `DEMO_DATA` maydoni.
+
 ## v1.17.0 (2026-10-10): mijoz oltin signallari Claude'ning o'z tahlilidan
 
 - Egasining qarori: mijozga oltin signali endi Claude treyderning kun ichidagi qaroridan beriladi (kirish, SL, TP1, TP2 Claude'dan,
