@@ -1,6 +1,8 @@
 // Iqtisodiy kalendar: Forex Factory haftalik kalendari (bepul, kalitsiz).
 // Manba soatiga bir necha so'rovdan ko'pini yoqtirmaydi, shuning uchun natija 30 daqiqa keshlanadi.
 
+import { isDemoData } from "./demoMode.ts";
+
 const CALENDAR_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
 const REVALIDATE = 1800;
 
@@ -64,7 +66,7 @@ export function parseCalendar(raw: RawEvent[]): NewsEvent[] {
 }
 
 export async function getCalendar(): Promise<NewsEvent[]> {
-  if (process.env.DEMO_DATA === "1") return demoCalendar();
+  if (isDemoData()) return demoCalendar();
   const res = await fetch(CALENDAR_URL, { next: { revalidate: REVALIDATE } } as RequestInit);
   if (!res.ok) throw new Error(`Kalendar ${res.status}`);
   return parseCalendar(await res.json());
