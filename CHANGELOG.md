@@ -4,6 +4,10 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.16.1 (2026-10-10): admin menyusi ixcham
+
+- Admin menyusi kompyuterda 2 qatorga o'tadi, tugmalar kichikroq; telefonda avvalgidek suriladi.
+
 ## v1.16.0 (2026-10-10): admin panelda bozor tugmalari
 
 - Admin bosh sahifasida "Bozorlar": Oltin, Valyutalar, Kripto ni belgilab yoqish yoki o'chirish (`app_settings` jadvali, `server/markets.ts`).
