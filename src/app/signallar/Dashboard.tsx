@@ -7,13 +7,6 @@ import NewsPanel from "../components/NewsPanel.tsx";
 const TFS: Timeframe[] = ["M5", "M15", "M30", "H1"];
 const CATS: Record<"all" | Category, string> = { all: "Barchasi", crypto: "Kripto", gold: "XAU/USD", forex: "Valyuta" };
 const REFRESH_MS = 60_000;
-// scripts/backtest.ts natijalari (kripto, 2018-yil yanvar, BACKTEST.md ga qarang).
-const HISTORY: Record<Timeframe, { win: number; pf: number; trades: number; weak: boolean }> = {
-  M5: { win: 54, pf: 0.5, trades: 491, weak: true },
-  M15: { win: 72, pf: 1.16, trades: 144, weak: false },
-  M30: { win: 73, pf: 1.2, trades: 71, weak: false },
-  H1: { win: 75, pf: 0.75, trades: 12, weak: true },
-};
 const STATUS: Record<NonNullable<Signal["status"]>, string> = {
   active: "Faol",
   tp1: "TP 1 urildi",
@@ -141,7 +134,7 @@ export default function Dashboard({ categories }: { categories: Category[] }) {
       <header className="page-head">
         <div>
           <h1>Signallar</h1>
-          <p className="sub">Robot bozorni M5, M15, M30 va H1 da tahlil qilib signal beradi</p>
+          <p className="sub">Zeus bozorni D1 dan M15 gacha tahlil qilib signal beradi</p>
         </div>
         <div className="robot" role="status">
           <span className={`dot ${state === "busy" ? "busy" : state === "err" ? "err" : ""}`} />
@@ -216,11 +209,7 @@ export default function Dashboard({ categories }: { categories: Category[] }) {
         </span>
       </label>}
 
-      <p className={`notice ${HISTORY[tf].weak ? "warn" : ""}`}>
-        {tf} tarixiy sinovda: win rate {HISTORY[tf].win}%, profit factor {HISTORY[tf].pf}, {HISTORY[tf].trades} ta savdo.{" "}
-        {tf === "M5" && "Bu taymfreymda robot tarixda zararda bo'lgan, signallarga ehtiyot bo'ling."}
-        {tf === "H1" && "Bu taymfreym bo'yicha ma'lumot kam, natija ishonchli emas."}
-      </p>
+      <p className="notice">Oltin signali bir nechta taymfreym (D1, H4, H1, M15) tahlilidan chiqadi va barcha taymfreym tugmalarida bir xil ko'rinadi. Natijalar sahifasida har bir yopilgan signal ochiq.</p>
 
       {data && data.errors.length > 0 && (
         <p className="notice">
@@ -239,12 +228,12 @@ export default function Dashboard({ categories }: { categories: Category[] }) {
           </div>
         )}
         {list.map((s) => (
-          <SignalCard key={s.pair + s.timeframe + (s.strategy ?? "")} s={s} tier={quota?.tier} />
+          <SignalCard key={s.pair + s.timeframe + (s.strategy ?? "") + s.candleTime} s={s} tier={quota?.tier} />
         ))}
       </div>
 
       <footer>
-        Signallar texnik indikatorlar (EMA, RSI, ADX, ATR) va yuqori taymfreym trendi asosida avtomatik hisoblanadi va moliyaviy maslahat emas. Har
+        Signallarni Zeus Number One tahlil tizimi bir nechta taymfreym, trend, talab va taklif zonalari, darajalar va yangiliklarni tahlil qilib beradi. Bu moliyaviy maslahat emas. Har
         qanday savdo xavf bilan bog'liq, foyda kafolatlanmaydi.
       </footer>
     </div>

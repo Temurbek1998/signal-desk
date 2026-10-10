@@ -4,6 +4,16 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.17.0 (2026-10-10): mijoz oltin signallari Claude'ning o'z tahlilidan
+
+- Egasining qarori: mijozga oltin signali endi Claude treyderning kun ichidagi qaroridan beriladi (kirish, SL, TP1, TP2 Claude'dan,
+  ishonch >= `AI_DEMO_MIN_CONF`, 50). Saytda nomi "Zeus" qoladi, sababdagi ichki nomlar almashtiriladi. Zeus oltin kartalari faqat adminga.
+  Kunlik limit Claude signallari bo'yicha. `GOLD_SIGNAL_SOURCE=zeus` eski yo'lga qaytaradi (`server/clientSignals.ts`).
+- Claude treyder Zeus fikrini olmaydi: o'zi tahlil qiladi. Unga xotira (30 kunlik natija, yopilgan savdolar va demo izohlari) va
+  yangiliklar (kalendar, M1 reaksiya tahlillari, keskin harakatlar) beriladi; kuchli yangilikdan 45 daqiqa oldin yangi savdo ochmaydi.
+- Zeus signallarini Claude baholashi o'chirildi (ortiqcha xarajat), `AI_REVIEW=1` bilan qayta yoqiladi.
+- Natijalar va bosh sahifa statistikasi mijozga berilgan Claude signallari bo'yicha; "Robot haqida", bosh sahifa, operator matnlari yangi usulga moslandi.
+
 ## v1.16.1 (2026-10-10): admin menyusi ixcham
 
 - Admin menyusi kompyuterda 2 qatorga o'tadi, tugmalar kichikroq; telefonda avvalgidek suriladi.

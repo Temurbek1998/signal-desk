@@ -20,7 +20,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   `runCycle` (runner.ts) robotni yurgizadi, `after()` ichida AI ishlari.
 - **Claude qatlami** (`src/lib/server/`):
   - `llm.ts`: provayderlar anthropic / deepseek / gemini / mock. Anthropic raw fetch + `output_config.format` JSON sxema.
-  - `aiReview.ts`: Zeus'ning har yangi kuchli signalini (oltin va valyuta) Claude baholaydi: "tasdiq" yoki "ehtiyot" va to'liq tahlil.
+  - `clientSignals.ts` (v1.17.0): mijoz oltin signallari = `ai_trades` (XAU/USD, intraday, ishonch >= 50); `/api/signals`, Natijalar, bosh sahifa.
+  - `aiReview.ts` (v1.17.0 dan standart o'chiq, `AI_REVIEW=1`): Zeus'ning har yangi kuchli signalini (oltin va valyuta) Claude baholaydi: "tasdiq" yoki "ehtiyot" va to'liq tahlil.
     **Oltinda Claude yakuniy qaror qiladi** (`gated`, `AI_GATE`): mijoz faqat "tasdiq" olgan signalni ko'radi (`/api/signals`).
     Valyutalar faqat admin sinovida.
   - `aiTrader.ts`: har juftlikda alohida Claude treyder demo savdo qiladi: oltin har soatda (Opus), 6 valyuta har 2 soatda
@@ -75,8 +76,9 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
 - Mijozlar ko'radigan joyda (sayt, operator, signal izohi) "Claude" yoki "Anthropic" so'zi yo'q (egasining qarori, 2026-10-10):
   robot "Zeus", tekshiruv "ikki bosqichli maxsus tekshiruv" / "Zeus Number One tahlil tizimi". Odamlar tekshiradi deb yozilmaydi.
   Admin panelda Claude nomi qoladi.
-- Saytda kafolatlangan yutuq foizi va "garant" so'zi yo'q. Claude mijoz signali uchun kirish/TP/SL o'ylab topmaydi:
-  darajalar Zeus'dan, Claude faqat tasdiqlaydi yoki ushlab qoladi.
+- Saytda kafolatlangan yutuq foizi va "garant" so'zi yo'q.
+- 2026-10-10 dan (egasining qarori, v1.17.0): mijoz oltin signali Claude treyderning o'z qaroridan (kirish/SL/TP Claude'dan),
+  Zeus faqat nom. Claude Zeus fikrini kutmaydi; xotira va yangiliklar bilan o'zi tahlil qiladi (`clientSignals.ts`, `aiTrader.ts` facts trader rejimi).
 - Yangi bozor yoki strategiya mijozlarga faqat natijasi isbotlangach ochiladi (valyuta: kamida 20 yopilgan, Claude tasdiqlaganlari bo'yicha ijobiy).
 - Narxni oshirish faqat 3+ oy barqaror jonli natijadan keyin.
 - Commit xabarlari o'zbekcha.

@@ -1,14 +1,15 @@
 import { signalLabel } from "@/lib/types.ts";
 import { recentClosed, trackRecord } from "@/lib/server/track.ts";
+import { claudeSource, clientClosed, clientRecord } from "@/lib/server/clientSignals.ts";
 
 export const metadata = { title: "Natijalar" };
 export const dynamic = "force-dynamic";
 
-const STATUS: Record<string, string> = { tp1: "TP 1", tp2: "TP 2", sl: "SL", close: "Kun oxiri" };
+const STATUS: Record<string, string> = { tp1: "TP 1", tp2: "TP 2", sl: "SL", close: "Yopildi" };
 const pips = (s: { strategy: string }) => s.strategy !== "trend";
 
 export default async function ResultsPage() {
-  const [record, recent] = await Promise.all([trackRecord(90), recentClosed(40)]);
+  const [record, recent] = await Promise.all(claudeSource() ? [clientRecord(90), clientClosed(40)] : [trackRecord(90), recentClosed(40)]);
   const rows = ["M5", "M15", "M30", "H1", "ALL"].map((tf) => record.find((r) => r.timeframe === tf)).filter(Boolean);
 
   return (
@@ -45,8 +46,8 @@ export default async function ResultsPage() {
           </div>
         )}
         <p className="muted">
-          Win rate: TP1 ga Stop Loss dan oldin yetgan signallar ulushi. R: risk birligidagi natija (SL = −1R). TP1 da
-          pozitsiyaning yarmi yopiladi, oltinda qolgan yarmi uchun SL narx ortidan 1 ATR masofada ergashadi va savdo ko'pi bilan 8 soatda yopiladi.
+          Win rate: foyda bilan yopilgan signallar ulushi. R: risk birligidagi natija (SL = −1R). TP1 da
+          pozitsiyaning yarmi yopiladi va SL kirishga ko'chadi; savdo TP2, SL yoki ko'pi bilan 24 soatda yopiladi.
         </p>
       </section>
 

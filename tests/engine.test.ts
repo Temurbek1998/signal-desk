@@ -401,3 +401,19 @@ test("kripto pips: BTC 1 $, ETH 0.1 $, XRP 0.0001 $", async () => {
   assert.equal(pipSize("XAU/USD"), 0.1);
   assert.equal(pipSize("USD/JPY"), 0.01);
 });
+
+test("mijoz oltin signali Claude qaroridan, ichki nomsiz", async () => {
+  const { toSignal, scrub } = await import("../src/lib/clientSignal.ts");
+  const at = new Date(Date.now() - 30 * 60_000);
+  const t = { id: 1, at, pair: "XAU/USD", action: "BUY", status: "tp1", entry: 4000, sl: 3990, tp1: 4010, tp2: 4030, confidence: 70,
+    reason: "Claude: H4 trendi yuqoriga. Narx talab zonasidan qaytdi.", note: "", model: "", tp1_hit: true, result_r: null, closed_at: null,
+    analysis: null, mode: "intraday", stops: [{ t: Date.now(), sl: 4005 }], exit_price: null, reviewed_at: null };
+  const s = toSignal(t as never, "M15", 4012);
+  assert.equal(s.status, "active");
+  assert.equal(s.side, "BUY");
+  assert.equal(s.trailStop, 4005);
+  assert.equal(s.barsAgo, 2);
+  assert.ok(!s.reasons.join(" ").includes("Claude"));
+  assert.equal(scrub("Anthropic opus"), "Zeus Zeus");
+  assert.equal(toSignal({ ...t, status: "be", tp1_hit: true } as never, "M15", 4000).status, "tp1");
+});

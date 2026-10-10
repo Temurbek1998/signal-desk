@@ -2,6 +2,7 @@ import "server-only";
 import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis } from "../aiAnalysis.ts";
 import { facts, round } from "./aiTrader.ts";
 import { digitsOf } from "./analysis.ts";
+import { claudeSource } from "./clientSignals.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
 import { notifyAdmin } from "./telegram.ts";
@@ -47,6 +48,8 @@ type Row = { id: number; pair: string; timeframe: string; side: string; entry: n
 
 export async function reviewNewSignals(limit = 2) {
   if (!provider() || process.env.AI_REVIEW === "0") return 0;
+  // Claude o'zi signal bersa (clientSignals.ts), Zeus signallarini baholash ortiqcha xarajat: AI_REVIEW=1 bilan qayta yoqiladi.
+  if (claudeSource() && process.env.AI_REVIEW !== "1") return 0;
   const rows = await sql<Row>(
     `SELECT id, pair, timeframe, side, entry, tp1, tp2, sl, confidence, signal_time FROM signal_log
      WHERE category IN ('gold', 'forex', 'crypto') AND coalesce(strategy, 'trend') = 'trend' AND status = 'active' AND ai_at IS NULL
