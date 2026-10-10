@@ -203,7 +203,7 @@ async function SelectedChart({ row }: { row: { inst: Instrument; sig: Sig | null
         <Link className="muted" href={`${adminHref("/tahlil")}?pair=${encodeURIComponent(inst.pair)}&tf=M15`}>Boshqa taymfreymlar →</Link>
       </div>
       <TvChart candles={all.slice(from)} ema20={e20.slice(from)} ema50={e50.slice(from)} signals={signals} digits={digitsOf(inst.pair, closes.at(-1) ?? 0)}
-        tfMinutes={15} levels={levels} zones={ca?.zones ?? []} />
+        tfMinutes={15} levels={levels} zones={ca?.zones ?? []} live={{ pair: inst.pair, source: inst.source }} />
       {view ? view.summary && <p className="ai-box" style={{ margin: 0 }}>Claude: {view.summary}</p> : (
         <p className="muted" style={{ margin: 0 }}>Bu juftlikda Claude tahlili (zonalar, darajalar) hali yo&apos;q: cron navbat bilan chizadi yoki hozir so&apos;rang.</p>
       )}

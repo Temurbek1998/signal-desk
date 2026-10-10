@@ -19,11 +19,24 @@ const alpha = (c: string, a: number) => {
   return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 };
 
-export default function TvChart({ candles, ema20, ema50, signals, digits, levels = [], zones = [], drawAll = false, height = 560 }: {
+// Jonli rejim (live): narx har necha soniyada yangilanadi (kripto 5, valyuta 30, oltin 60: Twelve Data limiti),
+// oxirgi sham shakllanib boradi va narx yonida sham yopilishigacha qolgan vaqt (TradingView kabi) ko'rinadi.
+const POLL: Record<string, number> = { binance: 5_000, yahoo: 30_000, twelvedata: 60_000 };
+const pad = (n: number) => String(n).padStart(2, "0");
+export const countdown = (ms: number) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return h ? `${pad(h)}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`;
+};
+
+export default function TvChart({ candles, ema20, ema50, signals, digits, levels = [], zones = [], drawAll = false, height = 560, tfMinutes, live }: {
   candles: ChartCandle[]; ema20: number[]; ema50: number[]; signals: ChartSignal[]; digits: number; tfMinutes?: number;
-  levels?: ChartLevel[]; zones?: ChartZone[]; drawAll?: boolean; height?: number;
+  levels?: ChartLevel[]; zones?: ChartZone[]; drawAll?: boolean; height?: number; live?: { pair: string; source?: string };
 }) {
   const box = useRef<HTMLDivElement>(null);
+  const timerBox = useRef<HTMLDivElement>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const lastRef = useRef<{ t: number; o: number; h: number; l: number; c: number } | null>(null);
   const zoneBox = useRef<HTMLDivElement>(null);
   // Kun/tun rejimi almashsa grafik ranglari qayta o'qiladi.
   const [theme, setTheme] = useState(0);
@@ -74,6 +87,8 @@ export default function TvChart({ candles, ema20, ema50, signals, digits, levels
       },
     });
     cs.setData(candles.map((c) => ({ time: T(c.t), open: c.o, high: c.h, low: c.l, close: c.c })));
+    seriesRef.current = cs;
+    lastRef.current = { ...candles[candles.length - 1] };
 
     const ema = (vals: number[], color: string) => {
       const s = chart.addSeries(LineSeries, { color, lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
@@ -126,17 +141,61 @@ export default function TvChart({ candles, ema20, ema50, signals, digits, levels
     if (zones.length) raf = requestAnimationFrame(place);
 
     chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, candles.length - 120), to: candles.length + 6 });
-    return () => { cancelAnimationFrame(raf); chart.remove(); };
+    return () => { cancelAnimationFrame(raf); seriesRef.current = null; chart.remove(); };
   }, [candles, ema20, ema50, signals, digits, levels, zones, drawAll, height, theme]);
+
+  // Jonli narx va sham taymeri.
+  useEffect(() => {
+    if (!live || !tfMinutes || candles.length < 2) return;
+    const step = tfMinutes * 60_000;
+    const off = -new Date().getTimezoneOffset() * 60;
+    const T = (ms: number) => (Math.floor(ms / 1000) + off) as UTCTimestamp;
+    let stop = false;
+    const apply = (price: number) => {
+      const cs = seriesRef.current, last = lastRef.current;
+      if (!cs || !last) return;
+      const bar = Math.floor(Date.now() / step) * step;
+      // Ma'lumot bir necha shamdan ortda qolgan bo'lsa (bozor yopiq), sun'iy sham qo'shilmaydi.
+      if (bar - last.t > step * 3) return;
+      const cur = bar > last.t ? { t: bar, o: last.c, h: Math.max(last.c, price), l: Math.min(last.c, price), c: price }
+        : { ...last, h: Math.max(last.h, price), l: Math.min(last.l, price), c: price };
+      lastRef.current = cur;
+      cs.update({ time: T(cur.t), open: cur.o, high: cur.h, low: cur.l, close: cur.c });
+    };
+    const poll = async () => {
+      try {
+        const r = await fetch(`/api/live?pair=${encodeURIComponent(live.pair)}`, { cache: "no-store" });
+        const j = await r.json();
+        if (!stop && Number.isFinite(j.price)) apply(j.price);
+      } catch {}
+    };
+    poll();
+    const pid = setInterval(poll, POLL[live.source ?? ""] ?? 30_000);
+    const tick = () => {
+      const el = timerBox.current, cs = seriesRef.current, last = lastRef.current;
+      if (!el || !cs || !last) return;
+      const left = Math.floor(Date.now() / step) * step + step - Date.now();
+      const y = cs.priceToCoordinate(last.c);
+      if (y == null) { el.style.display = "none"; return; }
+      el.style.display = "";
+      el.style.top = `${y + 11}px`;
+      el.textContent = countdown(left);
+    };
+    tick();
+    const tid = setInterval(tick, 1000);
+    return () => { stop = true; clearInterval(pid); clearInterval(tid); };
+  }, [live?.pair, live?.source, tfMinutes, candles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (candles.length < 2) return <p className="muted">Grafik uchun ma&apos;lumot yo&apos;q.</p>;
   return (
     <div className="tv-wrap">
       <div ref={box} className="tv-chart" />
       <div ref={zoneBox} className="tv-zones" aria-hidden />
+      {live && tfMinutes && <div ref={timerBox} className="tv-timer" title="Sham yopilishigacha qolgan vaqt" />}
       <p className="muted chart-legend">
         <span className="sw ema20" /> EMA20 <span className="sw ema50" /> EMA50 <span className="sw buy" /> BUY <span className="sw sell" /> SELL
         {(levels.length > 0 || zones.length > 0) && <> <span className="sw lvl" /> Claude darajalari <span className="sw zone" /> zonalar</>}
+        {live && tfMinutes ? <> · <b className="up">Jonli</b>: narx yangilanib boradi, narx ostida sham yopilishigacha qolgan vaqt</> : null}
         {" "}· Sichqoncha g&apos;ildiragi: kattalashtirish, sudrash: surish. Vaqt qurilmangiz soatida.
       </p>
     </div>
