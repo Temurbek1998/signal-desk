@@ -10,6 +10,7 @@ const ITEMS = [
   { key: "ai", label: "AI treyder", sub: "/ai" },
   { key: "demo", label: "Demo hisob", sub: "/demo" },
   { key: "mt5", label: "MT5 avtosavdo", sub: "/mt5" },
+  { key: "operator", label: "Operator", sub: "/operator" },
   { key: "sinov", label: "Bozorlar sinovi", sub: "/sinov" },
 ];
 

@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.2.0 (2026-10-10): Operator yangilandi
+
+- Operator chati obunachiga endi faqat Claude tasdiqlagan oltin signallarini aytadi (avval tasdiqlanmaganini ham aytishi mumkin edi).
+- Operator ko'rsatmasi yangilandi: Claude'ning yakuniy qarori, oltin chiqish qoidalari (SL 2.5 ATR, ergashuvchi SL, 8 soat),
+  tarixiy natija kafolat emasligi, jonli natija hali yig'ilayotgani.
+- Admin panelda "Operator" sahifasi: ulanish holati, savollar soni va oxirgi 60 ta yozishma.
+
 ## v1.1.0 (2026-10-10): MT5 avtosavdo (demo)
 
 - MT5 Expert Advisor (`public/mt5/SignalDeskEA.mq5`): Claude tasdiqlagan oltin signallarini va Claude'ning o'z savdolarini

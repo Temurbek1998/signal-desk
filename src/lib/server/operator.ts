@@ -1,6 +1,7 @@
 import "server-only";
 import type { Access } from "./auth.ts";
 import { formatUsdt, listPlans } from "./billing.ts";
+import { gated } from "./aiReview.ts";
 import { sql } from "./db.ts";
 import { recentSignals, trackRecord } from "./track.ts";
 import { allocate, TIER_NAME } from "../memory.ts";
@@ -15,15 +16,16 @@ export async function operatorPrompt(access: Access | null): Promise<string> {
   let signals = "";
   if (subscriber && access?.tier) {
     // Faqat shu tarif ko'radigan signallar (kunlik limit va reyting bo'yicha).
-    const recent = await recentSignals();
+    // Oltinda Claude tasdiqlamagan signal mijozga ko'rinmaydi (/api/signals bilan bir xil qoida).
+    const recent = (await recentSignals()).filter((r) => !gated(r.pair, r.strategy) || r.ai_verdict === "tasdiq");
     const days = [...new Set(recent.map((r) => r.day))];
     const allowed = new Set(
-      days.flatMap((d) => allocate(recent.filter((r) => r.day === d), access.tier!)).map((r) => `${r.pair}|${r.timeframe}|${new Date(r.signal_time).getTime()}`),
+      days.flatMap((d) => allocate(recent.filter((r) => r.day === d), access.tier!)).map((r) => `${r.pair}|${r.timeframe}|${r.strategy ?? "trend"}|${new Date(r.signal_time).getTime()}`),
     );
-    const rows = (await sql<{ pair: string; timeframe: string; side: string; entry: number; tp1: number; tp2: number; sl: number; signal_time: Date; rating: string | null }>(
-      `SELECT pair, timeframe, side, entry, tp1, tp2, sl, signal_time, rating FROM signal_log
+    const rows = (await sql<{ pair: string; timeframe: string; strategy: string | null; side: string; entry: number; tp1: number; tp2: number; sl: number; signal_time: Date; rating: string | null }>(
+      `SELECT pair, timeframe, strategy, side, entry, tp1, tp2, sl, signal_time, rating FROM signal_log
        WHERE status = 'active' AND signal_time > now() - interval '1 day' ORDER BY signal_time DESC LIMIT 50`,
-    )).filter((r) => allowed.has(`${r.pair}|${r.timeframe}|${new Date(r.signal_time).getTime()}`)).slice(0, 15);
+    )).filter((r) => allowed.has(`${r.pair}|${r.timeframe}|${r.strategy ?? "trend"}|${new Date(r.signal_time).getTime()}`)).slice(0, 15);
     signals = rows.length
       ? rows.map((r) => `- ${r.pair} ${r.timeframe} ${r.side} (reyting ${r.rating ?? "-"}): kirish ${r.entry}, TP1 ${r.tp1}, TP2 ${r.tp2}, SL ${r.sl} (${new Date(r.signal_time).toISOString()})`).join("\n")
       : "Hozir bu foydalanuvchi uchun faol signal yo'q.";
@@ -47,8 +49,11 @@ QOIDALAR:
 
 SAYT HAQIDA:
 - Robot hozir quyidagilarni tahlil qiladi: ${pairs}. ${onlyGold ? "Oltinda kuchli signallar faqat M15 da." : "Asosiy signallar M15 va M30 da."}${onlyGold ? " Hozircha faqat oltin; kripto va valyuta keyinroq bosqichma-bosqich qo'shiladi." : ""}
-- Qoidalar: trend EMA20/EMA50, trend kuchi ADX >= 20, yuqori taymfreym tasdig'i, pullback tugashi (RSI). SL = 2 x ATR, TP1 = 0.5R, TP2 = 1.5R. TP1 da pozitsiyaning yarmini yopib, SL ni kirish narxiga ko'chirish tavsiya etiladi.
-- Tarixiy sinov (2018-yil, 10 kripto juftlik): M15 win rate 72%, M30 73%, profit factor 1.16-1.20. Oltin tarixiy sinovi (2026-iyun–oktabr, 123 kun, PAXG narxlari): M15 da 38 signal, win rate 87%, o'rtacha +0.22R; namuna kichik, buni so'ralsa ochiq ayt.${all && all.closed >= 20 ? `\n- Jonli natija (90 kun): ${all.closed} signal, win rate ${Math.round(all.winRate * 100)}%, profit factor ${all.profitFactor?.toFixed(2) ?? "-"}.` : ""}
+- Qoidalar: trend EMA20/EMA50, trend kuchi ADX >= 20, yuqori taymfreym tasdig'i, pullback tugashi (RSI). ${onlyGold
+    ? "Oltinda: SL 2.5 x ATR, TP1 = 0.5R da pozitsiyaning yarmi yopiladi, so'ng qolgan yarmida SL narx ortidan 1 ATR masofada ergashadi, TP2 = 1.5R, savdo ko'pi bilan 8 soatda yopiladi."
+    : "SL = 2 x ATR (oltinda 2.5), TP1 = 0.5R, TP2 = 1.5R. TP1 da pozitsiyaning yarmini yopib, SL ni kirish narxiga ko'chirish tavsiya etiladi."}
+- Claude (Anthropic sun'iy intellekti) robotning har yangi oltin signalini to'liq tahlil qiladi: katta taymfreym trendlari, darajalar, zonalar, yangilik xavfi. Mijozga faqat Claude tasdiqlagan signal chiqadi, shubhali signallar ushlab qolinadi. Claude kirish, TP yoki SL narxini o'zgartirmaydi, faqat tasdiqlaydi yoki ushlab qoladi. Shuning uchun signal robot topgach bir necha daqiqa kechikib chiqishi mumkin.
+- ${onlyGold ? "" : "Tarixiy sinov (2018-yil, 10 kripto juftlik): M15 win rate 72%, M30 73%, profit factor 1.16-1.20. "}Oltin tarixiy sinovi (2026-iyun–oktabr, 123 kun, PAXG narxlari): M15 da 38 signal, win rate 87%, o'rtacha +0.22R. Namuna kichik va o'tgan natija kelajakni kafolatlamaydi: buni har safar ochiq ayt.${all && all.closed >= 20 ? `\n- Jonli natija (90 kun): ${all.closed} signal, win rate ${Math.round(all.winRate * 100)}%, profit factor ${all.profitFactor?.toFixed(2) ?? "-"}.` : "\n- Jonli natija hali yig'ilmoqda (20 tadan kam yopilgan signal): /natijalar sahifasida yangilanib boradi."}
 - Muhim yangiliklardan (NFP, CPI, FOMC) oldin saytda ogohlantirish chiqadi.
 - Robot har daqiqada signal bermaydi: saytda standart holatda faqat "kuchli" signallar (M15, M30 da barcha shartlar mos kelganda, yangilik oldidan emas) ko'rsatiladi. Signal bo'lmagan soatlar odatiy holat.
 - Tarif darajalari: Standart eng yuqori reytingli (A) signallarni oladi; PRO va VIP A va B reytingli signallarni oladi, VIP da ustuvor yordam va operatorga ko'proq savol. Robot faqat kuchli setuplarda signal beradi: oltinda odatda haftasiga 2-3 ta kuchli signal, mijozga kuniga ko'pi bilan 2 ta, ba'zi kunlari umuman bo'lmaydi. Aniq signal sonini va'da qilma. Reytingni robot o'z xotirasidan, o'xshash signallarning o'tgan natijalaridan hisoblaydi.

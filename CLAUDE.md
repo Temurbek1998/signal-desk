@@ -34,6 +34,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   `/api/ea` dan (sarlavha `X-EA-Key` = `EA_KEY`) oddiy matn qatorlarini oladi va savdo ochadi. Faqat demo, `InpAllowReal` bilan haqiqiy.
   Admin: "MT5 avtosavdo" sahifasi (`mt5`), `ea_pings` jadvali oxirgi ulanishni saqlaydi. MQL5 kodi bu muhitda kompilyatsiya qilinmaydi:
   MetaEditor xatolarini egasi yuboradi.
+- **Operator** (`src/lib/server/operator.ts`, `/api/chat`, `ChatWidget.tsx`): har sahifadagi chat, `LLM_MODEL` (standart Haiku). Obunachiga faqat
+  Claude tasdiqlagan faol signallarni aytadi. Admin: "Operator" sahifasi (`operator`), yozishmalar `chat_log` da.
 - `/api/health`: faqat sonlar va umumiy holat (pullik signal tafsilotlari chiqmaydi). `AI_KEY`, `ai_decisions`, `ai_views`, `ai_reviews`.
 
 ## Qat'iy qoidalar (egasi bilan kelishilgan)
