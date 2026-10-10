@@ -204,6 +204,9 @@ ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS tp1 double precision;
 ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS tp2 double precision;
 ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS lots double precision;
 CREATE INDEX IF NOT EXISTS demo_trades_closed ON demo_trades (closed_at) WHERE status = 'closed';
+-- Yopilgan demo savdo sababi (Claude, server/demoReview.ts): nega foyda yoki zarar bo'ldi.
+ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS review text;
+ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS review_at timestamptz;
 
 -- Admin harakatlari jurnali: kim, qachon, nima qildi.
 CREATE TABLE IF NOT EXISTS admin_log (

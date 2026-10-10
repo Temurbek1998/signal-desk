@@ -4,6 +4,15 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.14.0 (2026-10-10): demo savdolar jonli va izoh bilan
+
+- Admin "Demo hisob": ochiq savdolarda joriy narx, yurgan pips, SL gacha pips, suzuvchi USDT va R, amaldagi SL
+  (Claude ko'chirgan yoki TP1 dan keyin kirishga), SL / kirish / TP1 / TP2 va joriy narx chizig'i. Sahifa har 30 soniyada yangilanadi.
+- Tugagan savdolar ostida izoh: foyda, zarar yoki zararsiz, qaysi darajada yopilgani, pips, R va USDT (`demoNote.ts`).
+- Sabab: savdo yopilgach Claude (`DEMO_REVIEW_MODEL`, standart Sonnet) kirish sababi, nazorat logi va shamlarga qarab
+  2-4 jumlada nega foyda yoki zarar bo'lganini yozadi (`demoReview.ts`, `demo_trades.review`, cron'da 2 tagacha,
+  kunlik AI chegarasi ichida). O'chirish: `DEMO_REVIEW=0`.
+
 ## v1.13.1 (2026-10-10): demo hisob 100 000 $, kamida 0.05 lot
 
 - Demo hisob boshlang'ich balansi 100 000 $ (`DEMO_START_BALANCE`), plecho 1:1000 (`DEMO_LEVERAGE`, avvalgidek).

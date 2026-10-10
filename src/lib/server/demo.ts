@@ -7,6 +7,7 @@ export type DemoTrade = {
   id: number; pair: string; category: string; timeframe: string; strategy: string; side: string; rating: string | null; entry: number; sl: number; tp1: number | null; tp2: number | null; lots: number | null;
   opened_at: Date; risk_usdt: number; size: number; notional: number; fee: number; status: "open" | "closed";
   outcome: string | null; result_r: number | null; pnl: number | null; closed_at: Date | null; balance_after: number | null;
+  signal_id: number | null; ai_trade_id: number | null; review: string | null; review_at: Date | null;
 };
 
 async function closedBalance(start: number): Promise<number> {
