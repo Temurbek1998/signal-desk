@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cronDenied } from "@/lib/server/cronAuth.ts";
+import { refreshMarkets } from "@/lib/server/markets.ts";
 import { newsWatch } from "@/lib/server/newsWatch.ts";
 import { spikeWatch } from "@/lib/server/spikeWatch.ts";
 
@@ -12,6 +13,7 @@ export const maxDuration = 30;
 export async function GET(req: Request) {
   const why = cronDenied(req);
   if (why) return NextResponse.json({ error: "Ruxsat yo'q", why }, { status: 401 });
+  await refreshMarkets(true); // admin bozor tugmalari
   // Bitta daqiqa o'tkazib yuborilsa ham harakat yo'qolmasin: oxirgi 2 sham bo'yicha (takror xabar bazada to'siladi).
   const [news, spike] = await Promise.all([
     newsWatch().catch((e) => ({ error: e instanceof Error ? e.message : String(e) })),

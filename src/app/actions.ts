@@ -6,6 +6,8 @@ import { endSession, hashPassword, logAdmin, requireAdmin, requireUser, startSes
 import { grantSubscription, networks } from "@/lib/server/billing.ts";
 import { PAID_TIERS, TIER_NAME, type PaidTier } from "@/lib/memory.ts";
 import { sql } from "@/lib/server/db.ts";
+import { saveMarkets } from "@/lib/server/markets.ts";
+import { ALL_MARKETS } from "@/lib/instruments.ts";
 import { checkCode, sendCode } from "@/lib/server/verify.ts";
 
 export type FormState = { error?: string; ok?: string; email?: string; name?: string; step?: "verify" };
@@ -231,4 +233,13 @@ export async function closeTicket(form: FormData) {
   const [t] = await sql<{ id: number }>("UPDATE tickets SET status = 'closed', closed_at = now() WHERE id = $1 AND status = 'open' RETURNING id", [id]);
   if (t) await logAdmin(admin, "murojaat yopildi", null, `#${t.id}`);
   revalidatePath("/admin");
+}
+
+// Bozor tugmalari: belgilangan bozorlar yoqiladi, qolganlarida Zeus va Claude to'xtaydi (server/markets.ts).
+export async function setMarketsAction(form: FormData) {
+  const admin = await requireAdmin();
+  const cats = ALL_MARKETS.filter((c) => form.get(c) === "on");
+  await saveMarkets(cats);
+  await logAdmin(admin, "bozorlar", null, cats.join(",") || "hammasi o'chiq");
+  revalidatePath("/admin", "layout");
 }

@@ -34,7 +34,14 @@ export const ALL_INSTRUMENTS: Instrument[] = [
 //   ROBOT_MARKETS=gold                (faqat oltin)
 const ALL_CATEGORIES: Category[] = ["gold", "forex", "crypto"];
 
+// Admin paneldagi bozor tugmalari (2026-10-10, server/markets.ts, app_settings jadvali): bazadagi tanlov ROBOT_MARKETS dan ustun.
+// Hammasi o'chirilishi mumkin: unda robot va Claude hech qaysi bozorda ishlamaydi.
+const g = globalThis as unknown as { __sdMarkets?: Category[] | null };
+export function setMarketOverride(cats: Category[] | null) { g.__sdMarkets = cats; }
+export const ALL_MARKETS = ALL_CATEGORIES;
+
 export function activeCategories(env: Record<string, string | undefined> = process.env): Category[] {
+  if (env === process.env && g.__sdMarkets) return g.__sdMarkets;
   const want = (env.ROBOT_MARKETS ?? "gold,forex").split(",").map((s) => s.trim().toLowerCase());
   const cats = ALL_CATEGORIES.filter((c) => want.includes(c));
   return cats.length ? cats : ["gold"];

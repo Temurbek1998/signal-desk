@@ -40,5 +40,7 @@ export function db(): Promise<Db> {
 }
 
 export async function sql<T = Row>(text: string, params: unknown[] = []): Promise<T[]> {
+  // Admin bozor tugmalari: har 20 soniyada bir bazadan o'qiladi (server/markets.ts).
+  await (await import("./markets.ts")).refreshMarkets();
   return (await (await db()).query<T>(text, params)).rows;
 }

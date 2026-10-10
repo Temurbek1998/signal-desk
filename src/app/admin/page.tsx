@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { adminHref } from "@/lib/adminPath.ts";
-import { approvePayment, rejectPayment } from "../actions.ts";
+import { approvePayment, rejectPayment, setMarketsAction } from "../actions.ts";
+import { activeCategories } from "@/lib/instruments.ts";
 import GrantForm from "../components/GrantForm.tsx";
 import { requireAdmin } from "@/lib/server/auth.ts";
 import { explorerUrl, formatUsdt, networks } from "@/lib/server/billing.ts";
@@ -39,6 +40,12 @@ export default async function AdminPage() {
     ),
   ]);
 
+  const on = activeCategories();
+  const MARKETS = [
+    { key: "gold", name: "Oltin (XAU/USD)", ai: "Claude treyder har soatda (Opus), signal bahosi, yangiliklar, keskin harakatlar" },
+    { key: "forex", name: "Valyutalar (6 juftlik)", ai: "Claude treyder har 2 soatda (Sonnet), signal bahosi" },
+    { key: "crypto", name: "Kripto (BTC, ETH, SOL, BNB, XRP)", ai: "Claude treyder har 2 soatda (Sonnet), signal bahosi, 24/7" },
+  ] as const;
   const robotAge = robot.last ? (Date.now() - new Date(robot.last).getTime()) / 60_000 : Infinity;
   return (
     <main className="wrap">
@@ -60,6 +67,22 @@ export default async function AdminPage() {
           <div className="stat"><b>{robot.open}</b><span>Ochiq signallar</span></div>
           <div className="stat"><b>{robot.day}</b><span>Signallar, 24 soat</span></div>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Bozorlar</h2>
+        <p className="muted">O'chirilgan bozorda Zeus tahlil qilmaydi va Claude chaqirilmaydi, ya'ni Claude'ga pul ketmaydi. Ochiq savdolar narx bo'yicha
+          yopilguncha kuzatiladi, lekin Claude ularni qayta ko'rmaydi. O'zgarish keyingi cron aylanishida (5 daqiqa ichida) ishlaydi.</p>
+        <form action={setMarketsAction} className="markets">
+          {MARKETS.map((m) => (
+            <label key={m.key} className="market-row">
+              <input type="checkbox" name={m.key} defaultChecked={on.includes(m.key)} />
+              <span><b>{m.name}</b> <span className={on.includes(m.key) ? "up" : "down"}>{on.includes(m.key) ? "yoqilgan" : "o'chiq"}</span><br />
+                <span className="muted">{m.ai}</span></span>
+            </label>
+          ))}
+          <button className="btn gold sm" type="submit">Saqlash</button>
+        </form>
       </section>
 
       <div className="stats">

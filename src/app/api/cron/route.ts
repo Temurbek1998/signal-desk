@@ -9,6 +9,7 @@ import { newsCycle } from "@/lib/server/newsTrader.ts";
 import { newsWatch } from "@/lib/server/newsWatch.ts";
 import { spikeNotes, spikeWatch } from "@/lib/server/spikeWatch.ts";
 import { cronDenied } from "@/lib/server/cronAuth.ts";
+import { refreshMarkets } from "@/lib/server/markets.ts";
 import { demoReviews } from "@/lib/server/demoReview.ts";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export const maxDuration = 120;
 export async function GET(req: Request) {
   const why = cronDenied(req);
   if (why) return NextResponse.json({ error: "Ruxsat yo'q", why }, { status: 401 });
+  await refreshMarkets(true); // admin bozor tugmalari
   const r = await runCycle("cron");
   // Bozorlar sinovi haftada bir marta, javob yuborilgandan keyin (cron-job.org kutib qolmasin).
   after(async () => {
