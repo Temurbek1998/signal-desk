@@ -1,7 +1,7 @@
 import "server-only";
 import { activeStop, parseReview, pipSize, resultAt, toPips, validateStopMove, type StopMove } from "../aiTrade.ts";
 import { analyze } from "../engine.ts";
-import { ALL_INSTRUMENTS } from "../instruments.ts";
+import { activeInstruments, ALL_INSTRUMENTS } from "../instruments.ts";
 import { getCandles } from "../market.ts";
 import { digitsOf } from "./analysis.ts";
 import { underBudget } from "./aiBudget.ts";
@@ -55,8 +55,10 @@ export async function reviewOpenTrades(max = 2): Promise<TradeReview[]> {
   if (!reviewEnabled()) return [];
   const due = await sql<AiTrade>(
     `SELECT * FROM ai_trades WHERE status IN ('open', 'tp1') AND coalesce(reviewed_at, at) < now() - make_interval(mins => $1)
+       AND pair = ANY($3)
      ORDER BY coalesce(reviewed_at, at) LIMIT $2`,
-    [everyMin() - 2, max],
+    // Admin o'chirgan bozorlarda Claude qayta ko'rmaydi (savdo narx bo'yicha kuzatilaveradi).
+    [everyMin() - 2, max, activeInstruments().map((i) => i.pair)],
   );
   const out: TradeReview[] = [];
   for (const t of due) {

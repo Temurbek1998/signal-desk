@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.16.0 (2026-10-10): admin panelda bozor tugmalari
+
+- Admin bosh sahifasida "Bozorlar": Oltin, Valyutalar, Kripto ni belgilab yoqish yoki o'chirish (`app_settings` jadvali, `server/markets.ts`).
+  Panel tanlovi `ROBOT_MARKETS` dan ustun; panelda hech narsa saqlanmagan bo'lsa `ROBOT_MARKETS` ishlaydi.
+- O'chirilgan bozorda Zeus tahlil qilmaydi va Claude chaqirilmaydi: treyder, signal bahosi, qayta ko'rish, yangilik va keskin harakat
+  tahlili, demo izohi. Ochiq savdolar narx bo'yicha yopilguncha kuzatiladi. `/api/health` da `markets` maydoni.
+
 ## v1.15.0 (2026-10-10): kriptoda Claude treyder va Claude bahosi
 
 - `ROBOT_MARKETS` da `crypto` bo'lsa Claude treyder BTC, ETH, SOL, BNB, XRP da ham demo savdo qiladi (Sonnet, har 2 soatda,

@@ -1,6 +1,6 @@
 import "server-only";
 import { outcomeNote } from "../demoNote.ts";
-import { ALL_INSTRUMENTS } from "../instruments.ts";
+import { activeCategories, ALL_INSTRUMENTS } from "../instruments.ts";
 import { getCandles } from "../market.ts";
 import { underBudget } from "./aiBudget.ts";
 import { ohlc } from "./aiTrader.ts";
@@ -31,7 +31,8 @@ export async function demoReviews(max = 2): Promise<number> {
   if (!demoReviewEnabled()) return 0;
   // Navbatdagilar: oxirgi 3 kunda yopilgan, hali sababi yozilmagan.
   const queue = await sql<{ id: number }>(
-    `SELECT id FROM demo_trades WHERE status = 'closed' AND review_at IS NULL AND closed_at > now() - interval '3 days' ORDER BY closed_at LIMIT $1`, [max],
+    `SELECT id FROM demo_trades WHERE status = 'closed' AND review_at IS NULL AND closed_at > now() - interval '3 days'
+       AND category = ANY($2) ORDER BY closed_at LIMIT $1`, [max, activeCategories()],
   );
   if (!queue.length || !(await underBudget())) return 0;
   let n = 0;

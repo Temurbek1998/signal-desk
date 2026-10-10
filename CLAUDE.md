@@ -65,6 +65,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   Egasining talabi: Claude operatorlik qilmaydi, operator faqat platforma savollariga javob beradi (signal, narx aytmaydi).
   Muammo bo'lsa mijoz "Adminga murojaat" bosadi: `/api/ticket`, `tickets` jadvali, Telegram xabari. Admin: "Operator" sahifasi
   (`operator`): murojaatlar (yopish tugmasi) va `chat_log`. Keyinchalik murojaatlarni avtomatlashtirish rejada.
+- **Bozor tugmalari** (v1.16.0): admin bosh sahifasidagi "Bozorlar" (`app_settings.markets`, `server/markets.ts`, `setMarketOverride`)
+  `ROBOT_MARKETS` dan ustun. O'chirilgan bozorda Zeus va barcha Claude chaqiruvlari to'xtaydi (egasining talabi: ortiqcha xarajat yo'q).
 - `/api/health`: faqat sonlar va umumiy holat (pullik signal tafsilotlari chiqmaydi). `AI_KEY`, `ai_decisions`, `ai_views`, `ai_reviews`.
 
 ## Qat'iy qoidalar (egasi bilan kelishilgan)

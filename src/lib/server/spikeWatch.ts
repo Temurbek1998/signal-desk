@@ -1,5 +1,5 @@
 import "server-only";
-import { ALL_INSTRUMENTS } from "../instruments.ts";
+import { activeCategories, ALL_INSTRUMENTS } from "../instruments.ts";
 import { getM1 } from "../market.ts";
 import { describe, getCalendar } from "../news.ts";
 import { marketOpen } from "../sessions.ts";
@@ -18,7 +18,8 @@ import { notifyAdmin } from "./telegram.ts";
 // Manba: SPIKE_SOURCE=paxg (standart: Binance PAXGUSDT, real vaqt, limitsiz; Twelve Data kunlik 800 so'rovga har daqiqa sig'maydi)
 // yoki twelvedata. O'chirish: SPIKE_WATCH=0.
 
-export const spikeEnabled = () => process.env.SPIKE_WATCH !== "0";
+// Admin oltinni o'chirsa keskin harakat kuzatuvi va Claude xulosasi ham to'xtaydi.
+export const spikeEnabled = () => process.env.SPIKE_WATCH !== "0" && activeCategories().includes("gold");
 export const spikePips = () => Math.max(20, Number(process.env.SPIKE_PIPS ?? 180));
 const PAIR = "XAU/USD";
 const COOLDOWN_MIN = 5;

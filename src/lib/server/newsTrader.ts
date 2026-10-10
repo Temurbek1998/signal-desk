@@ -1,6 +1,6 @@
 import "server-only";
 import { pipSize } from "../aiTrade.ts";
-import { ALL_INSTRUMENTS } from "../instruments.ts";
+import { activeInstruments, ALL_INSTRUMENTS } from "../instruments.ts";
 import { getCandles, getM1 } from "../market.ts";
 import { describe, getCalendar, type NewsEvent } from "../news.ts";
 import { checkInvalidation, groupByTime, newsOutcome, parseNewsCall, reactionStats, type NewsStats } from "../newsReaction.ts";
@@ -17,7 +17,9 @@ import { notifyAdmin } from "./telegram.ts";
 // Model: juftlik treyderi bilan bir xil (oltinda Opus). Haftasiga bir necha chaqiruv, kunlik chegaraga sanaladi lekin to'xtatilmaydi.
 
 export const newsEnabled = () => process.env.NEWS_AI !== "0" && !!provider();
-export const newsPairs = () => (process.env.NEWS_PAIRS ?? "XAU/USD").split(",").map((s) => s.trim()).filter((p) => ALL_INSTRUMENTS.some((i) => i.pair === p));
+// Admin o'chirgan bozor juftliklari tushib qoladi (Claude chaqirilmaydi).
+export const newsPairs = () => (process.env.NEWS_PAIRS ?? "XAU/USD").split(",").map((s) => s.trim())
+  .filter((p) => ALL_INSTRUMENTS.some((i) => i.pair === p) && activeInstruments().some((i) => i.pair === p));
 const waitMin = () => Math.max(1, Number(process.env.NEWS_WAIT_MIN ?? 3));
 const WINDOW_MIN = 30; // chiqqandan keyin shu vaqtgacha avtomatik tahlil qilinadi
 
