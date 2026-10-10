@@ -86,6 +86,7 @@ function demoCalendar(): NewsEvent[] {
   const now = Date.now();
   const at = (min: number) => Math.round((now + min * 60_000) / 300_000) * 300_000;
   return parseCalendar([
+    { title: "Average Hourly Earnings m/m", country: "USD", date: new Date(at(-10)).toISOString(), impact: "High", forecast: "0.3%", previous: "0.4%" },
     { title: "Non-Farm Employment Change", country: "USD", date: new Date(at(40)).toISOString(), impact: "High", forecast: "140K", previous: "142K" },
     { title: "Unemployment Rate", country: "USD", date: new Date(at(40)).toISOString(), impact: "High", forecast: "4.2%", previous: "4.2%" },
     { title: "ECB President Lagarde Speaks", country: "EUR", date: new Date(at(190)).toISOString(), impact: "High" },

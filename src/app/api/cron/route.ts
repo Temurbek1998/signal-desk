@@ -5,6 +5,7 @@ import { aiDecide, aiSwingDecide, aiTraderEnabled, trackAiTrades } from "@/lib/s
 import { reviewNewSignals } from "@/lib/server/aiReview.ts";
 import { refreshStaleView } from "@/lib/server/aiView.ts";
 import { reviewOpenTrades } from "@/lib/server/aiManager.ts";
+import { newsCycle } from "@/lib/server/newsTrader.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -29,6 +30,8 @@ export async function GET(req: Request) {
   const r = await runCycle("cron");
   // Bozorlar sinovi haftada bir marta, javob yuborilgandan keyin (cron-job.org kutib qolmasin).
   after(async () => {
+    // Yangilik reaksiyasi (M1) vaqtga sezgir: qolgan AI ishlari bilan parallel, kutmasdan.
+    const news = newsCycle().catch((e) => console.error("Yangilik", e));
     // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror va Claude qayta ko'rishi navbat bilan.
     if (aiTraderEnabled()) {
       // Zeus'ning yangi signallariga AI ikkinchi fikri (mijozga signal bilan birga ko'rinadi).
@@ -44,6 +47,7 @@ export async function GET(req: Request) {
       const s = d?.skipped ? await aiSwingDecide().catch((e) => { console.error("AI swing", e); return null; }) : null;
       if (s?.skipped) await refreshStaleView().catch((e) => console.error("AI ko'rinish", e));
     }
+    await news;
     const last = await lastMarketTest().catch(() => null);
     if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});
   });

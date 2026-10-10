@@ -4,6 +4,16 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.11.0 (2026-10-10): yangiliklar bo'yicha M1 tahlil
+
+- Kuchli yangilik (NFP, CPI, FOMC va boshqalar, Forex Factory kalendari bo'yicha "High") chiqqach, 3 daqiqadan keyin
+  (`NEWS_WAIT_MIN`) Claude oltinning M1 reaksiyasini tahlil qiladi: savdo yo'nalishi (BUY/SELL/WAIT), taxminiy pips maqsadi,
+  bekor bo'lish narxi va muddat. Bir vaqtda chiqqan yangiliklar (NFP va ishsizlik) bitta tahlil.
+- Natija admin "Yangiliklar M1" sahifasida (M1 grafigi, qarorlar, kelayotgan kuchli yangiliklar) va Telegram'da.
+  Keyin har 5 daqiqada M1 bo'yicha o'lchanadi: maqsad, bekor narxi yoki muddat oxiri, eng yaxshi va eng yomon harakat.
+- Savdo ochilmaydi va mijozlarga chiqmaydi. Juftliklar: `NEWS_PAIRS` (standart `XAU/USD`), o'chirish: `NEWS_AI=0`.
+  Model oltin treyderi bilan bir xil (Opus), haftasiga bir necha chaqiruv. "Oxirgi yangilikni hozir tahlil qil" tugmasi.
+
 ## v1.10.1 (2026-10-10): valyuta grafiklarida Claude zonalari
 
 - Valyutalarda Claude tahlili hali bo'lmagani uchun grafik bo'sh edi (treyderlar faqat bozor ochiq paytda ishlaydi).

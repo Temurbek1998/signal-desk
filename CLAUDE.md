@@ -35,6 +35,10 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
     (`status = 'closed'`, `exit_price`). Har tekshiruv `ai_trade_reviews` (Claude nazorat logi). MT5 EA ko'chirilgan SL ni olmaydi.
   - `live.ts`: admin "Jonli savdolar" (`jonli`): oltin va har valyuta alohida, Claude va Zeus ochiq savdolari joriy narx bilan
     (amaldagi SL, SL gacha pips, yurgan pips, demo USDT), 30 kunlik pips/R/USDT. Narx `getLastPrice` (cron bilan bitta kesh).
+  - `newsTrader.ts` (v1.11.0): kuchli (High) yangilik chiqqach `NEWS_WAIT_MIN` (3) daqiqadan keyin Claude M1 reaksiyasini
+    (`getM1`, keshsiz) tahlil qiladi: BUY/SELL/WAIT, taxminiy pips maqsadi, bekor narxi, muddat. `news_reactions` jadvali,
+    natija M1 bo'yicha o'lchanadi (`newsReaction.ts`). Admin "Yangiliklar M1" (`yangiliklar`) va Telegram. Savdo ochilmaydi.
+    `NEWS_PAIRS` (standart XAU/USD), `NEWS_AI=0` o'chiradi. Kalendarda haqiqiy qiymat yo'q: Claude uni narx reaksiyasidan biladi.
   - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
   - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 250; qayta ko'rishlar ham sanaladi). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).

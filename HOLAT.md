@@ -6,7 +6,7 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 - Sayt: https://signal-desk-vert.vercel.app (saytdagi nomi "Zeus Number One")
 - Repo: github.com/Temurbek1998/signal-desk, branch `main` (har push Vercel'da avtomatik deploy)
 - Loyiha qo'llanmasi: repodagi `CLAUDE.md`, o'zgarishlar tarixi: `CHANGELOG.md`
-- Oxirgi versiya: **v1.10.0** (barcha o'zgarishlar main da, ishlanmagan narsa yo'q)
+- Oxirgi versiya: **v1.11.0** (yangiliklar M1 tahlili, PR orqali)
 
 ## Shu chatda qilinganlar (v1.2.0 – v1.9.1)
 - Operator: faqat DeepSeek yoki bepul Gemini (Claude emas), faqat platforma savollari, signal/narx aytmaydi.
@@ -23,6 +23,10 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 - v1.10.0: Claude ochiq savdolarni har soatda qayta ko'radi (ushlab turish / SL ni yaqinlashtirish / yopish), har tekshiruv
   "Claude nazorat logi"da. Claude ko'proq kiradi: oltin har soat, valyutalar har 2 soat, juftlikda 2 tagacha ochiq savdo.
   Admin "Jonli savdolar": oltin va har valyuta alohida, SL qayerda, necha pips yurdi, qancha USDT (Claude va Zeus solishtirib).
+
+- v1.11.0: yangiliklar bo'yicha M1 tahlil. Kuchli yangilik (NFP va h.k.) chiqqach 3 daqiqada Claude oltin M1 reaksiyasini ko'rib
+  yo'nalish va taxminiy pips maqsadini admin "Yangiliklar M1" sahifasiga va Telegram'ga yozadi, natija pips da o'lchanadi. Savdo ochilmaydi.
+  Keyingi qadam (Bek xohlasa, natija yaxshi bo'lsa): shu qarorlarni demo savdoga ulash.
 
 ## Egasi bilan kelishilgan qoidalar
 - Kalit va parollar chatga yoki repoga yozilmaydi, faqat Vercel Environment Variables (Bek o'zi qo'yadi).

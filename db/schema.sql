@@ -356,3 +356,31 @@ CREATE TABLE IF NOT EXISTS ai_trade_reviews (
 );
 CREATE INDEX IF NOT EXISTS ai_trade_reviews_at ON ai_trade_reviews (at DESC);
 CREATE INDEX IF NOT EXISTS ai_trade_reviews_trade ON ai_trade_reviews (trade_id, at DESC);
+
+-- Yangilik reaksiyasi (egasining talabi, 2026-10-10): kuchli yangilik (masalan NFP) chiqqach Claude M1 reaksiyasini
+-- ko'rib savdo yo'nalishi va taxminiy pips maqsadini aytadi. Faqat admin va Telegram, savdo ochilmaydi.
+-- status: open (kuzatilmoqda), target, stop, expired, wait (yo'nalish yo'q), error. Natija pips da.
+CREATE TABLE IF NOT EXISTS news_reactions (
+  id           bigserial PRIMARY KEY,
+  at           timestamptz NOT NULL DEFAULT now(),
+  event_time   timestamptz NOT NULL,
+  pair         text NOT NULL,
+  events       jsonb NOT NULL DEFAULT '[]',
+  stats        jsonb,
+  price        double precision,
+  direction    text NOT NULL DEFAULT 'WAIT',
+  confidence   int NOT NULL DEFAULT 0,
+  target_pips  double precision,
+  invalidation double precision,
+  horizon_min  int NOT NULL DEFAULT 60,
+  entry_note   text NOT NULL DEFAULT '',
+  reason       text NOT NULL DEFAULT '',
+  model        text NOT NULL DEFAULT '',
+  status       text NOT NULL DEFAULT 'open',
+  result_pips  double precision,
+  mfe_pips     double precision,
+  mae_pips     double precision,
+  closed_at    timestamptz,
+  UNIQUE (event_time, pair)
+);
+CREATE INDEX IF NOT EXISTS news_reactions_at ON news_reactions (at DESC);

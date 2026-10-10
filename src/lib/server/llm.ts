@@ -52,6 +52,10 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
     const analysis = opts.json && "analysis" in ((opts.json.properties as object) ?? {}) ? mockAnalysis(last) : undefined;
     if (opts.json && "verdict" in ((opts.json.properties as object) ?? {})) return JSON.stringify({ verdict: "tasdiq", confidence: 60, note: "Sinov javobi: H1 tuzilmasi signal yo'nalishini qo'llaydi.", analysis });
     if (opts.json && "new_sl" in ((opts.json.properties as object) ?? {})) return JSON.stringify({ action: "HOLD", new_sl: 0, confidence: 55, reason: "Sinov javobi: g'oya o'z kuchida." });
+    if (opts.json && "target_pips" in ((opts.json.properties as object) ?? {})) {
+      const p = Number(last.match(/"joriy_narx":([\d.]+)/)?.[1] ?? 0);
+      return JSON.stringify({ direction: "SELL", confidence: 60, target_pips: 150, invalidation: Math.round(p * 1.003 * 100) / 100, horizon_min: 60, entry: "joriy narxda", reason: "Sinov javobi: kuchli ma'lumot, dollar ko'tarildi, oltin pastga davom etmoqda." });
+    }
     if (opts.json) return JSON.stringify({ action: "WAIT", sl: 0, tp1: 0, tp2: 0, confidence: 40, reason: "Sinov javobi: aniq ustunlik yo'q.", analysis });
     return `Sinov javobi: "${last.slice(0, 80)}" savolingizni oldim.`;
   }
