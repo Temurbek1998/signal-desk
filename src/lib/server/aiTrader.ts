@@ -32,16 +32,23 @@ export type AiTrade = {
 
 export const aiTraderEnabled = () => process.env.AI_TRADER !== "0" && !!provider();
 
+const isCrypto = (pair: string) => pair.endsWith("/USDT");
+
 export function traderModel(pair: string) {
+  if (isCrypto(pair)) return process.env.AI_CRYPTO_TRADER_MODEL || (provider() === "anthropic" ? "claude-sonnet-5-5" : undefined);
   if (pair !== PAIR) return process.env.AI_FX_TRADER_MODEL || (provider() === "anthropic" ? "claude-sonnet-5-5" : undefined);
   if (process.env.AI_TRADER_MODEL) return process.env.AI_TRADER_MODEL;
   return provider() === "anthropic" ? "claude-opus-5-5" : undefined;
 }
-const everyMin = (pair: string) => Math.max(15, Number((pair === PAIR ? process.env.AI_TRADER_EVERY_MIN : process.env.AI_FX_TRADER_EVERY_MIN) ?? (pair === PAIR ? 60 : 120)));
+const everyMin = (pair: string) => Math.max(15, Number(
+  (pair === PAIR ? process.env.AI_TRADER_EVERY_MIN : isCrypto(pair) ? process.env.AI_CRYPTO_TRADER_EVERY_MIN : process.env.AI_FX_TRADER_EVERY_MIN) ?? (pair === PAIR ? 60 : 120),
+));
 const maxOpen = () => Math.max(1, Number(process.env.AI_MAX_OPEN ?? 2));
-// Claude treyder ishlaydigan juftliklar: oltin va (AI_FX_TRADER=0 bo'lmasa) yoqilgan valyutalar.
+// Claude treyder ishlaydigan juftliklar: oltin, (AI_FX_TRADER=0 bo'lmasa) yoqilgan valyutalar va
+// (ROBOT_MARKETS da crypto bo'lsa, AI_CRYPTO_TRADER=0 bo'lmasa) kripto: Sonnet, har AI_CRYPTO_TRADER_EVERY_MIN (120) daqiqada, faqat demo.
 export const traderPairs = () => activeInstruments()
-  .filter((i) => i.category === "gold" || (i.category === "forex" && process.env.AI_FX_TRADER !== "0"))
+  .filter((i) => i.category === "gold" || (i.category === "forex" && process.env.AI_FX_TRADER !== "0")
+    || (i.category === "crypto" && process.env.AI_CRYPTO_TRADER !== "0"))
   .sort((a, b) => (a.pair === PAIR ? -1 : b.pair === PAIR ? 1 : 0));
 
 // Swing rejimi (demo): Claude 3–5 kunlik savdo, oltinda 700–1000 pips (70–100 $) maqsad. Har juftlikda AI_SWING_EVERY_H
@@ -73,7 +80,9 @@ Qanday tahlil qilasan:
 - Narx qayerdan tushishi va qayerdan ko'tarilishi mumkinligini aniq darajalar bilan ayt.
 Hamkoring Zeus (qoidaga asoslangan robot) strategiyasi, undan foydalan: EMA20/EMA50 bilan trend yo'nalishi, ADX >= 20 bo'lsa trend bor,
 M15 signali H1 trendi bilan tasdiqlanadi, kirish trend ichidagi pullback tugaganda (BUY uchun RSI 45 dan pastga tushib qaytsa, SELL uchun 55 dan),
-${pair === PAIR ? "SL 2.5 ATR, TP1 0.5R (yarmi yopiladi), keyin SL narx ortidan 1 ATR masofada ergashadi. Tarixiy sinovda oltinda M15 ishladi, M30 va H1 zarar berdi." : "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu juftlik hali sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi."}
+${pair === PAIR ? "SL 2.5 ATR, TP1 0.5R (yarmi yopiladi), keyin SL narx ortidan 1 ATR masofada ergashadi. Tarixiy sinovda oltinda M15 ishladi, M30 va H1 zarar berdi."
+    : isCrypto(pair) ? "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu kripto juftlik, bozor 24/7 ochiq va valyutadan keskinroq: tun va dam olish kunlari likvidlik past, soxta sinishlar ko'p. Tarixiy sinovda Zeus kriptoda kuchsiz chiqqan, shuning uchun uning signaliga ko'r-ko'rona ergashma. Bu juftlik sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi."
+    : "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu juftlik hali sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi."}
 Ochiq savdolaringni har soatda qayta ko'rib, SL ni yaqinlashtirish yoki erta yopish imkoning bor: shuning uchun mantiqiy setup bo'lsa kirishdan qo'rqma.
 Qoidalar:
 - Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
@@ -95,7 +104,7 @@ Qanday tahlil qilasan:
 - Savdo 3-5 kun ushlanadi, ${swingMaxH()} soatdan keyin joriy narxda yopiladi. Kunlik shovqin SL ga tegmasligi kerak.
 ${pair === PAIR
     ? "- Oltinda maqsad katta harakat: TP2 odatda 700-1000 pips (70-100 $) uzoqlikda, agar D1 tuzilmasi va ATR shunga yo'l qo'ysa. Yo'l qo'ymasa kichikroq maqsad yoki WAIT."
-    : "- Maqsad D1 ATR ga mos bo'lsin: TP2 odatda 2-4 kunlik o'rtacha harakat. Valyutada 700-1000 pips 3-5 kunda deyarli bo'lmaydi, uni zo'rlama."}
+    : "- Maqsad D1 ATR ga mos bo'lsin: TP2 odatda 2-4 kunlik o'rtacha harakat. Uzoq maqsadni zo'rlama."}
 Qoidalar:
 - Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
 - SL mantiqiy D1/H4 darajasining orqasida, masofasi D1 ATR ning 0.3-2 baravari. TP1 kamida 1R (yarmi yopiladi, SL kirishga ko'chadi), TP2 kamida 2R.

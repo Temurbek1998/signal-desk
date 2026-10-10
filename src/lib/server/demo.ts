@@ -23,6 +23,8 @@ export async function syncDemo(): Promise<{ opened: DemoTrade[]; closed: DemoTra
     `SELECT l.id, l.pair, l.category, l.timeframe, l.strategy, l.side, l.rating, l.entry, l.sl, l.tp1, l.tp2, l.signal_time
      FROM signal_log l LEFT JOIN demo_trades d ON d.signal_id = l.id
      WHERE d.id IS NULL AND l.rating = ANY($1) AND l.signal_time > now() - interval '3 days'
+       -- Kriptoda Zeus signali demo hisobga faqat Claude "tasdiq" bergandan keyin kiradi (egasining qarori, 2026-10-10).
+       AND (l.category <> 'crypto' OR l.ai_verdict = 'tasdiq')
      ORDER BY l.signal_time, l.id`,
     [cfg.ratings],
   );

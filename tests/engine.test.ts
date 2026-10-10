@@ -391,3 +391,13 @@ test("demo izohi: foyda yoki zarar, qaysi daraja va necha pips", async () => {
   assert.equal(resultPips({ pair: "USD/JPY", entry: 150, sl: 149.5, result_r: 1 }), 50);
   assert.equal(outcomeNote({ pair: "XAU/USD", side: "BUY", entry: 1, sl: 0, outcome: "be", result_r: 0, pnl: -2 }).text.startsWith("Zararsiz"), true);
 });
+
+test("kripto pips: BTC 1 $, ETH 0.1 $, XRP 0.0001 $", async () => {
+  const { pipSize, toPips } = await import("../src/lib/aiTrade.ts");
+  assert.equal(pipSize("BTC/USDT"), 1);
+  assert.equal(toPips("BTC/USDT", 250), 250);
+  assert.ok(Math.abs(toPips("ETH/USDT", 12) - 120) < 1e-9);
+  assert.equal(pipSize("XRP/USDT"), 0.0001);
+  assert.equal(pipSize("XAU/USD"), 0.1);
+  assert.equal(pipSize("USD/JPY"), 0.01);
+});

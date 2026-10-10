@@ -4,7 +4,8 @@ import { sql } from "./db.ts";
 // Kunlik AI chaqiruvlari chegarasi (Anthropic hisobidagi oylik limit tugab qolmasligi uchun).
 // Mijozga ta'sir qiladigan baho (oltin signalini tasdiqlash) chegarasiz; demo qarorlar va admin ko'rinishlari chegarada to'xtaydi.
 // AI_DAILY_CALLS (standart 250): kun ichi qarorlar (oltin har soat, valyutalar har 2 soat) ~95, swing 7,
-// ochiq savdolarni har soat qayta ko'rish ~70-140 va zaxira.
+// ochiq savdolarni har soat qayta ko'rish ~70-140 va zaxira. 2026-10-10 dan 400: kripto Claude treyderi (5 juftlik, har 2 soatda
+// ~60 qaror va ularning qayta ko'rishlari) qo'shildi, egasi "pul bilan bo'lsa ham" dedi.
 export async function aiCallsToday(): Promise<number> {
   const [r] = await sql<{ n: string }>(
     `SELECT (SELECT count(*) FROM ai_trades WHERE at >= date_trunc('day', now()))
@@ -20,7 +21,7 @@ export async function aiCallsToday(): Promise<number> {
   return Number(r?.n ?? 0);
 }
 
-export const dailyLimit = () => Math.max(1, Number(process.env.AI_DAILY_CALLS ?? 250));
+export const dailyLimit = () => Math.max(1, Number(process.env.AI_DAILY_CALLS ?? 400));
 export async function underBudget() {
   return (await aiCallsToday()) < dailyLimit();
 }

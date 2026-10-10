@@ -4,6 +4,14 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.15.0 (2026-10-10): kriptoda Claude treyder va Claude bahosi
+
+- `ROBOT_MARKETS` da `crypto` bo'lsa Claude treyder BTC, ETH, SOL, BNB, XRP da ham demo savdo qiladi (Sonnet, har 2 soatda,
+  `AI_CRYPTO_TRADER_MODEL`, `AI_CRYPTO_TRADER_EVERY_MIN`, o'chirish `AI_CRYPTO_TRADER=0`), swing ham. Har soatlik qayta ko'rish ham ishlaydi.
+- Zeus'ning har kuchli kripto signalini Claude baholaydi (tasdiq / ehtiyot), demo hisobga faqat "tasdiq" olgani kiradi.
+- Kripto pips: BTC 1 $, ETH 0.1 $, SOL va BNB 0.01 $, XRP 0.0001 $. "Jonli savdolar" kriptoni ham ko'rsatadi.
+- Kunlik AI chegarasi standarti 250 dan 400 ga (`AI_DAILY_CALLS`). Kripto mijozlarga ochilmaydi (`PUBLIC_CATEGORIES`).
+
 ## v1.14.1 (2026-10-10): versiya saytda ko'rinadi
 
 - Admin panel pastida va `/api/health` boshida versiya (`package.json`) va Vercel deploy qilgan commit (`src/lib/version.ts`).

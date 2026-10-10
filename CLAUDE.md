@@ -30,6 +30,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
     Swing rejim (`aiSwingDecide`, `ai_trades.mode = 'swing'`, `AI_SWING*`): har juftlikda kuniga bitta 3-5 kunlik qaror
     (D1/H4/H1, oltinda 700-1000 pips maqsad, SL 0.3-2 D1 ATR, TP1 >= 1R, TP2 >= 2R), H1 bo'yicha kuzatiladi, 120 soatda yopiladi.
     Kun ichidagi savdoni to'smaydi; cron'da kun ichidagi qaror bo'lmagan aylanishda so'raladi. Faqat demo.
+    Kripto (v1.15.0): `ROBOT_MARKETS` da `crypto` bo'lsa 5 juftlikda Sonnet treyder (`AI_CRYPTO_TRADER*`), Zeus kripto signallarini
+    Claude baholaydi va demo hisobga faqat "tasdiq" olgani kiradi. Kripto pips `aiTrade.ts` `CRYPTO_PIP`. Mijozlarga yopiq.
   - `aiManager.ts`: Claude ochiq savdolarini har soatda qayta ko'radi (`AI_REVIEW_EVERY_MIN`, cron'da qaror bilan parallel,
     aylanishda 2 tagacha): HOLD, MOVE_SL (faqat yaqinlashtirish, `ai_trades.stops`, `trackPlan` ga beriladi) yoki CLOSE
     (`status = 'closed'`, `exit_price`). Har tekshiruv `ai_trade_reviews` (Claude nazorat logi). MT5 EA ko'chirilgan SL ni olmaydi.
@@ -47,7 +49,7 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   - `demoReview.ts` (v1.14.0): yopilgan demo savdoga Claude (Sonnet) sababini yozadi (`demo_trades.review`); natija jumlasi `demoNote.ts`.
     Admin "Demo hisob" ochiq savdolarni jonli ko'rsatadi (`liveBoard` bilan), tugaganlar ostida izoh. `DEMO_REVIEW=0` o'chiradi.
   - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
-  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 250; qayta ko'rishlar ham sanaladi). Oltin signalini baholash chegarasiz.
+  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 400; qayta ko'rishlar ham sanaladi). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).
 - **Admin** (`src/app/admin/`, maxfiy manzil `ADMIN_PATH` orqali, oddiy `/admin` 404 beradi):
   "Signal pulti" (`pult`: barcha juftliklar, texnik tahlil, kirish/SL/TP, kirish taymeri), "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`
