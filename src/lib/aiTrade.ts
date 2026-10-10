@@ -98,7 +98,9 @@ export function resultAt(p: AiPlan, price: number, tp1Hit: boolean): number {
 }
 
 // Pips: oltinda 1 pip = 0.10 $, JPY juftliklarida 0.01, boshqa valyutalarda 0.0001.
-export const pipSize = (pair: string) => (pair === "XAU/USD" ? 0.1 : pair.includes("JPY") ? 0.01 : 0.0001);
+// Kriptoda (2026-10-10): BTC 1 $, ETH 0.1 $, SOL va BNB 0.01 $, XRP 0.0001 $ (narxga nisbatan taxminan bir xil ulush).
+const CRYPTO_PIP: Record<string, number> = { "BTC/USDT": 1, "ETH/USDT": 0.1, "SOL/USDT": 0.01, "BNB/USDT": 0.01, "XRP/USDT": 0.0001 };
+export const pipSize = (pair: string) => (pair === "XAU/USD" ? 0.1 : CRYPTO_PIP[pair] ?? (pair.includes("JPY") ? 0.01 : 0.0001));
 export const toPips = (pair: string, diff: number) => diff / pipSize(pair);
 
 // Ochiq savdoni qayta ko'rish qarori: ushlab turish, SL ni ko'chirish yoki hozir yopish.

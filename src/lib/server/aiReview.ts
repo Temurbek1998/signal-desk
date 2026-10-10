@@ -10,6 +10,7 @@ import { notifyAdmin } from "./telegram.ts";
 // va "tasdiq" yoki "ehtiyot" deb baholaydi, sababini o'zbekcha yozadi.
 // Claude yakuniy qaror qiladi (aiGateOn): mijozga faqat "tasdiq" olgan oltin signali ko'rinadi, "ehtiyot" esa ushlab qolinadi.
 // Valyutalar hozircha faqat admin uchun sinovda: baho va tahlil yoziladi, mijozga chiqmaydi.
+// Kripto (2026-10-10, egasi: "Zeus'ning miyasi Claude"): har kuchli signal baholanadi, demo hisobga faqat "tasdiq" olgani kiradi (demo.ts).
 // AI_GATE=0 bo'lsa baho faqat izoh bo'lib qoladi va signalni to'xtatmaydi.
 
 export const aiGateOn = () => !!provider() && process.env.AI_REVIEW !== "0" && process.env.AI_GATE !== "0";
@@ -30,7 +31,7 @@ const SCHEMA = {
 
 const SYSTEM = `Sen Signal Desk'da Zeus robotining hamkori bo'lgan AI tahlilchisan. Zeus qoidaga asoslangan robot: EMA20/EMA50 trendi, ADX >= 20,
 H1 tasdig'i va RSI pullback bo'yicha signal beradi. Sen unga ikkinchi fikr berasan.
-Vazifa: berilgan juftlik (oltin yoki valyuta) shamlari va ko'rsatkichlarini mustaqil tahlil qil (D1/H4 trendi, H1 tuzilmasi, M15, talab/taklif zonalari,
+Vazifa: berilgan juftlik (oltin, valyuta yoki kripto) shamlari va ko'rsatkichlarini mustaqil tahlil qil (D1/H4 trendi, H1 tuzilmasi, M15, talab/taklif zonalari,
 likvidlik, yaqin qarshilik va qo'llab-quvvatlash) va Zeus signalini baholab ber:
 - "tasdiq": tahlilingiz signal yo'nalishini qo'llaydi va TP1 yo'lida kuchli to'siq yo'q.
 - "ehtiyot": signal yo'nalishiga qarshi muhim daraja, zaif tuzilma yoki katta trendga zid holat bor.
@@ -48,7 +49,7 @@ export async function reviewNewSignals(limit = 2) {
   if (!provider() || process.env.AI_REVIEW === "0") return 0;
   const rows = await sql<Row>(
     `SELECT id, pair, timeframe, side, entry, tp1, tp2, sl, confidence, signal_time FROM signal_log
-     WHERE category IN ('gold', 'forex') AND coalesce(strategy, 'trend') = 'trend' AND status = 'active' AND ai_at IS NULL
+     WHERE category IN ('gold', 'forex', 'crypto') AND coalesce(strategy, 'trend') = 'trend' AND status = 'active' AND ai_at IS NULL
        AND signal_time > now() - interval '3 hours'
      ORDER BY (pair = 'XAU/USD') DESC, signal_time LIMIT $1`,
     [limit],

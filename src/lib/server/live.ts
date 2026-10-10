@@ -42,7 +42,7 @@ export async function liveBoard(days = 30): Promise<{ pairs: PairLive[]; reviews
     sql<ZeusRow>(
       `SELECT l.id, l.signal_time, l.pair, l.timeframe, l.strategy, l.side, l.entry, l.sl, l.tp1, l.tp2, d.risk_usdt, d.lots
        FROM signal_log l LEFT JOIN demo_trades d ON d.signal_id = l.id
-       WHERE l.status = 'active' AND l.category IN ('gold', 'forex') ORDER BY l.signal_time`,
+       WHERE l.status = 'active' ORDER BY l.signal_time`,
     ),
     sql<StatRow>(
       `SELECT a.pair, CASE a.mode WHEN 'swing' THEN 'swing' ELSE 'claude' END AS source, count(*) AS n,
@@ -53,7 +53,7 @@ export async function liveBoard(days = 30): Promise<{ pairs: PairLive[]; reviews
        UNION ALL
        SELECT l.pair, 'zeus', count(*), count(*) FILTER (WHERE l.result_r > 0), sum(l.result_r), sum(l.result_r * abs(l.entry - l.sl)), sum(d.pnl)
        FROM signal_log l LEFT JOIN demo_trades d ON d.signal_id = l.id AND d.status = 'closed'
-       WHERE l.status <> 'active' AND l.result_r IS NOT NULL AND l.category IN ('gold', 'forex') AND l.signal_time > now() - make_interval(days => $1)
+       WHERE l.status <> 'active' AND l.result_r IS NOT NULL AND l.signal_time > now() - make_interval(days => $1)
        GROUP BY 1`,
       [days],
     ),
@@ -65,7 +65,7 @@ export async function liveBoard(days = 30): Promise<{ pairs: PairLive[]; reviews
   for (const r of reviews) if (!lastReview.has(r.trade_id)) lastReview.set(r.trade_id, r);
 
   // Kerakli juftliklar: faol bozorlar (oltin birinchi) va ochiq savdosi yoki natijasi bor boshqalar.
-  const wanted = new Set([...activeInstruments().filter((i) => i.category !== "crypto").map((i) => i.pair), ...ai.map((t) => t.pair), ...zeus.map((t) => t.pair), ...stats.map((s) => s.pair)]);
+  const wanted = new Set([...activeInstruments().map((i) => i.pair), ...ai.map((t) => t.pair), ...zeus.map((t) => t.pair), ...stats.map((s) => s.pair)]);
   const order = ALL_INSTRUMENTS.map((i) => i.pair).filter((p) => wanted.has(p));
   const prices = new Map(await Promise.all(order.map(async (pair) => {
     const inst = ALL_INSTRUMENTS.find((i) => i.pair === pair)!;
