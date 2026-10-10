@@ -42,7 +42,7 @@ export function traderModel(pair: string) {
   if (process.env.AI_TRADER_MODEL) return process.env.AI_TRADER_MODEL;
   return provider() === "anthropic" ? "claude-opus-5-5" : undefined;
 }
-const everyMin = (pair: string) => Math.max(15, Number(
+export const everyMin = (pair: string) => Math.max(15, Number(
   (pair === PAIR ? process.env.AI_TRADER_EVERY_MIN : isCrypto(pair) ? process.env.AI_CRYPTO_TRADER_EVERY_MIN : process.env.AI_FX_TRADER_EVERY_MIN) ?? (pair === PAIR ? 60 : 120),
 ));
 const maxOpen = () => Math.max(1, Number(process.env.AI_MAX_OPEN ?? 2));
