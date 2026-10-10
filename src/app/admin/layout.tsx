@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/server/auth.ts";
 
 const ITEMS = [
   { key: "", label: "Umumiy", sub: "" },
+  { key: "pult", label: "Signal pulti", sub: "/pult" },
   { key: "tahlil", label: "Robot + Claude", sub: "/tahlil" },
   { key: "robot", label: "Robot logi", sub: "/robot" },
   { key: "signallar", label: "Signallar", sub: "/signallar" },

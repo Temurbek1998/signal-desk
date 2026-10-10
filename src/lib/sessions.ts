@@ -10,3 +10,11 @@ export function marketOpen(category: string, t: number = Date.now()): boolean {
   if (day === 0 && h < 22) return false;
   return true;
 }
+
+// Bozor keyingi ochiladigan vaqt (ms). Ochiq bo'lsa hozirgi vaqtni qaytaradi.
+export function nextOpen(category: string, t: number = Date.now()): number {
+  if (marketOpen(category, t)) return t;
+  let x = Math.ceil(t / 3600_000) * 3600_000;
+  for (let i = 0; i < 24 * 8 && !marketOpen(category, x); i++) x += 3600_000;
+  return x;
+}

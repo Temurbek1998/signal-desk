@@ -4,6 +4,14 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.4.0 (2026-10-10): Signal pulti (admin)
+
+- Admin panelda "Signal pulti" sahifasi: oltin va barcha valyutalar bir joyda. Har juftlikda texnik tahlil (M15 trend, ADX, RSI,
+  ATR, EMA20/50, katta trend, robot holati, Claude fikri), faol signal (kirish, SL, TP1, TP2 va R masofalari, Claude bahosi).
+- Taymer: kirishgacha (sham yopilishi va Claude tasdig'i), kirish oynasi tugashigacha (20 daqiqa, MT5 EA bilan bir xil),
+  signal bo'lmasa keyingi M15 tekshiruvigacha, bozor yopiq bo'lsa ochilishigacha.
+- Tanlangan juftlikning TradingView uslubidagi grafigi: signal darajalari, Claude darajalari va zonalari.
+
 ## v1.3.1 (2026-10-10): Operator uchun bepul Gemini
 
 - Operator DeepSeek o'rniga bepul Gemini (`GEMINI_API_KEY`) bilan ham ishlaydi. `OPERATOR_PROVIDER` bilan tanlanadi.

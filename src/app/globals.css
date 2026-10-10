@@ -551,3 +551,20 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .ai-take.ehtiyot { background: var(--sell-soft); }
 .ai-take.ehtiyot b { color: var(--sell); }
 .ai-take span { color: var(--fg); }
+
+/* Signal pulti (admin) */
+.pult-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 14px; }
+.pult-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin: 0; }
+.pult-card.buy { box-shadow: inset 3px 0 0 var(--buy); }
+.pult-card.sell { box-shadow: inset 3px 0 0 var(--sell); }
+.pult-timer { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--fill); border-radius: 12px; padding: 10px 12px; font-size: 0.86rem; }
+.pult-timer.go { background: color-mix(in srgb, var(--buy) 18%, transparent); }
+.pult-timer.wait { background: color-mix(in srgb, var(--gold) 14%, transparent); }
+.pult-timer.no { background: color-mix(in srgb, var(--sell) 16%, transparent); }
+.timer { font-family: var(--f-mono); font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pult-signal { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.pult-levels { width: 100%; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.pult-levels th { text-align: left; font-family: inherit; width: 64px; }
+.pult-levels td { padding: 3px 6px; }
+.pult-tech { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px 12px; font-size: 0.86rem; color: var(--muted); }
+.pult-tech b { color: var(--fg); font-family: var(--f-mono); }

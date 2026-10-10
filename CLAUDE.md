@@ -27,7 +27,7 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 40, ~$50/oy). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).
 - **Admin** (`src/app/admin/`, maxfiy manzil `ADMIN_PATH` orqali, oddiy `/admin` 404 beradi):
-  "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`
+  "Signal pulti" (`pult`: barcha juftliklar, texnik tahlil, kirish/SL/TP, kirish taymeri), "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`
   (bitta signal yoki qarorning to'liq tahlili). Grafiklar `TvChart.tsx` (TradingView Lightweight Charts).
 - **Tariflar** (`db/schema.sql`, `memory.ts` TIER_RULES): Standart 19, PRO 39, VIP 79 USDT/oy. To'lov USDT, admin qo'lda tasdiqlaydi.
 - **MT5 avtosavdo**: `public/mt5/SignalDeskEA.mq5` (egasining MT5 ida ishlaydi, login saytga berilmaydi) har 10 soniyada
