@@ -4,6 +4,10 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.3.1 (2026-10-10): Operator uchun bepul Gemini
+
+- Operator DeepSeek o'rniga bepul Gemini (`GEMINI_API_KEY`) bilan ham ishlaydi. `OPERATOR_PROVIDER` bilan tanlanadi.
+
 ## v1.3.0 (2026-10-10): Operator faqat platforma savollari, adminga murojaat
 
 - Operator faqat DeepSeek'da (Claude zaxirasi olib tashlandi) va faqat platforma haqidagi savollarga javob beradi:

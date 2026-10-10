@@ -110,8 +110,8 @@ tugmasi robotni darhol aylantiradi. Kuchsiz signallar ham shu yerda ko'rinadi, o
 Har bir sahifaning pastki o'ng burchagida "Operator" chati bor. U faqat platforma haqidagi savollarga javob beradi
 (ro'yxatdan o'tish, tariflar, to'lov, obuna, sahifalar). Signal, narx va bozor haqida gapirmaydi, foyda kafolatlamaydi.
 
-- Ulash: `DEEPSEEK_API_KEY` (platform.deepseek.com). Operator faqat DeepSeek'da ishlaydi, Claude operatorlik qilmaydi.
-  Ixtiyoriy: `OPERATOR_MODEL` (standart deepseek-chat).
+- Ulash: `DEEPSEEK_API_KEY` (platform.deepseek.com) yoki bepul `GEMINI_API_KEY` (aistudio.google.com).
+  Ikkalasi bo'lsa DeepSeek. Claude operatorlik qilmaydi. Ixtiyoriy: `OPERATOR_PROVIDER`, `OPERATOR_MODEL`.
 - Muammo bo'lsa foydalanuvchi chatdagi "Adminga murojaat" tugmasini bosadi: murojaat `tickets` jadvaliga yoziladi,
   Telegram ulangan bo'lsa adminga xabar keladi. Admin paneldagi "Operator" sahifasida murojaatlar va yozishmalar ko'rinadi.
 - Limit: chat savollari mehmon uchun kuniga 10, Standart 30, PRO 45, VIP va admin 60; murojaat kuniga 5 ta.

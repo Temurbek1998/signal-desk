@@ -39,12 +39,12 @@ export default async function OperatorPage() {
       <header className="page-head">
         <div>
           <h1>Operator</h1>
-          <p className="sub">Har sahifadagi chat. Operator (DeepSeek) faqat platforma haqidagi savollarga javob beradi: ro&apos;yxatdan o&apos;tish, tariflar, to&apos;lov, obuna. Signal va bozor haqida gapirmaydi. Muammo bo&apos;lsa mijoz &quot;Adminga murojaat&quot; tugmasi bilan murojaat ochadi.</p>
+          <p className="sub">Har sahifadagi chat. Operator (DeepSeek yoki Gemini) faqat platforma haqidagi savollarga javob beradi: ro&apos;yxatdan o&apos;tish, tariflar, to&apos;lov, obuna. Signal va bozor haqida gapirmaydi. Muammo bo&apos;lsa mijoz &quot;Adminga murojaat&quot; tugmasi bilan murojaat ochadi.</p>
         </div>
       </header>
       <section className="panel">
         <div className="stats">
-          <div className="stat"><b className={p ? "up" : "down"}>{p ? "Ulangan" : "Ulanmagan"}</b><span>{p ? `Provayder: ${p}` : "DEEPSEEK_API_KEY yo'q"}</span></div>
+          <div className="stat"><b className={p ? "up" : "down"}>{p ? "Ulangan" : "Ulanmagan"}</b><span>{p ? `Provayder: ${p}` : "DEEPSEEK_API_KEY yoki GEMINI_API_KEY yo'q"}</span></div>
           <div className="stat"><b className={open ? "down" : undefined}>{open}</b><span>ochiq murojaat</span></div>
           <div className="stat"><b>{stats?.day ?? 0}</b><span>savol, 24 soat</span></div>
           <div className="stat"><b>{stats?.week ?? 0}</b><span>savol, 7 kun</span></div>

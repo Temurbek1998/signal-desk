@@ -34,7 +34,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   `/api/ea` dan (sarlavha `X-EA-Key` = `EA_KEY`) oddiy matn qatorlarini oladi va savdo ochadi. Faqat demo, `InpAllowReal` bilan haqiqiy.
   Admin: "MT5 avtosavdo" sahifasi (`mt5`), `ea_pings` jadvali oxirgi ulanishni saqlaydi. MQL5 kodi bu muhitda kompilyatsiya qilinmaydi:
   MetaEditor xatolarini egasi yuboradi.
-- **Operator** (`src/lib/server/operator.ts`, `/api/chat`, `ChatWidget.tsx`): har sahifadagi chat, faqat DeepSeek (`DEEPSEEK_API_KEY`, `OPERATOR_MODEL`).
+- **Operator** (`src/lib/server/operator.ts`, `/api/chat`, `ChatWidget.tsx`): har sahifadagi chat, DeepSeek yoki bepul Gemini (`DEEPSEEK_API_KEY` / `GEMINI_API_KEY`,
+  `OPERATOR_PROVIDER`, `OPERATOR_MODEL`).
   Egasining talabi: Claude operatorlik qilmaydi, operator faqat platforma savollariga javob beradi (signal, narx aytmaydi).
   Muammo bo'lsa mijoz "Adminga murojaat" bosadi: `/api/ticket`, `tickets` jadvali, Telegram xabari. Admin: "Operator" sahifasi
   (`operator`): murojaatlar (yopish tugmasi) va `chat_log`. Keyinchalik murojaatlarni avtomatlashtirish rejada.
