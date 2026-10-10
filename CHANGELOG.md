@@ -4,6 +4,11 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.2.1 (2026-10-10): Operator DeepSeek'da
+
+- Operator chati alohida provayderda: `DEEPSEEK_API_KEY` bo'lsa DeepSeek, xato bo'lsa bir marta Claude javob beradi.
+  Claude tahlillari, signal tasdig'i va AI treyder Anthropic'da qoladi. Sozlamalar: `OPERATOR_PROVIDER`, `OPERATOR_MODEL`.
+
 ## v1.2.0 (2026-10-10): Operator yangilandi
 
 - Operator chati obunachiga endi faqat Claude tasdiqlagan oltin signallarini aytadi (avval tasdiqlanmaganini ham aytishi mumkin edi).

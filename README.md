@@ -111,8 +111,9 @@ Har bir sahifaning pastki o'ng burchagida "Operator" chati bor. U obuna, tarifla
 signallarni o'qish haqidagi savollarga javob beradi. Obunachilarga so'nggi faol signallarni ham ayta oladi,
 mehmonlarga esa aniq signal aytmaydi. Foyda kafolatlamaydi va signal to'qimaydi.
 
-- Ulash: `LLM_PROVIDER=deepseek` va `DEEPSEEK_API_KEY` (platform.deepseek.com), yoki
-  `LLM_PROVIDER=anthropic` va `ANTHROPIC_API_KEY` (console.anthropic.com).
+- Ulash: `DEEPSEEK_API_KEY` (platform.deepseek.com) qo'yilsa operator DeepSeek'da ishlaydi. DeepSeek xato bersa,
+  bir marta asosiy provayder (`ANTHROPIC_API_KEY`, Claude) javob beradi. Claude tahlillari Anthropic'da qoladi.
+  Ixtiyoriy: `OPERATOR_PROVIDER`, `OPERATOR_MODEL`.
 - Limit: mehmon uchun kuniga 10, Standart uchun 30, PRO uchun 45, VIP va admin uchun 60 savol. Yozishmalar `chat_log` jadvalida.
 - Kalit berilmasa chat ochiladi, lekin "Operator hali ulanmagan" deb javob beradi.
 

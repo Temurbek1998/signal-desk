@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAccess } from "@/lib/server/auth.ts";
 import { sql } from "@/lib/server/db.ts";
-import { complete, LlmNotConfigured, type ChatMessage } from "@/lib/server/llm.ts";
+import { complete, LlmNotConfigured, operatorProvider, provider, type ChatMessage } from "@/lib/server/llm.ts";
 import { operatorPrompt } from "@/lib/server/operator.ts";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const reply = await complete(await operatorPrompt(access), messages);
+    const system = await operatorPrompt(access);
+    // Operator DeepSeek'da (OPERATOR_PROVIDER); u ishlamasa bir marta asosiy provayder (Claude) bilan qayta urinadi.
+    const op = operatorProvider(), main = provider();
+    const ask = (p: typeof op) => complete(system, messages, { provider: p, model: p === op ? process.env.OPERATOR_MODEL || undefined : undefined });
+    const reply = await ask(op).catch((e) => {
+      if (!main || main === op) throw e;
+      console.error("operator", op, e);
+      return ask(main);
+    });
     await sql("INSERT INTO chat_log (user_id, client_key, question, answer) VALUES ($1, $2, $3, $4)", [
       access?.user.id ?? null, clientKey, messages[messages.length - 1].content, reply,
     ]);

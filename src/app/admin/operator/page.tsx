@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/server/auth.ts";
 import { sql } from "@/lib/server/db.ts";
-import { provider } from "@/lib/server/llm.ts";
+import { operatorProvider } from "@/lib/server/llm.ts";
 import LocalTime from "../../components/LocalTime.tsx";
 
 export const metadata = { title: "Operator", robots: { index: false, follow: false } };
@@ -25,13 +25,13 @@ export default async function OperatorPage() {
        ORDER BY c.created_at DESC LIMIT 60`,
     ),
   ]);
-  const p = provider();
+  const p = operatorProvider();
   return (
     <main className="wrap">
       <header className="page-head">
         <div>
           <h1>Operator</h1>
-          <p className="sub">Har sahifadagi chat. Claude obuna, tariflar, to&apos;lov va signallarni o&apos;qish haqida javob beradi. Obunachiga faqat Claude tasdiqlagan faol signallarni aytadi, mehmonga aniq signal aytmaydi.</p>
+          <p className="sub">Har sahifadagi chat. Operator (DeepSeek, ishlamasa Claude) obuna, tariflar, to&apos;lov va signallarni o&apos;qish haqida javob beradi. Obunachiga faqat Claude tasdiqlagan faol signallarni aytadi, mehmonga aniq signal aytmaydi.</p>
         </div>
       </header>
       <section className="panel">

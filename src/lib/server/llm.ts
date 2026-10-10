@@ -1,18 +1,22 @@
 import "server-only";
 
-// AI operator uchun til modeli. LLM_PROVIDER bilan tanlanadi:
+// Til modeli. Asosiy provayder (Claude tahlillari) LLM_PROVIDER bilan tanlanadi:
 //   deepseek  — DEEPSEEK_API_KEY (platform.deepseek.com), model standart: deepseek-chat
 //   anthropic — ANTHROPIC_API_KEY (console.anthropic.com), model standart: claude-haiku-5-5
 //   gemini    — GEMINI_API_KEY (aistudio.google.com, bepul tarifi bor), model standart: gemini-2.5-flash
 //   mock      — sinov uchun, tashqi so'rov yubormaydi
 // LLM_MODEL bilan modelni almashtirish mumkin.
+// Sayt operatori (chat) alohida: OPERATOR_PROVIDER (standart: DEEPSEEK_API_KEY bo'lsa deepseek), OPERATOR_MODEL.
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export class LlmNotConfigured extends Error {}
 
-export function provider() {
-  const p = (process.env.LLM_PROVIDER ?? (process.env.ANTHROPIC_API_KEY ? "anthropic" : process.env.DEEPSEEK_API_KEY ? "deepseek" : process.env.GEMINI_API_KEY ? "gemini" : "")).toLowerCase();
+export type Provider = "mock" | "deepseek" | "anthropic" | "gemini";
+
+// Kaliti qo'yilgan bo'lsa provayder nomini qaytaradi, aks holda null.
+function usable(name: string): Provider | null {
+  const p = name.toLowerCase();
   if (p === "mock") return p;
   if (p === "deepseek" && process.env.DEEPSEEK_API_KEY) return p;
   if (p === "anthropic" && process.env.ANTHROPIC_API_KEY) return p;
@@ -20,13 +24,25 @@ export function provider() {
   return null;
 }
 
+export function provider() {
+  return usable(process.env.LLM_PROVIDER ?? (process.env.ANTHROPIC_API_KEY ? "anthropic" : process.env.DEEPSEEK_API_KEY ? "deepseek" : process.env.GEMINI_API_KEY ? "gemini" : ""));
+}
+
+// Operator chati uchun provayder: arzon DeepSeek, kaliti bo'lmasa asosiy provayder.
+export function operatorProvider() {
+  return usable(process.env.OPERATOR_PROVIDER ?? (process.env.DEEPSEEK_API_KEY ? "deepseek" : "")) ?? provider();
+}
+
 // opts.json: javob shu JSON sxemaga mos bo'lsin (Anthropic'da qat'iy, boshqalarda JSON rejimi).
 // opts.model: shu chaqiruv uchun model (masalan AI treyder uchun alohida), opts.maxTokens: javob chegarasi.
-export type CompleteOpts = { json?: Record<string, unknown>; model?: string; maxTokens?: number };
+// opts.provider: asosiysidan boshqa provayder (operator uchun). LLM_MODEL faqat asosiy provayderga tegishli.
+export type CompleteOpts = { json?: Record<string, unknown>; model?: string; maxTokens?: number; provider?: Provider | null };
 
 export async function complete(system: string, messages: ChatMessage[], opts: CompleteOpts = {}): Promise<string> {
-  const p = provider();
+  const main = provider();
+  const p = opts.provider ?? main;
   if (!p) throw new LlmNotConfigured("AI operator hali ulanmagan");
+  const envModel = p === main ? process.env.LLM_MODEL : undefined;
 
   if (p === "mock") {
     const last = messages[messages.length - 1]?.content ?? "";
@@ -41,7 +57,7 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
-        model: opts.model ?? process.env.LLM_MODEL ?? "deepseek-chat",
+        model: opts.model ?? envModel ?? "deepseek-chat",
         messages: [{ role: "system", content: system }, ...messages],
         max_tokens: opts.maxTokens ?? 1200,
         temperature: 0.4,
@@ -54,7 +70,7 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
   }
 
   if (p === "gemini") {
-    const model = opts.model ?? process.env.LLM_MODEL ?? "gemini-2.5-flash";
+    const model = opts.model ?? envModel ?? "gemini-2.5-flash";
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
@@ -77,7 +93,7 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: opts.model ?? process.env.LLM_MODEL ?? "claude-haiku-5-5",
+      model: opts.model ?? envModel ?? "claude-haiku-5-5",
       system,
       messages,
       max_tokens: opts.maxTokens ?? 1200,
