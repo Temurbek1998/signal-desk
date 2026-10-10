@@ -28,6 +28,8 @@ async function binance(symbol: string, minutes: number, limit = LIMIT): Promise<
 }
 
 async function yahoo(symbol: string, minutes: number, limit = LIMIT): Promise<Candle[]> {
+  // Yahoo 4 soatlik interval bermaydi ("240m" ga 400 qaytaradi): H4 3 oylik H1 shamlaridan vaqt bo'yicha yig'iladi.
+  if (minutes === 240) return bucketByTime(await yahoo(symbol, 60, 2000), 240).slice(-limit);
   const interval = minutes === 60 ? "60m" : `${minutes}m`;
   const range = minutes >= 60 ? (limit > LIMIT ? "3mo" : "1mo") : "5d";
   const data = await getJson(

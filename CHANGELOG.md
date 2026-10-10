@@ -4,6 +4,11 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.10.2 (2026-10-10): valyutalarda Claude ishlamasligi tuzatildi
+
+- Yahoo 4 soatlik shamni bermaydi ("240m" ga 400 xato): shu sabab valyutalar uchun Claude treyder, tahlil va qayta ko'rish
+  umuman ishlamagan. Endi H4 Yahoo'dan olingan H1 shamlaridan vaqt bo'yicha yig'iladi (oltin Twelve Data'da edi, unga ta'sir yo'q).
+
 ## v1.10.1 (2026-10-10): valyuta grafiklarida Claude zonalari
 
 - Valyutalarda Claude tahlili hali bo'lmagani uchun grafik bo'sh edi (treyderlar faqat bozor ochiq paytda ishlaydi).
