@@ -9,6 +9,7 @@ import { newsCycle } from "@/lib/server/newsTrader.ts";
 import { newsWatch } from "@/lib/server/newsWatch.ts";
 import { spikeNotes, spikeWatch } from "@/lib/server/spikeWatch.ts";
 import { cronDenied } from "@/lib/server/cronAuth.ts";
+import { demoReviews } from "@/lib/server/demoReview.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -29,6 +30,8 @@ export async function GET(req: Request) {
     const watch = newsWatch().catch((e) => console.error("Impuls", e));
     // Keskin harakat: zaxira (oxirgi 5 sham) va kuzatuvi tugaganlarga Claude xulosasi.
     const spike = spikeWatch(5).then(() => spikeNotes()).catch((e) => console.error("Keskin harakat", e));
+    // Yopilgan demo savdolar sababi (Claude, Sonnet): parallel, aylanishda 2 tagacha.
+    const demoWhy = demoReviews().catch((e) => console.error("Demo sababi", e));
     // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror va Claude qayta ko'rishi navbat bilan.
     if (aiTraderEnabled()) {
       // Zeus'ning yangi signallariga AI ikkinchi fikri (mijozga signal bilan birga ko'rinadi).
@@ -44,7 +47,7 @@ export async function GET(req: Request) {
       const s = d?.skipped ? await aiSwingDecide().catch((e) => { console.error("AI swing", e); return null; }) : null;
       if (s?.skipped) await refreshStaleView().catch((e) => console.error("AI ko'rinish", e));
     }
-    await Promise.all([news, watch, spike]);
+    await Promise.all([news, watch, spike, demoWhy]);
     const last = await lastMarketTest().catch(() => null);
     if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});
   });

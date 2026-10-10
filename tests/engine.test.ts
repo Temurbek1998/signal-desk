@@ -378,3 +378,16 @@ test("oltin: TP1 dan keyin SL narx ortidan ergashadi, 8 soatda yopiladi", () => 
   assert.ok(Math.abs(t.resultR! - 0.16) < 1e-9);
   assert.equal(walkTrailing(s, [k(105, 95)], rule, 2.5).status, "active");
 });
+
+test("demo izohi: foyda yoki zarar, qaysi daraja va necha pips", async () => {
+  const { outcomeNote, resultPips } = await import("../src/lib/demoNote.ts");
+  const win = outcomeNote({ pair: "XAU/USD", side: "BUY", entry: 2400, sl: 2380, outcome: "tp2", result_r: 1.5, pnl: 1499.5 });
+  assert.equal(win.win, true);
+  assert.match(win.text, /^Foyda: narx TP 2 ga yetdi/);
+  assert.match(win.text, /\+300 pips/); // 1.5 * 20 $ = 30 $ = 300 pips
+  const loss = outcomeNote({ pair: "EUR/USD", side: "SELL", entry: 1.1, sl: 1.102, outcome: "sl", result_r: -1, pnl: -1000.4 });
+  assert.equal(loss.win, false);
+  assert.match(loss.text, /^Zarar: narx teskari ketib SL ga urildi \(−20 pips, −1\.00R, −1000\.40 USDT\)\.$/);
+  assert.equal(resultPips({ pair: "USD/JPY", entry: 150, sl: 149.5, result_r: 1 }), 50);
+  assert.equal(outcomeNote({ pair: "XAU/USD", side: "BUY", entry: 1, sl: 0, outcome: "be", result_r: 0, pnl: -2 }).text.startsWith("Zararsiz"), true);
+});

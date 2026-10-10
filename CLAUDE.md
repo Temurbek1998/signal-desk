@@ -44,6 +44,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   - `spikeWatch.ts` (v1.13.0): yangilikdan qat'i nazar har daqiqada oltin M1 (standart Binance PAXGUSDT) da 2-3 daqiqada
     `SPIKE_PIPS` (180) pips harakat (`spike.ts` detectSpike) bo'lsa Telegram, `price_spikes`, 60 daqiqa kuzatuv (`followSpike`),
     so'ng Claude xulosasi (`spikeNotes`, cron). Admin "Keskin harakatlar" (`keskin`).
+  - `demoReview.ts` (v1.14.0): yopilgan demo savdoga Claude (Sonnet) sababini yozadi (`demo_trades.review`); natija jumlasi `demoNote.ts`.
+    Admin "Demo hisob" ochiq savdolarni jonli ko'rsatadi (`liveBoard` bilan), tugaganlar ostida izoh. `DEMO_REVIEW=0` o'chiradi.
   - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
   - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 250; qayta ko'rishlar ham sanaladi). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).

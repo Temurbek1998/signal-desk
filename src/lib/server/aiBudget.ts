@@ -14,7 +14,8 @@ export async function aiCallsToday(): Promise<number> {
           + (SELECT count(*) FROM signal_log WHERE ai_at >= date_trunc('day', now()))
           + (SELECT count(*) FROM ai_trade_reviews WHERE at >= date_trunc('day', now()))
           + (SELECT count(*) FROM news_reactions WHERE at >= date_trunc('day', now()))
-          + (SELECT count(*) FROM price_spikes WHERE note_at >= date_trunc('day', now())) AS n`,
+          + (SELECT count(*) FROM price_spikes WHERE note_at >= date_trunc('day', now()))
+          + (SELECT count(*) FROM demo_trades WHERE review_at >= date_trunc('day', now())) AS n`,
   );
   return Number(r?.n ?? 0);
 }

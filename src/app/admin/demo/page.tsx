@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { adminHref } from "@/lib/adminPath.ts";
 import { activeInstruments } from "@/lib/instruments.ts";
 import { marketOpen } from "@/lib/sessions.ts";
 import { signalLabel } from "@/lib/types.ts";
 import { requireAdmin } from "@/lib/server/auth.ts";
 import { demoSummary, type DemoTrade } from "@/lib/server/demo.ts";
+import { liveBoard, type LiveTrade } from "@/lib/server/live.ts";
+import { outcomeNote } from "@/lib/demoNote.ts";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 
 export const metadata = { title: "Demo hisob", robots: { index: false, follow: false } };
@@ -51,10 +54,36 @@ function Curve({ points, start }: { points: { t: number; balance: number }[]; st
   );
 }
 
+// Darajalar chizig'i: SL, kirish, TP1, TP2 va joriy narx bitta o'qda (BUY da chapdan o'ngga, SELL da teskari).
+// O'q faqat darajalar bo'yicha; narx ulardan tashqarida bo'lsa chetda ko'rsatiladi. Yozuvlar yuqori-past navbatma-navbat.
+function Ladder({ t, live }: { t: DemoTrade; live: LiveTrade | undefined }) {
+  const dir = t.side === "BUY" ? 1 : -1;
+  const sl = live?.stop ?? Number(t.sl);
+  const lv = [Number(t.sl), sl, Number(t.entry), Number(t.tp1 ?? t.entry), Number(t.tp2 ?? t.tp1 ?? t.entry)].map((v) => v * dir);
+  const lo = Math.min(...lv), hi = Math.max(...lv);
+  const W = 240, x = (v: number) => 10 + Math.min(1, Math.max(0, (v * dir - lo) / (hi - lo || 1))) * (W - 20);
+  const mark = (v: number, cls: string, label: string, up: boolean) => (
+    <g key={label}><line x1={x(v)} x2={x(v)} y1={16} y2={30} className={cls} /><text x={x(v)} y={up ? 11 : 42} textAnchor="middle" className="tick">{label}</text></g>
+  );
+  const price = live?.price ?? null;
+  return (
+    <svg viewBox={`0 0 ${W} 46`} className="ladder" role="img" aria-label="SL, kirish, TP va joriy narx">
+      <line x1={10} x2={W - 10} y1={23} y2={23} className="rail" />
+      {mark(sl, "lv sl", live?.slMoved || live?.tp1Hit ? "SL*" : "SL", false)}
+      {mark(Number(t.entry), "lv entry", "Kirish", true)}
+      {t.tp1 != null && mark(Number(t.tp1), "lv tp", "TP1", false)}
+      {t.tp2 != null && mark(Number(t.tp2), "lv tp", "TP2", true)}
+      {price != null && <circle cx={x(price)} cy={23} r={5} className={`now ${(price - Number(t.entry)) * dir >= 0 ? "up" : "down"}`} />}
+    </svg>
+  );
+}
+
 function Row({ t }: { t: DemoTrade }) {
   const pnl = Number(t.pnl);
+  const note = outcomeNote(t);
   return (
-    <tr>
+    <>
+    <tr className="has-note">
       <td>{when(t.opened_at)}</td>
       <td>{when(t.closed_at)}</td>
       <td>{t.pair} <span className="muted">{t.timeframe} · {strat(t.strategy)}</span></td>
@@ -69,18 +98,30 @@ function Row({ t }: { t: DemoTrade }) {
       <td className={`num ${pnl >= 0 ? "up" : "down"}`}>{signed(pnl)}</td>
       <td className="num">{usdt(Number(t.balance_after))}</td>
     </tr>
+    <tr className="note-row">
+      <td colSpan={13}><div className="note-box text">
+        <b className={note.win ? "up" : note.win === false ? "down" : undefined}>{note.text}</b>{" "}
+        <span className="muted">Sabab: </span>
+        {t.review ? <span>{t.review}</span> : <span className="muted">{t.review_at ? "yozilmoqda..." : "Claude tahlili navbatda (keyingi 5-10 daqiqada)."}</span>}
+      </div></td>
+    </tr>
+    </>
   );
 }
 
 export default async function DemoAccountPage() {
   await requireAdmin();
-  const d = await demoSummary();
+  const [d, board] = await Promise.all([demoSummary(), liveBoard().catch(() => null)]);
+  // Ochiq demo savdoning jonli holati: Claude savdolari ai_trade_id, Zeus signal_id bo'yicha.
+  const liveOf = new Map<string, LiveTrade>();
+  for (const p of board?.pairs ?? []) for (const lt of p.trades) liveOf.set(lt.source === "zeus" ? `s${lt.id}` : `a${lt.id}`, lt);
+  const live = (t: DemoTrade) => liveOf.get(t.ai_trade_id ? `a${t.ai_trade_id}` : `s${t.signal_id}`);
   const markets = [...new Set(activeInstruments().map((i) => i.category))];
   const open = markets.some((c) => marketOpen(c));
   const winRate = d.trades ? Math.round((d.wins / d.trades) * 100) : null;
   return (
     <main className="wrap">
-      <AutoRefresh seconds={60} />
+      <AutoRefresh seconds={30} />
       <header className="page-head">
         <div>
           <h1>Robot demo hisobi</h1>
@@ -168,16 +209,20 @@ export default async function DemoAccountPage() {
       </section>
 
       <section className="panel">
-        <h2>Ochiq pozitsiyalar ({d.open.length})</h2>
+        <h2>Ochiq pozitsiyalar ({d.open.length}), jonli</h2>
+        <p className="muted">Har 30 soniyada yangilanadi. Chiziqda: SL, kirish, TP1, TP2 va doira joriy narx. SL* Claude yaqinlashtirgan yoki TP1 dan keyin kirishga ko'chgan SL.</p>
         {d.open.length === 0 ? (
           <p className="muted">Hozir ochiq demo savdo yo'q.</p>
         ) : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Ochilgan</th><th>Juftlik</th><th>Yo'nalish</th><th>Reyting</th><th className="num">Lot</th><th className="num">Kirish</th><th className="num">TP 1</th><th className="num">TP 2</th><th className="num">SL</th><th className="num">Risk</th><th className="num">Marja</th></tr></thead>
+              <thead><tr><th>Ochilgan</th><th>Juftlik</th><th>Yo'nalish</th><th>Reyting</th><th className="num">Lot</th><th className="num">Kirish</th><th className="num">TP 1</th><th className="num">TP 2</th><th className="num">SL</th><th className="num">Joriy narx</th><th className="num">Yurish</th><th className="num">Suzuvchi</th><th className="num">Risk</th><th className="num">Marja</th></tr></thead>
               <tbody>
-                {d.open.map((t) => (
-                  <tr key={t.id}>
+                {d.open.map((t) => {
+                  const lv = live(t);
+                  return (
+                  <Fragment key={t.id}>
+                  <tr className="has-note">
                     <td>{when(t.opened_at)}</td>
                     <td>{t.pair} <span className="muted">{t.timeframe} · {strat(t.strategy)}</span></td>
                     <td className={t.side === "BUY" ? "up" : "down"}>{t.side}</td>
@@ -186,11 +231,22 @@ export default async function DemoAccountPage() {
                     <td className="num">{px(t.entry)}</td>
                     <td className="num">{px(t.tp1)}</td>
                     <td className="num">{px(t.tp2)}</td>
-                    <td className="num">{px(t.sl)}</td>
+                    <td className="num">{px(t.sl)}{lv && lv.stop !== Number(t.sl) ? <><br /><span className="muted">hozir {px(lv.stop)}</span></> : null}</td>
+                    <td className="num">{px(lv?.price ?? null)}</td>
+                    <td className={`num ${(lv?.pips ?? 0) >= 0 ? "up" : "down"}`}>{lv?.pips != null ? `${lv.pips >= 0 ? "+" : "−"}${Math.abs(lv.pips).toFixed(0)} pips` : "—"}{lv?.toSlPips != null ? <><br /><span className="muted">SL gacha {lv.toSlPips.toFixed(0)}</span></> : null}</td>
+                    <td className={`num ${(lv?.usdt ?? 0) >= 0 ? "up" : "down"}`}>{lv?.usdt != null ? signed(lv.usdt) : "—"}{lv?.r != null ? <><br /><span className="muted">{lv.r >= 0 ? "+" : "−"}{Math.abs(lv.r).toFixed(2)}R</span></> : null}</td>
                     <td className="num">{usdt(Number(t.risk_usdt))}</td>
                     <td className="num">{usdt(Number(t.notional) / d.leverage)}</td>
                   </tr>
-                ))}
+                  <tr className="note-row">
+                    <td colSpan={14}><div className="note-box">
+                      <Ladder t={t} live={lv} />
+                      <span className="muted">{lv ? [lv.tp1Hit ? "TP1 olindi, yarmi yopildi" : null, lv.slMoved ? "SL ko'chirildi" : null].filter(Boolean).join(", ") || "Kuzatilmoqda: TP1 ham, SL ham hali urilmagan" : "Joriy narx olinmadi"}</span>
+                    </div></td>
+                  </tr>
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -199,7 +255,8 @@ export default async function DemoAccountPage() {
 
       {d.recent.length > 0 && (
         <section className="panel">
-          <h2>Savdolar tarixi</h2>
+          <h2>Tugagan savdolar</h2>
+          <p className="muted">Har savdo ostida: foyda yoki zarar, qaysi darajada yopilgani va Claude yozgan sababi.</p>
           <div className="table-wrap">
             <table>
               <thead><tr><th>Ochilgan</th><th>Yopilgan</th><th>Juftlik</th><th>Yo'nalish</th><th>Reyting</th><th className="num">Lot</th><th className="num">Kirish</th><th className="num">TP 1</th><th className="num">TP 2</th><th className="num">SL</th><th>Natija</th><th className="num">Foyda / zarar</th><th className="num">Balans</th></tr></thead>
