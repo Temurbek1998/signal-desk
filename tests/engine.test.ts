@@ -152,8 +152,9 @@ test("tarif: yagona tarif kuniga 6 tagacha A va B, eski PRO 12, VIP cheklovsiz, 
 test("demo hisob: risk 1%, SL urilsa aynan 1% yo'qotiladi, komissiya alohida", async () => {
   const { demoConfig, position, pnlOf, maxDrawdown } = await import("../src/lib/paper.ts");
   const cfg = demoConfig({});
-  assert.equal(cfg.startBalance, 10_000);
+  assert.equal(cfg.startBalance, 100_000);
   assert.equal(cfg.riskPct, 1);
+  assert.equal(cfg.leverage, 1000);
   const p = position(10_000, cfg, "crypto", 100, 98);
   assert.equal(p.risk, 100);
   assert.equal(p.size, 50);
@@ -162,6 +163,24 @@ test("demo hisob: risk 1%, SL urilsa aynan 1% yo'qotiladi, komissiya alohida", a
   assert.equal(pnlOf(1, p.risk, 4), 96);
   assert.equal(demoConfig({ DEMO_RISK_PCT: "50" }).riskPct, 1); // chegaradan tashqari qiymat rad etiladi
   assert.ok(Math.abs(maxDrawdown([100, 120, 90, 130]) - 25) < 1e-9);
+});
+
+test("demo hisob: oltin va valyutada kamida 0.05 lot, DEMO_LOTS qat'iy lot", async () => {
+  const { demoConfig, position, lotsOf } = await import("../src/lib/paper.ts");
+  const cfg = demoConfig({});
+  assert.equal(cfg.minLots, 0.05);
+  // Kichik balans, keng SL: risk bo'yicha 0.05 lotdan kam chiqadi, 0.05 ga ko'tariladi.
+  const small = position(1000, cfg, "gold", 2400, 2370);
+  assert.ok(Math.abs(lotsOf("gold", small.size) - 0.05) < 1e-9);
+  assert.ok(Math.abs(small.risk - 150) < 1e-9); // 5 unsiya * 30 $
+  // 100 000 $, 1% risk, 30 $ SL: 1000 / 30 = 33.3 unsiya = 0.333 lot (0.05 dan katta, o'zgarmaydi).
+  const big = position(100_000, cfg, "gold", 2400, 2370);
+  assert.ok(Math.abs(lotsOf("gold", big.size) - 1000 / 30 / 100) < 1e-9);
+  const fx = position(1000, cfg, "forex", 1.1, 1.095);
+  assert.ok(Math.abs(lotsOf("forex", fx.size) - 0.05) < 1e-9);
+  const fixed = demoConfig({ DEMO_LOTS: "0.05" });
+  assert.ok(Math.abs(lotsOf("gold", position(100_000, fixed, "gold", 2400, 2370).size) - 0.05) < 1e-9);
+  assert.equal(position(10_000, cfg, "crypto", 100, 98).size, 50); // kriptoda lot qoidasi yo'q
 });
 
 test("admin manzili: maxfiy yo'l /admin ga aylanadi, oddiy /admin yashiriladi", async () => {

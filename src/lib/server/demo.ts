@@ -85,7 +85,7 @@ export async function syncDemo(): Promise<{ opened: DemoTrade[]; closed: DemoTra
 
 export type DemoSummary = {
   start: number; balance: number; returnPct: number; open: DemoTrade[]; recent: DemoTrade[];
-  curve: { t: number; balance: number }[]; trades: number; wins: number; maxDd: number; fees: number; riskPct: number; leverage: number; since: Date | null; days: DayRow[]; strategies: StrategyRow[];
+  curve: { t: number; balance: number }[]; trades: number; wins: number; maxDd: number; fees: number; riskPct: number; leverage: number; minLots: number; fixedLots: number | null; since: Date | null; days: DayRow[]; strategies: StrategyRow[];
 };
 
 // Eski qatorlarda tp1/tp2/lot bo'lmasligi mumkin: signal jurnalidan va hajmdan to'ldiriladi.
@@ -123,6 +123,8 @@ export async function demoSummary(): Promise<DemoSummary> {
     fees,
     riskPct: cfg.riskPct,
     leverage: cfg.leverage,
+    minLots: cfg.minLots,
+    fixedLots: cfg.fixedLots,
     since: first ? new Date(first) : null,
   };
 }
