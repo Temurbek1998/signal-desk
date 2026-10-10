@@ -203,6 +203,7 @@ export async function claudeViewNow(_prev: { msg?: string } | null, form: FormDa
   try {
     const v = await claudeView(pair);
     revalidatePath("/admin/tahlil");
+    revalidatePath("/admin/pult");
     return { msg: `Claude: ${v.bias}, ishonch ${v.confidence}%` };
   } catch (e) {
     return { msg: e instanceof Error ? e.message : String(e) };

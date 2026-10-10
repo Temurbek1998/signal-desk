@@ -62,7 +62,8 @@ export async function claudeView(pair: string, pre?: Awaited<ReturnType<typeof f
 }
 
 export async function latestView(pair: string): Promise<AiView | null> {
-  const [v] = await sql<AiView>("SELECT * FROM ai_views WHERE pair = $1 AND at > now() - interval '2 days' ORDER BY at DESC LIMIT 1", [pair]);
+  // 4 kun: juma kechki tahlil dam olish kunlari ham grafikda qoladi.
+  const [v] = await sql<AiView>("SELECT * FROM ai_views WHERE pair = $1 AND at > now() - interval '4 days' ORDER BY at DESC LIMIT 1", [pair]);
   return v ?? null;
 }
 
@@ -77,7 +78,9 @@ export async function refreshStaleView() {
   const due = pairs.map((p) => ({ p, at: last.get(p) ?? 0 })).filter((x) => Date.now() - x.at >= every).sort((a, b) => a.at - b.at);
   for (const { p } of due) {
     const f = await facts(p).catch(() => null);
-    if (!f?.price || Date.now() - f.lastTime > 3 * 3600_000) continue; // bozor yopiq
+    // Bozor yopiq bo'lsa ham, juftlikda 4 kun ichida birorta tahlil bo'lmasa, oxirgi shamlar bo'yicha bitta chiziladi (grafik bo'sh qolmasin).
+    const empty = Date.now() - (last.get(p) ?? 0) > 4 * 86_400_000;
+    if (!f?.price || (!empty && Date.now() - f.lastTime > 3 * 3600_000)) continue;
     await claudeView(p, f);
     return;
   }

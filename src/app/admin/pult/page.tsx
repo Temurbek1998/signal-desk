@@ -16,10 +16,12 @@ import Countdown from "../../components/Countdown.tsx";
 import LocalTime from "../../components/LocalTime.tsx";
 import type { ChartLevel, ChartSignal } from "../../components/RobotChart.tsx";
 import TvChart from "../../components/TvChart.tsx";
+import ClaudeViewButton from "../../components/ClaudeViewButton.tsx";
+import { provider } from "@/lib/server/llm.ts";
 
 export const metadata = { title: "Signal pulti", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // Signal pulti: oltin va barcha valyutalar bir sahifada. Texnik tahlil, aniq signal (kirish, SL, TP1, TP2),
 // kirishgacha taymer va tanlangan juftlik grafigi (Claude darajalari va zonalari bilan). Faqat admin.
@@ -202,7 +204,10 @@ async function SelectedChart({ row }: { row: { inst: Instrument; sig: Sig | null
       </div>
       <TvChart candles={all.slice(from)} ema20={e20.slice(from)} ema50={e50.slice(from)} signals={signals} digits={digitsOf(inst.pair, closes.at(-1) ?? 0)}
         tfMinutes={15} levels={levels} zones={ca?.zones ?? []} />
-      {view?.summary && <p className="ai-box" style={{ margin: 0 }}>Claude: {view.summary}</p>}
+      {view ? view.summary && <p className="ai-box" style={{ margin: 0 }}>Claude: {view.summary}</p> : (
+        <p className="muted" style={{ margin: 0 }}>Bu juftlikda Claude tahlili (zonalar, darajalar) hali yo&apos;q: cron navbat bilan chizadi yoki hozir so&apos;rang.</p>
+      )}
+      <ClaudeViewButton pair={inst.pair} enabled={!!provider()} />
     </section>
   );
 }

@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.10.1 (2026-10-10): valyuta grafiklarida Claude zonalari
+
+- Valyutalarda Claude tahlili hali bo'lmagani uchun grafik bo'sh edi (treyderlar faqat bozor ochiq paytda ishlaydi).
+  Endi bozor yopiq bo'lsa ham, 4 kun ichida tahlili yo'q juftlikka cron oxirgi shamlar bo'yicha bitta tahlil chizadi.
+  Tahlil grafikda 4 kun turadi (oldin 2 kun: juma kechki tahlil dam olish kunlari yo'qolardi).
+- "Signal pulti" grafigida "Claude qayta tahlil qilsin" tugmasi: istalgan juftlik uchun darhol.
+
 ## v1.10.0 (2026-10-10): Claude ochiq savdolarni har soat qayta ko'radi, "Jonli savdolar" sahifasi
 
 - Claude o'z ochiq savdolarini (kun ichi va swing) har soatda qayta ko'radi: ushlab turish, SL ni yaqinlashtirish
