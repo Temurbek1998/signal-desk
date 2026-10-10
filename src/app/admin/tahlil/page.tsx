@@ -7,7 +7,8 @@ import AiAnalysisView from "../../components/AiAnalysisView.tsx";
 import ClaudeViewButton from "../../components/ClaudeViewButton.tsx";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 import LocalTime from "../../components/LocalTime.tsx";
-import RobotChart, { type ChartLevel } from "../../components/RobotChart.tsx";
+import type { ChartLevel } from "../../components/RobotChart.tsx";
+import TvChart from "../../components/TvChart.tsx";
 import RunNowButton from "../../components/RunNowButton.tsx";
 import { requireAdmin } from "@/lib/server/auth.ts";
 import { chartData } from "@/lib/server/analysis.ts";
@@ -64,7 +65,7 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
           </div>
         </div>
         {d ? (
-          <RobotChart candles={d.candles} ema20={d.ema20} ema50={d.ema50} signals={d.signals} digits={d.digits} tfMinutes={d.minutes}
+          <TvChart candles={d.candles} ema20={d.ema20} ema50={d.ema50} signals={d.signals} digits={d.digits} tfMinutes={d.minutes}
             levels={levels} zones={ca?.zones ?? []} />
         ) : (
           <p className="err">Narx ma'lumotini olib bo'lmadi: {error}</p>

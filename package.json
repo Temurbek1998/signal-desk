@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "0.3.7",
+    "lightweight-charts": "^5.0.9",
     "next": "15.5.27",
     "nodemailer": "10.0.16",
     "pg": "8.16.3",

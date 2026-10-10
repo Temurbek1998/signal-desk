@@ -9,7 +9,8 @@ import { sql } from "@/lib/server/db.ts";
 import type { Timeframe } from "@/lib/types.ts";
 import LocalTime from "../../../components/LocalTime.tsx";
 import AiAnalysisView from "../../../components/AiAnalysisView.tsx";
-import RobotChart, { type ChartLevel, type ChartSignal } from "../../../components/RobotChart.tsx";
+import type { ChartLevel, ChartSignal } from "../../../components/RobotChart.tsx";
+import TvChart from "../../../components/TvChart.tsx";
 
 export const metadata = { title: "Claude tahlili", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -155,7 +156,7 @@ function Chart({ chart, minutes, signals, a, title }: {
     <section className="panel">
       <h2>{title}</h2>
       {!chart.covered && <p className="muted">Signal vaqti grafik ma&apos;lumotidan eski: faqat mavjud qismi ko&apos;rsatilgan.</p>}
-      <RobotChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={signals} digits={chart.digits}
+      <TvChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={signals} digits={chart.digits}
         tfMinutes={minutes} levels={levels} zones={a?.zones ?? []} drawAll />
     </section>
   );

@@ -8,7 +8,7 @@ import type { ChartSignal } from "../../components/RobotChart.tsx";
 import AiDecideButton from "../../components/AiDecideButton.tsx";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 import LocalTime from "../../components/LocalTime.tsx";
-import RobotChart from "../../components/RobotChart.tsx";
+import TvChart from "../../components/TvChart.tsx";
 
 export const metadata = { title: "AI treyder", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -112,7 +112,7 @@ export default async function AiTraderPage() {
       {chart && (
         <section className="panel">
           <h2>Oltin H1 va AI savdolari</h2>
-          <RobotChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={aiSignals} digits={chart.digits} tfMinutes={60} />
+          <TvChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={aiSignals} digits={chart.digits} tfMinutes={60} />
         </section>
       )}
 

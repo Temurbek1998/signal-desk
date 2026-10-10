@@ -348,6 +348,13 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .robot-chart .lvl-resistance line, .robot-chart .lvl-supply line { stroke: var(--sell); }
 .robot-chart .lvl-invalidation line { stroke: var(--fg); stroke-dasharray: 8 3 2 3; }
 .sw.lvl { border-top: 2px dotted var(--ema50); height: 0; } .sw.zone { background: var(--buy); opacity: .3; height: 8px; }
+/* TradingView uslubidagi grafik (admin) */
+.tv-wrap { position: relative; display: grid; gap: 8px; }
+.tv-chart { width: 100%; min-height: 420px; border-radius: 10px; overflow: hidden; }
+.tv-zones { position: absolute; inset: 0 0 auto 0; height: 0; pointer-events: none; z-index: 3; }
+.tv-zone { position: absolute; left: 0; border-block: 1px solid; font: 600 10px var(--f-mono); padding: 2px 6px; overflow: hidden; }
+.tv-zone.demand { background: color-mix(in srgb, var(--buy) 14%, transparent); border-color: color-mix(in srgb, var(--buy) 45%, transparent); color: var(--buy); }
+.tv-zone.supply { background: color-mix(in srgb, var(--sell) 14%, transparent); border-color: color-mix(in srgb, var(--sell) 45%, transparent); color: var(--sell); }
 /* Admin: Claude tahlili sahifasi */
 .an-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
 .an-grid > * { min-width: 0; }
