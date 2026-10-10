@@ -10,6 +10,7 @@ import { sql } from "@/lib/server/db.ts";
 import { memoryTable } from "@/lib/server/memory.ts";
 import { estimate, MIN_FOR_BLOCK } from "@/lib/memory.ts";
 import { CONTEXT_TFS, TIMEFRAMES } from "@/lib/types.ts";
+import { todaySql } from "@/lib/day.ts";
 
 export const metadata = { title: "Robot", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -26,9 +27,9 @@ const t = (d: Date) => new Date(d).toLocaleString("ru-RU", { day: "2-digit", mon
 export default async function RobotPage() {
   await requireAdmin();
   const [runs, states, events, [today], memory, ctx] = await Promise.all([
-    sql<Run>("SELECT * FROM robot_runs ORDER BY started_at DESC LIMIT 30"),
+    sql<Run>(`SELECT * FROM robot_runs WHERE ${todaySql("started_at")} ORDER BY started_at DESC LIMIT 30`),
     sql<State>("SELECT * FROM robot_state ORDER BY pair, timeframe"),
-    sql<Ev>("SELECT * FROM robot_events ORDER BY at DESC LIMIT 60"),
+    sql<Ev>(`SELECT * FROM robot_events WHERE ${todaySql("at")} ORDER BY at DESC LIMIT 200`),
     sql<{ strong: string; closed: string; runs: string }>(
       `SELECT (SELECT count(*) FROM signal_log WHERE signal_time > now() - interval '24 hours') AS strong,
               (SELECT count(*) FROM signal_log WHERE status <> 'active' AND updated_at > now() - interval '24 hours') AS closed,
@@ -114,9 +115,12 @@ export default async function RobotPage() {
       </section>
 
       <section className="panel">
-        <h2>Hodisalar</h2>
+        <div className="bar">
+          <h2 style={{ margin: 0 }}>Hodisalar, bugun</h2>
+          <Link className="muted" href={adminHref("/arxiv")}>Oldingi kunlar: Kunlik arxiv →</Link>
+        </div>
         {events.length === 0 ? (
-          <p className="muted">Hali hodisa yo'q.</p>
+          <p className="muted">Bugun hali hodisa yo'q.</p>
         ) : (
           <div className="table-wrap">
             <table>
@@ -138,7 +142,7 @@ export default async function RobotPage() {
       </section>
 
       <section className="panel">
-        <h2>Aylanishlar</h2>
+        <h2>Aylanishlar, bugun</h2>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Boshlandi</th><th>Kim</th><th className="num">Davomiyligi</th><th className="num">Tahlil</th><th className="num">Xato</th><th className="num">Kuchli</th><th className="num">Kuchsiz</th></tr></thead>

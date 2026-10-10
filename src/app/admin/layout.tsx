@@ -19,6 +19,7 @@ const ITEMS = [
   { key: "mt5", label: "MT5 avtosavdo", sub: "/mt5" },
   { key: "operator", label: "Operator", sub: "/operator" },
   { key: "sinov", label: "Bozorlar sinovi", sub: "/sinov" },
+  { key: "arxiv", label: "Kunlik arxiv", sub: "/arxiv" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
