@@ -30,6 +30,10 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`
   (bitta signal yoki qarorning to'liq tahlili). Grafiklar `TvChart.tsx` (TradingView Lightweight Charts).
 - **Tariflar** (`db/schema.sql`, `memory.ts` TIER_RULES): Standart 19, PRO 39, VIP 79 USDT/oy. To'lov USDT, admin qo'lda tasdiqlaydi.
+- **MT5 avtosavdo**: `public/mt5/SignalDeskEA.mq5` (egasining MT5 ida ishlaydi, login saytga berilmaydi) har 10 soniyada
+  `/api/ea` dan (sarlavha `X-EA-Key` = `EA_KEY`) oddiy matn qatorlarini oladi va savdo ochadi. Faqat demo, `InpAllowReal` bilan haqiqiy.
+  Admin: "MT5 avtosavdo" sahifasi (`mt5`), `ea_pings` jadvali oxirgi ulanishni saqlaydi. MQL5 kodi bu muhitda kompilyatsiya qilinmaydi:
+  MetaEditor xatolarini egasi yuboradi.
 - `/api/health`: faqat sonlar va umumiy holat (pullik signal tafsilotlari chiqmaydi). `AI_KEY`, `ai_decisions`, `ai_views`, `ai_reviews`.
 
 ## Qat'iy qoidalar (egasi bilan kelishilgan)

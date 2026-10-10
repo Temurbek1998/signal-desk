@@ -297,3 +297,10 @@ CREATE TABLE IF NOT EXISTS ai_views (
   model text
 );
 CREATE INDEX IF NOT EXISTS ai_views_pair_at ON ai_views (pair, at DESC);
+
+-- MT5 Expert Advisor oxirgi marta qachon signal so'ragani (admin panelda "ulangan" holati uchun).
+CREATE TABLE IF NOT EXISTS ea_pings (
+  id        int PRIMARY KEY DEFAULT 1,
+  last_seen timestamptz NOT NULL DEFAULT now(),
+  info      text NOT NULL DEFAULT ''
+);

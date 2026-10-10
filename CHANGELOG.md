@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.1.0 (2026-10-10): MT5 avtosavdo (demo)
+
+- MT5 Expert Advisor (`public/mt5/SignalDeskEA.mq5`): Claude tasdiqlagan oltin signallarini va Claude'ning o'z savdolarini
+  egasining MT5 hisobida avtomatik ochadi (Exness, XM va boshqalar), risk 1%, TP1 da yarmi, ergashuvchi SL, vaqt bo'yicha yopish.
+  Standart holatda faqat demo hisobda ishlaydi.
+- `/api/ea`: EA uchun himoyalangan signal manzili (`EA_KEY`). Admin panelda "MT5 avtosavdo" sahifasi: holat va o'rnatish yo'riqnomasi.
+
 ## v1.0.0 (2026-10-10): Claude boshqaruvidagi birinchi to'liq versiya
 
 **Robotlar**
