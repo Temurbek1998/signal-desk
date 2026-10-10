@@ -22,6 +22,7 @@ Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
   Keyin har 5 daqiqada M1 bo'yicha o'lchanadi: maqsad, bekor narxi yoki muddat oxiri, eng yaxshi va eng yomon harakat.
 - Savdo ochilmaydi va mijozlarga chiqmaydi. Juftliklar: `NEWS_PAIRS` (standart `XAU/USD`), o'chirish: `NEWS_AI=0`.
   Model oltin treyderi bilan bir xil (Opus), haftasiga bir necha chaqiruv. "Oxirgi yangilikni hozir tahlil qil" tugmasi.
+
 ## v1.10.2 (2026-10-10): valyutalarda Claude ishlamasligi tuzatildi
 
 - Yahoo 4 soatlik shamni bermaydi ("240m" ga 400 xato): shu sabab valyutalar uchun Claude treyder, tahlil va qayta ko'rish
