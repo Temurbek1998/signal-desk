@@ -4,6 +4,11 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.5.0 (2026-10-10): bitta tarif 20 USDT
+
+- Uch tarif o'rniga bitta: 20 USDT/oy, kuniga 6 tagacha A va B reytingli signal. PRO va VIP yangi obuna uchun yopildi
+  (eski obunalar o'z qoidasi bilan qoladi). Bosh sahifa, operator va obuna nomlari yangilandi.
+
 ## v1.4.0 (2026-10-10): Signal pulti (admin)
 
 - Admin panelda "Signal pulti" sahifasi: oltin va barcha valyutalar bir joyda. Har juftlikda texnik tahlil (M15 trend, ADX, RSI,

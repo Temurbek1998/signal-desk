@@ -44,13 +44,14 @@ export function ratePips(m: Memory): { rating: Rating; est: number; reason: stri
 
 export type Tier = "standard" | "pro" | "vip" | "admin";
 export type PaidTier = Exclude<Tier, "admin">;
-export const PAID_TIERS: PaidTier[] = ["standard", "pro", "vip"];
-export const TIER_NAME: Record<Tier, string> = { standard: "Standart", pro: "PRO", vip: "VIP", admin: "Admin" };
+// 2026-10-10 dan bitta tarif (20 USDT/oy): yangi obunalar faqat "standard". PRO va VIP eski obunalar uchun qoladi.
+export const PAID_TIERS: PaidTier[] = ["standard"];
+export const TIER_NAME: Record<Tier, string> = { standard: "Obuna", pro: "PRO", vip: "VIP", admin: "Admin" };
 
 // Har bir daraja qaysi reytingdagi signallarni va kuniga nechtasini ko'radi.
 export const TIER_RULES: Record<Tier, { ratings: Rating[]; daily: number }> = {
   // Kunlik chegara "gacha": robot faqat shartlar mos kelganda signal beradi, shuning uchun soni kafolatlanmaydi.
-  standard: { ratings: ["A"], daily: 5 },
+  standard: { ratings: ["A", "B"], daily: 6 },
   pro: { ratings: ["A", "B"], daily: 12 },
   vip: { ratings: ["A", "B"], daily: Infinity },
   admin: { ratings: ["A", "B", "C"], daily: Infinity },

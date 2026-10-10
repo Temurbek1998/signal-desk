@@ -29,7 +29,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
 - **Admin** (`src/app/admin/`, maxfiy manzil `ADMIN_PATH` orqali, oddiy `/admin` 404 beradi):
   "Signal pulti" (`pult`: barcha juftliklar, texnik tahlil, kirish/SL/TP, kirish taymeri), "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`
   (bitta signal yoki qarorning to'liq tahlili). Grafiklar `TvChart.tsx` (TradingView Lightweight Charts).
-- **Tariflar** (`db/schema.sql`, `memory.ts` TIER_RULES): Standart 19, PRO 39, VIP 79 USDT/oy. To'lov USDT, admin qo'lda tasdiqlaydi.
+- **Tariflar** (`db/schema.sql`, `memory.ts` TIER_RULES): 2026-10-10 dan bitta tarif: 20 USDT/oy (`standard`, kuniga 6 tagacha A/B signal).
+  PRO/VIP faqat eski obunalar uchun. To'lov USDT, admin qo'lda tasdiqlaydi.
 - **MT5 avtosavdo**: `public/mt5/SignalDeskEA.mq5` (egasining MT5 ida ishlaydi, login saytga berilmaydi) har 10 soniyada
   `/api/ea` dan (sarlavha `X-EA-Key` = `EA_KEY`) oddiy matn qatorlarini oladi va savdo ochadi. Faqat demo, `InpAllowReal` bilan haqiqiy.
   Admin: "MT5 avtosavdo" sahifasi (`mt5`), `ea_pings` jadvali oxirgi ulanishni saqlaydi. MQL5 kodi bu muhitda kompilyatsiya qilinmaydi:
@@ -47,7 +48,7 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
 - Saytda kafolatlangan yutuq foizi va "garant" so'zi yo'q. Claude mijoz signali uchun kirish/TP/SL o'ylab topmaydi:
   darajalar Zeus'dan, Claude faqat tasdiqlaydi yoki ushlab qoladi.
 - Yangi bozor yoki strategiya mijozlarga faqat natijasi isbotlangach ochiladi (valyuta: kamida 20 yopilgan, Claude tasdiqlaganlari bo'yicha ijobiy).
-- Narxni oshirish (49/99/200) faqat 3+ oy barqaror jonli natijadan keyin.
+- Narxni oshirish faqat 3+ oy barqaror jonli natijadan keyin.
 - Commit xabarlari o'zbekcha.
 
 ## Lokal ishga tushirish va sinov

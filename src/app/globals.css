@@ -568,3 +568,4 @@ th { font-family: var(--f-body); letter-spacing: 0.02em; }
 .pult-levels td { padding: 3px 6px; }
 .pult-tech { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px 12px; font-size: 0.86rem; color: var(--muted); }
 .pult-tech b { color: var(--fg); font-family: var(--f-mono); }
+#narxlar .plan { max-width: 440px; width: 100%; justify-self: center; margin-inline: auto; }

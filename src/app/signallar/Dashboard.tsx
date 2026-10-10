@@ -27,7 +27,7 @@ type Quota = { tier: "standard" | "pro" | "vip" | "admin"; used: number; limit: 
 type RobotResponse = {
   timeframe: Timeframe; generatedAt: number; signals: Signal[]; errors: { pair: string; message: string }[]; quota?: Quota;
 };
-const TIER_NAME = { standard: "Standart", pro: "PRO", vip: "VIP", admin: "Admin" };
+const TIER_NAME = { standard: "Obuna", pro: "PRO", vip: "VIP", admin: "Admin" };
 
 function pipSize(s: Signal) {
   if (s.category === "gold") return 0.1;

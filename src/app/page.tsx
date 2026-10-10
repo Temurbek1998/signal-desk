@@ -4,7 +4,7 @@ import { PAID_TIERS, TIER_NAME } from "@/lib/memory.ts";
 
 const CHAT_LIMIT = { standard: 30, pro: 45, vip: 60 } as const;
 const TIER_FEATURES = {
-  standard: { lead: "Boshlash uchun", count: "Kuniga 5 tagacha signal", rating: "Faqat eng ishonchli (A reyting) signallar", extra: [] as string[] },
+  standard: { lead: "Barcha signallar bitta tarifda", count: "Kuniga 6 tagacha signal", rating: "A va B reytingli kuchli signallar, Claude tekshiruvidan o'tgan", extra: ["Adminga murojaat orqali yordam"] as string[] },
   pro: { lead: "Faol treyder uchun", count: "Kuniga 12 tagacha signal", rating: "A va B reytingli kuchli signallar", extra: [] as string[] },
   vip: { lead: "Hammasi va shaxsiy yordam", count: "Cheklovsiz: robotning barcha kuchli signallari", rating: "A va B reytingli kuchli signallar", extra: ["Ustuvor shaxsiy yordam"] },
 };
@@ -145,8 +145,8 @@ export default async function Home() {
       <section className="section" id="narxlar">
         <h2>Tariflar</h2>
         <p className="sub">
-          Hamma tarif oylik. Robot yangi, jonli natijalari endi yig'ilmoqda, shuning uchun narxlar boshlang'ich darajada:
-          natija o'zini isbotlagach oshiriladi. Signallarni bitta robot beradi, tariflar signal soni, reytingi va yordam darajasi bilan farq qiladi.
+          Bitta oylik tarif. Robot yangi, jonli natijalari endi yig'ilmoqda, shuning uchun narx boshlang'ich darajada:
+          natija o'zini isbotlagach oshiriladi.
           Robot faqat barcha shartlar mos kelganda signal beradi, shuning uchun kunlik son &quot;gacha&quot; deb yozilgan: tinch kunlarda kamroq bo&apos;ladi.
           Har bir signal natijasi <Link href="/natijalar">Natijalar</Link> sahifasida ochiq ko&apos;rinadi.
         </p>
@@ -155,8 +155,7 @@ export default async function Home() {
             const p = plans.find((x) => x.tier === tier && x.days === 30);
             const f = TIER_FEATURES[tier];
             return (
-              <TiltCard key={tier} className={`plan plan3d ${tier} ${tier === "pro" ? "best" : ""}`}>
-                {tier === "pro" && <span className="badge">Eng ko&apos;p tanlanadi</span>}
+              <TiltCard key={tier} className={`plan plan3d ${tier} best`}>
                 <MiniCandles n={(i + 1) as 1 | 2 | 3} />
                 <h3>{TIER_NAME[tier]}</h3>
                 <div className="price">{p ? formatUsdt(p.price_usdt) : "—"}<small> / oy</small></div>
@@ -168,7 +167,7 @@ export default async function Home() {
                   <li>AI operator: kuniga {CHAT_LIMIT[tier]} savol</li>
                   {f.extra.map((x) => <li key={x}>{x}</li>)}
                 </ul>
-                <Link className={`btn ${tier === "pro" ? "gold" : ""}`} href="/royxat">Tanlash</Link>
+                <Link className="btn gold" href="/royxat">Obuna bo&apos;lish</Link>
               </TiltCard>
             );
           })}

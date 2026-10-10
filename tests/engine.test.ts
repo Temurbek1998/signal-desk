@@ -139,9 +139,9 @@ test("xotira: yomon natijali juftlik bloklanadi, yaxshisi A oladi", () => {
   assert.equal(rate(70, { n: 0, wins: 0 }, { n: 0, wins: 0 }).rating, "B");
 });
 
-test("tarif: standart kuniga 5 tagacha A, PRO 12 tagacha A va B, VIP cheklovsiz A va B, admin hammasi", () => {
+test("tarif: yagona tarif kuniga 6 tagacha A va B, eski PRO 12, VIP cheklovsiz, admin hammasi", () => {
   const day = Array.from({ length: 30 }, (_, i) => ({ id: i, rating: i % 3 === 0 ? "A" : i % 3 === 1 ? "B" : "C" }));
-  assert.deepEqual(allocate(day, "standard").map((s) => s.id), [0, 3, 6, 9, 12]);
+  assert.deepEqual(allocate(day, "standard").map((s) => s.id), [0, 1, 3, 4, 6, 7]);
   assert.equal(allocate(day, "pro").length, 12);
   assert.ok(allocate(day, "pro").every((s) => s.rating !== "C"));
   assert.equal(allocate(day, "vip").length, 20);

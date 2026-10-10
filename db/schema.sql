@@ -318,3 +318,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   closed_at  timestamptz
 );
 CREATE INDEX IF NOT EXISTS tickets_status_idx ON tickets(status, created_at DESC);
+
+-- 2026-10-10: bitta tarif, 20 USDT/oy (egasining qarori). PRO va VIP yangi obuna uchun yopildi.
+UPDATE plans SET name = '1 oy', price_usdt = 20, sort = 1, active = true WHERE id = 'month';
+UPDATE plans SET active = false WHERE id IN ('pro_month', 'vip_month');
