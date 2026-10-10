@@ -6,7 +6,7 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 - Sayt: https://signal-desk-vert.vercel.app (saytdagi nomi "Zeus Number One")
 - Repo: github.com/Temurbek1998/signal-desk, branch `main` (har push Vercel'da avtomatik deploy)
 - Loyiha qo'llanmasi: repodagi `CLAUDE.md`, o'zgarishlar tarixi: `CHANGELOG.md`
-- Oxirgi versiya: **v1.11.0** (yangiliklar M1 tahlili, PR orqali)
+- Oxirgi versiya: **v1.12.0** (yangiliklar M1 tahlili va efir impulslari, PR #1)
 
 ## Shu chatda qilinganlar (v1.2.0 – v1.9.1)
 - Operator: faqat DeepSeek yoki bepul Gemini (Claude emas), faqat platforma savollari, signal/narx aytmaydi.
@@ -28,6 +28,9 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
   yo'nalish va taxminiy pips maqsadini admin "Yangiliklar M1" sahifasiga va Telegram'ga yozadi, natija pips da o'lchanadi. Savdo ochilmaydi.
   Keyingi qadam (Bek xohlasa, natija yaxshi bo'lsa): shu qarorlarni demo savdoga ulash.
 
+- v1.12.0: yangilik efiri impulslari. Yangilik paytida oltin M1 har daqiqada kuzatiladi, 2-3 daqiqa kuchli bir tomonga harakat
+  bo'lsa Telegram va admin "Yangilik impulslari" sahifasi. Bek cron-job.org da `/api/news-watch` ni har daqiqaga qo'yishi kerak.
+
 ## Egasi bilan kelishilgan qoidalar
 - Kalit va parollar chatga yoki repoga yozilmaydi, faqat Vercel Environment Variables (Bek o'zi qo'yadi).
 - "Garant" va kafolatlangan yutuq foizi yo'q.
@@ -40,6 +43,7 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
   Eng ko'p holatda xarajat taxminan 3.5 baravar (~$200-230/oy, taxmin). Claude Console limitini shunga moslash kerak.
 
 ## Bek qilishi kerak (ochiq)
+- cron-job.org: `/api/news-watch` har 1 daqiqada, `Authorization: Bearer CRON_SECRET` (yangilik impulslari uchun).
 - Vercel'ga `DEEPSEEK_API_KEY` yoki `GEMINI_API_KEY` (operator uchun).
 - Claude Console limitini v1.10.0 xarajatiga moslab oshirish.
 - `EA_KEY` va MT5 EA o'rnatish/kompilyatsiya.

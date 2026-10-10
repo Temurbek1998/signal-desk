@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkInvalidation, groupByTime, newsOutcome, parseNewsCall, reactionStats } from "../src/lib/newsReaction.ts";
+import { checkInvalidation, detectImpulse, groupByTime, newsOutcome, parseNewsCall, reactionStats } from "../src/lib/newsReaction.ts";
 
 const M = 60_000;
 const c = (t: number, o: number, h: number, l: number, cl: number) => ({ t: t * M, o, h, l, c: cl });
@@ -40,4 +40,22 @@ test("newsOutcome: maqsad, bekor, muddat", () => {
 test("groupByTime: bir vaqtdagi yangiliklar birga", () => {
   const g = groupByTime([{ time: 2, n: "a" }, { time: 1, n: "b" }, { time: 2, n: "c" }]);
   assert.deepEqual(g.map((x) => [x.time, x.events.map((e) => e.n)]), [[1, ["b"]], [2, ["a", "c"]]]);
+});
+
+test("detectImpulse: 3 ta katta sham bir tomonga", () => {
+  const pre = Array.from({ length: 10 }, (_, i) => c(i, 2650, 2650.5, 2649.5, 2650));
+  const sell = [...pre, c(10, 2650, 2650.2, 2645, 2645.5), c(11, 2645.5, 2645.6, 2641, 2641.5), c(12, 2641.5, 2641.6, 2637, 2638)];
+  const imp = detectImpulse("XAU/USD", sell, 10 * M)!;
+  assert.equal(imp.side, "SELL");
+  assert.equal(imp.bars, 3);
+  assert.equal(imp.movePips, 120);
+  // Oxirgi sham teskari: impuls hozir yo'q.
+  assert.equal(detectImpulse("XAU/USD", [...sell, c(13, 2638, 2641, 2637.5, 2640.5)], 10 * M), null);
+  // Kichik shamlar: yo'q.
+  const small = [...pre, c(10, 2650, 2650.4, 2649.6, 2649.7), c(11, 2649.7, 2649.8, 2649.2, 2649.3)];
+  assert.equal(detectImpulse("XAU/USD", small, 10 * M), null);
+  // Hajm berilsa u ham katta bo'lishi kerak.
+  const v = (x: ReturnType<typeof c>, vol: number) => ({ ...x, v: vol });
+  const lowVol = [...pre.map((x) => v(x, 100)), ...sell.slice(10).map((x) => v(x, 90))];
+  assert.equal(detectImpulse("XAU/USD", lowVol, 10 * M), null);
 });

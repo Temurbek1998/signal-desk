@@ -133,14 +133,14 @@ export async function getM1(inst: Instrument, limit = 120): Promise<Candle[]> {
   let raw: Candle[];
   if (inst.source === "binance") {
     const rows: unknown[][] = await getJson(`https://data-api.binance.vision/api/v3/klines?symbol=${inst.symbol}&interval=1m&limit=${limit}`, {}, 0);
-    raw = rows.map((r) => ({ t: Number(r[0]), o: +String(r[1]), h: +String(r[2]), l: +String(r[3]), c: +String(r[4]) }));
+    raw = rows.map((r) => ({ t: Number(r[0]), o: +String(r[1]), h: +String(r[2]), l: +String(r[3]), c: +String(r[4]), v: +String(r[5]) }));
   } else if (inst.source === "twelvedata") {
     const data = await getJson(
       `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(inst.symbol)}&interval=1min&outputsize=${limit}&order=asc&timezone=UTC&apikey=${process.env.TWELVEDATA_API_KEY}`,
       {}, 0,
     );
     if (data.status === "error") throw new Error(`Twelve Data: ${data.message}`);
-    raw = data.values.map((v: Record<string, string>) => ({ t: Date.parse(v.datetime.replace(" ", "T") + "Z"), o: +v.open, h: +v.high, l: +v.low, c: +v.close }));
+    raw = data.values.map((v: Record<string, string>) => ({ t: Date.parse(v.datetime.replace(" ", "T") + "Z"), o: +v.open, h: +v.high, l: +v.low, c: +v.close, ...(v.volume ? { v: +v.volume } : {}) }));
   } else {
     const data = await getJson(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(inst.symbol)}?interval=1m&range=1d`,
@@ -152,7 +152,7 @@ export async function getM1(inst: Instrument, limit = 120): Promise<Candle[]> {
     raw = [];
     r.timestamp.forEach((ts: number, i: number) => {
       if ([q.open[i], q.high[i], q.low[i], q.close[i]].some((v) => v == null)) return;
-      raw.push({ t: ts * 1000, o: q.open[i], h: q.high[i], l: q.low[i], c: q.close[i] });
+      raw.push({ t: ts * 1000, o: q.open[i], h: q.high[i], l: q.low[i], c: q.close[i], ...(q.volume?.[i] ? { v: q.volume[i] } : {}) });
     });
   }
   return closedOnly(raw, 1).slice(-limit);

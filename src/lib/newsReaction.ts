@@ -107,3 +107,33 @@ export function groupByTime<T extends { time: number }>(events: T[]): { time: nu
   }
   return out;
 }
+
+// Yangilik efiri paytidagi impuls (egasining talabi): ketma-ket 2-3 ta M1 sham bir tomonga, katta shamlar bilan
+// (forex/oltinda haqiqiy hajm yo'q, shuning uchun "katta hajm" o'rniga sham diapazoni chiqishdan oldingi o'rtachadan katta bo'lishi
+// olinadi; manba hajm bersa u ham tekshiriladi). Topilsa yo'nalish, harakat pipsi va shamlar soni qaytadi.
+export type Impulse = { side: "BUY" | "SELL"; bars: number; movePips: number; from: number; to: number; price: number; rangeX: number; t: number };
+export type ImpulseRules = { minPips: number; rangeX: number; moveX: number };
+export const IMPULSE_RULES: ImpulseRules = { minPips: 60, rangeX: 1.5, moveX: 4 };
+
+export function detectImpulse(pair: string, m1: (Candle & { v?: number })[], releaseAt: number, rules: ImpulseRules = IMPULSE_RULES): Impulse | null {
+  const pre = m1.filter((c) => c.t < releaseAt).slice(-30);
+  if (pre.length < 5) return null;
+  const avgRange = pre.reduce((a, c) => a + (c.h - c.l), 0) / pre.length || pipSize(pair);
+  const avgVol = pre.every((c) => c.v != null && c.v > 0) ? pre.reduce((a, c) => a + c.v!, 0) / pre.length : 0;
+  const after = m1.filter((c) => c.t >= releaseAt - 60_000);
+  // Eng uzun mos keladigan zanjir (3 sham, bo'lmasa 2) oxirgi yopilgan shamda tugashi kerak: eski impuls qayta xabar qilinmaydi.
+  for (const n of [3, 2]) {
+    const g = after.slice(-n);
+    if (g.length < n) continue;
+    const dir = Math.sign(g.at(-1)!.c - g[0].o);
+    if (!dir || g.some((c) => Math.sign(c.c - c.o) !== dir)) continue;
+    const move = Math.abs(g.at(-1)!.c - g[0].o);
+    const big = g.every((c) => c.h - c.l >= rules.rangeX * avgRange);
+    const vol = !avgVol || g.reduce((a, c) => a + (c.v ?? 0), 0) / n >= rules.rangeX * avgVol;
+    const pips = toPips(pair, move);
+    if (big && vol && pips >= rules.minPips && move >= rules.moveX * avgRange) {
+      return { side: dir > 0 ? "BUY" : "SELL", bars: n, movePips: r1(pips), from: g[0].o, to: g.at(-1)!.c, price: g.at(-1)!.c, rangeX: r1(g.reduce((a, c) => a + (c.h - c.l), 0) / n / avgRange), t: g.at(-1)!.t };
+    }
+  }
+  return null;
+}

@@ -39,6 +39,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
     (`getM1`, keshsiz) tahlil qiladi: BUY/SELL/WAIT, taxminiy pips maqsadi, bekor narxi, muddat. `news_reactions` jadvali,
     natija M1 bo'yicha o'lchanadi (`newsReaction.ts`). Admin "Yangiliklar M1" (`yangiliklar`) va Telegram. Savdo ochilmaydi.
     `NEWS_PAIRS` (standart XAU/USD), `NEWS_AI=0` o'chiradi. Kalendarda haqiqiy qiymat yo'q: Claude uni narx reaksiyasidan biladi.
+  - `newsWatch.ts` (v1.12.0): yangilik efiri paytida M1 ni har daqiqada (`/api/news-watch`, cron-job.org) tekshiradi,
+    2-3 ta katta M1 sham bir tomonga bo'lsa (`detectImpulse`) Telegram va admin "Yangilik impulslari" (`impuls`). Claude chaqirilmaydi.
   - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
   - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 250; qayta ko'rishlar ham sanaladi). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).

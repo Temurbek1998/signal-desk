@@ -4,6 +4,15 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.12.0 (2026-10-10): yangilik efiri impulslari
+
+- Yangilik (kuchli va o'rta, `NEWS_WATCH_IMPACT`) chiqishidan 1 daqiqa oldin boshlab 20 daqiqa (`NEWS_WATCH_MIN`),
+  nutqlarda 60 daqiqa oltin M1 har daqiqada kuzatiladi. Ketma-ket 2-3 ta katta M1 sham bir tomonga ketsa (kamida 60 pips,
+  `NEWS_IMPULSE_PIPS`, shamlar chiqishdan oldingi o'rtachadan 1.5x katta) darhol Telegram xabari. Haqiqiy hajm yo'q
+  (oltin/forex), shuning uchun sham kattaligi olinadi; manba hajm bersa u ham tekshiriladi.
+- Alohida admin sahifa "Yangilik impulslari": kuzatuv holati, jonli M1 grafigi, impulslar va 15 daqiqadan keyingi natija.
+- Yangi manzil `/api/news-watch`: cron-job.org da har daqiqada (kalit asosiy cron bilan bir xil). O'chirish: `NEWS_WATCH=0`.
+
 ## v1.11.0 (2026-10-10): yangiliklar bo'yicha M1 tahlil
 
 - Kuchli yangilik (NFP, CPI, FOMC va boshqalar, Forex Factory kalendari bo'yicha "High") chiqqach, 3 daqiqadan keyin

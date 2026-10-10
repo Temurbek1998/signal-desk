@@ -384,3 +384,28 @@ CREATE TABLE IF NOT EXISTS news_reactions (
   UNIQUE (event_time, pair)
 );
 CREATE INDEX IF NOT EXISTS news_reactions_at ON news_reactions (at DESC);
+
+-- Yangilik efiri impulslari (egasining talabi, 2026-10-10): yangilik chiqqach M1 har daqiqada kuzatiladi, 2-3 daqiqa
+-- kuchli bir tomonga harakat bo'lsa adminga xabar. after_pips: 15 daqiqadan keyin narx impuls yo'nalishida necha pips.
+CREATE TABLE IF NOT EXISTS news_impulses (
+  id          bigserial PRIMARY KEY,
+  at          timestamptz NOT NULL DEFAULT now(),
+  event_time  timestamptz NOT NULL,
+  events      jsonb NOT NULL DEFAULT '[]',
+  pair        text NOT NULL,
+  side        text NOT NULL,
+  bars        int NOT NULL,
+  move_pips   double precision NOT NULL,
+  range_x     double precision,
+  price       double precision NOT NULL,
+  candle_time timestamptz NOT NULL,
+  after_pips  double precision,
+  UNIQUE (pair, candle_time)
+);
+CREATE INDEX IF NOT EXISTS news_impulses_at ON news_impulses (at DESC);
+-- Har daqiqalik kuzatuvning oxirgi ishlagan vaqti (sahifada "kuzatuv ishlayaptimi" ko'rsatish uchun).
+CREATE TABLE IF NOT EXISTS news_watch_pings (
+  id  int PRIMARY KEY DEFAULT 1,
+  at  timestamptz NOT NULL DEFAULT now(),
+  note text NOT NULL DEFAULT ''
+);

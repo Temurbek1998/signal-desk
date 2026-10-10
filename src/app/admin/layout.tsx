@@ -11,6 +11,7 @@ const ITEMS = [
   { key: "jonli", label: "Jonli savdolar", sub: "/jonli" },
   { key: "ai", label: "AI treyder", sub: "/ai" },
   { key: "yangiliklar", label: "Yangiliklar M1", sub: "/yangiliklar" },
+  { key: "impuls", label: "Yangilik impulslari", sub: "/impuls" },
   { key: "demo", label: "Demo hisob", sub: "/demo" },
   { key: "mt5", label: "MT5 avtosavdo", sub: "/mt5" },
   { key: "operator", label: "Operator", sub: "/operator" },
