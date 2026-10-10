@@ -1,6 +1,6 @@
 # Signal Desk: yangi Claude uchun qo'llanma
 
-Bu fayl loyihani boshqa Claude (yoki dasturchi) qabul qilib olishi uchun. Avval shuni, keyin README.md,
+Bu fayl loyihani boshqa Claude (yoki dasturchi) qabul qilib olishi uchun. Avval shuni va HOLAT.md (joriy holat), keyin README.md,
 GOLD_BACKTEST.md va BACKTEST.md ni o'qing. Loyiha egasi bilan o'zbek tilida (lotin) gaplashiladi.
 
 ## Nima bu
