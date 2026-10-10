@@ -47,8 +47,16 @@ export default async function AiTraderPage() {
   };
   const ok = revOf("tasdiq"), care = revOf("ehtiyot");
   const trades = rows.filter((r) => r.status !== "wait" && r.status !== "rejected");
+  // Har juftlikning o'z Claude treyderi: juftlik bo'yicha natija.
+  const aiPairs = [...new Set(rows.map((r) => r.pair))].map((pair) => {
+    const all = rows.filter((r) => r.pair === pair), tr = trades.filter((r) => r.pair === pair), cl = tr.filter((r) => r.result_r != null);
+    const total = cl.reduce((a, r) => a + Number(r.result_r), 0);
+    return { pair, decisions: all.length, trades: tr.length, open: tr.filter((r) => r.status === "open" || r.status === "tp1").length, closed: cl.length, wins: cl.filter((r) => Number(r.result_r) > 0).length, total };
+  }).sort((a, b) => (a.pair === "XAU/USD" ? -1 : b.pair === "XAU/USD" ? 1 : b.total - a.total));
+  const dg = (pair: string) => (pair === "XAU/USD" ? 2 : pair.includes("JPY") ? 3 : 5);
   const since = chart?.candles[0]?.t ?? 0;
   const aiSignals: ChartSignal[] = trades
+    .filter((t) => t.pair === "XAU/USD")
     .filter((t) => new Date(t.at).getTime() >= since || t.status === "open" || t.status === "tp1")
     .map((t) => ({
       t: Math.floor(new Date(t.at).getTime() / 3600_000) * 3600_000, side: t.action as "BUY" | "SELL",
@@ -62,7 +70,7 @@ export default async function AiTraderPage() {
       <header className="page-head">
         <div>
           <h1>AI treyder</h1>
-          <p className="sub">Oltin (XAU/USD), faqat demo. AI har soatda bozorni o&apos;zi tahlil qiladi va BUY, SELL yoki kutish qaroriga keladi.</p>
+          <p className="sub">Faqat demo. Har juftlikda alohida Claude bozorni o&apos;zi tahlil qiladi va BUY, SELL yoki kutish qaroriga keladi: oltin har 2 soatda (Opus), valyutalar har 4 soatda (Sonnet). Tugma oltin uchun darhol qaror so&apos;raydi.</p>
         </div>
         <AiDecideButton enabled={enabled} />
       </header>
@@ -76,7 +84,7 @@ export default async function AiTraderPage() {
       <section className="panel">
         <h2>AI va Zeus, so&apos;nggi 30 kun</h2>
         <div className="stats">
-          <div className="stat"><b className={ai.totalR >= 0 ? "up" : "down"}>{ai.closed ? r2(ai.totalR) : "—"}</b><span>AI jami natija, {ai.closed} yopilgan savdo</span></div>
+          <div className="stat"><b className={ai.totalR >= 0 ? "up" : "down"}>{ai.closed ? r2(ai.totalR) : "—"}</b><span>AI jami natija (barcha juftliklar), {ai.closed} yopilgan savdo</span></div>
           <div className="stat"><b>{pct(ai.wins, ai.closed)}</b><span>AI yutuq ulushi, o&apos;rtacha {ai.closed ? r2(ai.avgR) : "—"}</span></div>
           <div className="stat"><b className={zeus.totalR >= 0 ? "up" : "down"}>{zeus.closed ? r2(zeus.totalR) : "—"}</b><span>Zeus jami natija (oltin), {zeus.closed} yopilgan</span></div>
           <div className="stat"><b>{pct(zeus.wins, zeus.closed)}</b><span>Zeus yutuq ulushi, o&apos;rtacha {zeus.closed ? r2(zeus.avgR) : "—"}</span></div>
@@ -85,6 +93,25 @@ export default async function AiTraderPage() {
           R: risk birligi (−1 = to&apos;liq SL). Ikkalasi bir xil o&apos;lchanadi: TP1 da yarmi yopiladi, SL kirishga ko&apos;chadi.
           AI qarorlari mijozlarga chiqmaydi. Kamida 30 ta yopilgan savdoda Zeus&apos;dan yaxshi bo&apos;lsa, keyin mijozlarga ochish mumkin.
         </p>
+      </section>
+
+      <section className="panel">
+        <h2>Claude treyderlar: juftliklar bo&apos;yicha, 30 kun</h2>
+        {aiPairs.length === 0 ? <p className="muted" style={{ margin: 0 }}>Hali qaror yo&apos;q. Bozor ochilgach har juftlik navbat bilan tahlil qilinadi.</p> : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Juftlik</th><th>Qarorlar</th><th>Savdolar</th><th>Ochiq</th><th>Yopilgan</th><th>Yutuq</th><th>Jami</th></tr></thead>
+              <tbody>
+                {aiPairs.map((p) => (
+                  <tr key={p.pair}>
+                    <td>{p.pair}</td><td>{p.decisions}</td><td>{p.trades}</td><td>{p.open}</td><td>{p.closed}</td><td>{pct(p.wins, p.closed)}</td>
+                    <td className={p.total >= 0 ? "up" : "down"}>{p.closed ? r2(p.total) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="panel">
@@ -101,7 +128,7 @@ export default async function AiTraderPage() {
 
       {latest && (
         <section className="panel">
-          <h2>Oxirgi qaror: {latest.action} · {STATUS[latest.status] ?? latest.status}</h2>
+          <h2>Oxirgi qaror: {latest.action} {latest.pair} · {STATUS[latest.status] ?? latest.status}</h2>
           <p className="muted" style={{ margin: 0 }}><LocalTime at={latest.at} />{latest.confidence ? ` · ishonch ${latest.confidence}%` : ""}{latest.model ? ` · ${latest.model}` : ""}</p>
           {latest.reason && <p className="ai-box">{latest.reason}</p>}
           <Link href={detail("t", latest.id)}>To&apos;liq tahlil va grafik →</Link>
@@ -171,16 +198,17 @@ export default async function AiTraderPage() {
         {rows.length === 0 ? <p className="muted">Hali qaror yo&apos;q.</p> : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Vaqt</th><th>Qaror</th><th>Kirish</th><th>SL</th><th>TP1</th><th>TP2</th><th>Holat</th><th>Natija</th><th>Sabab</th><th /></tr></thead>
+              <thead><tr><th>Vaqt</th><th>Juftlik</th><th>Qaror</th><th>Kirish</th><th>SL</th><th>TP1</th><th>TP2</th><th>Holat</th><th>Natija</th><th>Sabab</th><th /></tr></thead>
               <tbody>
                 {rows.slice(0, 60).map((t) => (
                   <tr key={t.id}>
                     <td><LocalTime at={t.at} /></td>
+                    <td>{t.pair}</td>
                     <td className={t.action === "BUY" ? "up" : t.action === "SELL" ? "down" : ""}>{t.action}{t.confidence ? ` ${t.confidence}%` : ""}</td>
-                    <td>{t.entry != null ? Number(t.entry).toFixed(2) : "—"}</td>
-                    <td>{t.action !== "WAIT" && t.sl ? Number(t.sl).toFixed(2) : "—"}</td>
-                    <td>{t.action !== "WAIT" && t.tp1 ? Number(t.tp1).toFixed(2) : "—"}</td>
-                    <td>{t.action !== "WAIT" && t.tp2 ? Number(t.tp2).toFixed(2) : "—"}</td>
+                    <td>{t.entry != null ? Number(t.entry).toFixed(dg(t.pair)) : "—"}</td>
+                    <td>{t.action !== "WAIT" && t.sl ? Number(t.sl).toFixed(dg(t.pair)) : "—"}</td>
+                    <td>{t.action !== "WAIT" && t.tp1 ? Number(t.tp1).toFixed(dg(t.pair)) : "—"}</td>
+                    <td>{t.action !== "WAIT" && t.tp2 ? Number(t.tp2).toFixed(dg(t.pair)) : "—"}</td>
                     <td>{STATUS[t.status] ?? t.status}</td>
                     <td className={t.result_r == null ? "" : Number(t.result_r) >= 0 ? "up" : "down"}>{t.result_r == null ? "—" : r2(Number(t.result_r))}</td>
                     <td className="muted" style={{ minWidth: 260 }}>{t.note || t.reason}</td>

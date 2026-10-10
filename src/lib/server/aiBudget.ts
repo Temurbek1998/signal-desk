@@ -13,7 +13,7 @@ export async function aiCallsToday(): Promise<number> {
   return Number(r?.n ?? 0);
 }
 
-export const dailyLimit = () => Math.max(1, Number(process.env.AI_DAILY_CALLS ?? 40));
+export const dailyLimit = () => Math.max(1, Number(process.env.AI_DAILY_CALLS ?? 60));
 export async function underBudget() {
   return (await aiCallsToday()) < dailyLimit();
 }

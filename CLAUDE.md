@@ -23,10 +23,11 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   - `aiReview.ts`: Zeus'ning har yangi kuchli signalini (oltin va valyuta) Claude baholaydi: "tasdiq" yoki "ehtiyot" va to'liq tahlil.
     **Oltinda Claude yakuniy qaror qiladi** (`gated`, `AI_GATE`): mijoz faqat "tasdiq" olgan signalni ko'radi (`/api/signals`).
     Valyutalar faqat admin sinovida.
-  - `aiTrader.ts`: Claude'ning o'zi oltinda demo savdo qiladi (har 2 soatda, Opus), natija R da Zeus bilan solishtiriladi.
-    Har qaror "Robot + Claude" ko'rinishi sifatida ham `ai_views` ga yoziladi.
-  - `aiView.ts`: valyutalar uchun Robot + Claude tahlili, navbat bilan har 8 soatda (Sonnet).
-  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 40, ~$50/oy). Oltin signalini baholash chegarasiz.
+  - `aiTrader.ts`: har juftlikda alohida Claude treyder demo savdo qiladi: oltin har 2 soatda (Opus), 6 valyuta har 4 soatda
+    (Sonnet, `AI_FX_TRADER*`). Bir cron aylanishida bitta qaror (oltin oldin, keyin eng eski juftlik). Natija R da o'lchanadi,
+    har qaror "Robot + Claude" ko'rinishi sifatida ham `ai_views` ga yoziladi. MT5 EA faqat oltin Claude savdolarini oladi.
+  - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
+  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 60, ~$50-55/oy). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).
 - **Admin** (`src/app/admin/`, maxfiy manzil `ADMIN_PATH` orqali, oddiy `/admin` 404 beradi):
   "Signal pulti" (`pult`: barcha juftliklar, texnik tahlil, kirish/SL/TP, kirish taymeri), "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`

@@ -45,7 +45,7 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
   const q = await searchParams;
   const list = activeInstruments().filter((i) => i.category !== "crypto");
   const pairs = list.map((i) => i.pair);
-  const [sigs, states, ctx, techs, views] = await Promise.all([
+  const [sigs, states, ctx, techs, views, aiOpen] = await Promise.all([
     sql<Sig>(
       `SELECT id, pair, timeframe, side, entry, sl, tp1, tp2, signal_time, strategy, rating, confidence, ai_verdict, ai_at
        FROM signal_log WHERE status = 'active' AND pair = ANY($1) AND signal_time > now() - interval '8 hours'
@@ -55,6 +55,9 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
     sql<{ pair: string; timeframe: string; trend: string }>("SELECT pair, timeframe, trend FROM market_context WHERE pair = ANY($1)", [pairs]),
     Promise.all(list.map((i) => techOf(i).catch(() => null))),
     Promise.all(pairs.map((p) => latestView(p).catch(() => null))),
+    sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; status: string; at: Date; confidence: number }>(
+      "SELECT id, pair, action, entry, sl, tp1, tp2, status, at, confidence FROM ai_trades WHERE status IN ('open', 'tp1') AND pair = ANY($1)", [pairs],
+    ),
   ]);
   const now = Date.now();
   const rows = list.map((inst, k) => {
@@ -108,6 +111,12 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
                   return `${t} ${s?.side && s.status === "active" ? `${s.quality === "strong" ? "kuchli" : "kuchsiz"} ${s.side}` : "kutmoqda"}`;
                 }).join(" · ")}
               </p>
+              {aiOpen.filter((t) => t.pair === inst.pair).map((t) => (
+                <p key={t.id} style={{ margin: 0 }}>
+                  Claude treyder (demo): <b className={t.action === "BUY" ? "up" : "down"}>{t.action}</b> {f(t.entry)} · SL {f(t.sl)} · TP1 {f(t.tp1)} · TP2 {f(t.tp2)}
+                  {t.status === "tp1" ? " · TP1 urildi" : ""} · <Link href={`${adminHref("/ai/tahlil")}?t=${t.id}`}>tahlil</Link>
+                </p>
+              ))}
               {view ? (
                 <p style={{ margin: 0 }}>
                   Claude: <b className={view.bias === "BUY" ? "up" : view.bias === "SELL" ? "down" : ""}>{view.bias === "WAIT" ? "kutish" : view.bias}</b>

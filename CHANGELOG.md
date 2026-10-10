@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.7.0 (2026-10-10): har juftlikka alohida Claude treyder
+
+- Oltindan tashqari 6 valyuta juftligining har biriga alohida Claude treyder (demo): har 4 soatda, Sonnet. Oltin har 2 soatda, Opus.
+  Har biri o'z juftligi va o'z savdolari tarixini ko'radi. Qarorlar faqat adminda; mijozga isbotlangach ochiladi.
+- Admin "AI treyder": juftliklar bo'yicha Claude natijasi jadvali, jurnalda juftlik ustuni. "Signal pulti": Claude'ning ochiq savdosi.
+- Kunlik AI chegarasi standarti 40 dan 60 ga (taxminan oyiga $50-55).
+
 ## v1.6.0 (2026-10-10): loyiha nomi "Zeus Number One"
 
 - Saytda "Signal Desk" nomi "Zeus Number One" ga almashtirildi (sarlavha, logo yozuvi, footer, email kodi, operator).
