@@ -139,6 +139,17 @@ export async function getCandles(inst: Instrument, minutes: number, limit = LIMI
   return closedOnly(raw, minutes);
 }
 
+// Jonli narx (admin "Jonli savdolar"): shakllanayotgan oxirgi M5 sham bilan. So'rov manzili getCandles(inst, 5) bilan bir xil,
+// shuning uchun cron bilan bitta keshni bo'lishadi (Twelve Data kunlik limiti tejaladi).
+export async function getLastPrice(inst: Instrument): Promise<{ price: number; t: number } | null> {
+  const raw = process.env.DEMO_DATA === "1" ? demo(inst.symbol, 5, 3)
+    : inst.source === "binance" ? await binance(inst.symbol, 5, 3)
+    : inst.source === "twelvedata" ? await twelvedata(inst.symbol, 5, 3)
+    : await yahoo(inst.symbol, 5, 3);
+  const last = raw.at(-1);
+  return last ? { price: last.c, t: last.t } : null;
+}
+
 export function minutesOf(tf: Timeframe) {
   return MINUTES[tf];
 }

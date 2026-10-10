@@ -16,7 +16,7 @@ export const maxDuration = 120;
 
 const STATUS: Record<string, string> = {
   active: "Ochiq", close: "Vaqt bo'yicha yopildi", open: "Ochiq", tp1: "TP1 urildi, ochiq", tp2: "TP2 urildi", sl: "SL urildi", be: "TP1, so'ng kirishda yopildi",
-  expired: "24 soatdan keyin yopildi", wait: "Kutish", rejected: "Rad etildi",
+  trail: "Claude ko'chirgan SL da yopildi", closed: "Claude yopdi", expired: "Muddati o'tib yopildi", wait: "Kutish", rejected: "Rad etildi",
 };
 const r2 = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(2)}R`;
 const pct = (w: number, n: number) => (n ? `${Math.round((w / n) * 100)}%` : "—");
@@ -72,7 +72,7 @@ export default async function AiTraderPage() {
       <header className="page-head">
         <div>
           <h1>AI treyder</h1>
-          <p className="sub">Faqat demo. Har juftlikda alohida Claude bozorni o&apos;zi tahlil qiladi va BUY, SELL yoki kutish qaroriga keladi: oltin har 2 soatda (Opus), valyutalar har 4 soatda (Sonnet). Swing rejim: kuniga bitta 3-5 kunlik savdo qarori (oltinda 700-1000 pips maqsad). Tugmalar oltin uchun darhol qaror so&apos;raydi.</p>
+          <p className="sub">Faqat demo. Har juftlikda alohida Claude bozorni o&apos;zi tahlil qiladi va BUY, SELL yoki kutish qaroriga keladi: oltin har soatda (Opus), valyutalar har 2 soatda (Sonnet), ochiq savdolarni Claude har soatda qayta ko&apos;radi ("Jonli savdolar"). Swing rejim: kuniga bitta 3-5 kunlik savdo qarori (oltinda 700-1000 pips maqsad). Tugmalar oltin uchun darhol qaror so&apos;raydi.</p>
         </div>
         <div className="bar" style={{ gap: 8 }}>
           <AiDecideButton enabled={enabled} />

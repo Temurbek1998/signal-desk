@@ -1,6 +1,6 @@
 import "server-only";
 import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis, type AiAnalysis } from "../aiAnalysis.ts";
-import { parseDecision, SWING_LIMITS, trackPlan, validatePlan, type AiPlan, type PlanLimits } from "../aiTrade.ts";
+import { parseDecision, SWING_LIMITS, trackPlan, validatePlan, type AiPlan, type PlanLimits, type StopMove } from "../aiTrade.ts";
 import { analyze } from "../engine.ts";
 import { activeInstruments, ALL_INSTRUMENTS } from "../instruments.ts";
 import { getCandles, getContextCandles } from "../market.ts";
@@ -13,10 +13,12 @@ import { complete, provider } from "./llm.ts";
 import { notifyAdmin } from "./telegram.ts";
 
 // AI treyder (faqat demo): har juftlikda alohida Claude bozorni o'zi tahlil qilib BUY, SELL yoki WAIT qaror qiladi.
-// Oltin: har AI_TRADER_EVERY_MIN (standart 120) daqiqada, AI_TRADER_MODEL (Opus). Valyutalar: har AI_FX_TRADER_EVERY_MIN
-// (standart 240), AI_FX_TRADER_MODEL (Sonnet). Valyutalarni o'chirish: AI_FX_TRADER=0. Bir cron aylanishida bitta qaror.
+// Oltin: har AI_TRADER_EVERY_MIN (standart 60) daqiqada, AI_TRADER_MODEL (Opus). Valyutalar: har AI_FX_TRADER_EVERY_MIN
+// (standart 120), AI_FX_TRADER_MODEL (Sonnet). Valyutalarni o'chirish: AI_FX_TRADER=0. Bir cron aylanishida bitta qaror.
+// Bir juftlikda bir vaqtda AI_MAX_OPEN (standart 2) tagacha kun ichidagi savdo ochiq bo'lishi mumkin.
+// Ochiq savdolarni Claude har soatda qayta ko'radi: aiManager.ts.
 // Qarorlar mijozlarga chiqmaydi: faqat admin panelda va adminga Telegram orqali, natijasi R da o'lchanadi.
-// O'chirish: AI_TRADER=0. Oraliq: AI_TRADER_EVERY_MIN (standart 120). Model: AI_TRADER_MODEL.
+// O'chirish: AI_TRADER=0. Oraliq: AI_TRADER_EVERY_MIN (standart 60). Model: AI_TRADER_MODEL.
 // Har qaror oltin uchun "Robot + Claude" ko'rinishi sifatida ham yoziladi (ai_views), alohida chaqiruv kerak emas.
 
 const PAIR = "XAU/USD";
@@ -25,19 +27,20 @@ const gold = () => ALL_INSTRUMENTS.find((i) => i.pair === PAIR)!;
 export type AiTrade = {
   id: number; at: Date; pair: string; action: string; status: string; entry: number | null; sl: number | null; tp1: number | null; tp2: number | null;
   confidence: number; reason: string; note: string; model: string; tp1_hit: boolean; result_r: number | null; closed_at: Date | null;
-  analysis: AiAnalysis | null; mode: string;
+  analysis: AiAnalysis | null; mode: string; stops: StopMove[] | null; exit_price: number | null; reviewed_at: Date | null;
 };
 
 export const aiTraderEnabled = () => process.env.AI_TRADER !== "0" && !!provider();
 
-function traderModel(pair: string) {
+export function traderModel(pair: string) {
   if (pair !== PAIR) return process.env.AI_FX_TRADER_MODEL || (provider() === "anthropic" ? "claude-sonnet-5-5" : undefined);
   if (process.env.AI_TRADER_MODEL) return process.env.AI_TRADER_MODEL;
   return provider() === "anthropic" ? "claude-opus-5-5" : undefined;
 }
-const everyMin = (pair: string) => Math.max(15, Number((pair === PAIR ? process.env.AI_TRADER_EVERY_MIN : process.env.AI_FX_TRADER_EVERY_MIN) ?? (pair === PAIR ? 120 : 240)));
+const everyMin = (pair: string) => Math.max(15, Number((pair === PAIR ? process.env.AI_TRADER_EVERY_MIN : process.env.AI_FX_TRADER_EVERY_MIN) ?? (pair === PAIR ? 60 : 120)));
+const maxOpen = () => Math.max(1, Number(process.env.AI_MAX_OPEN ?? 2));
 // Claude treyder ishlaydigan juftliklar: oltin va (AI_FX_TRADER=0 bo'lmasa) yoqilgan valyutalar.
-const traderPairs = () => activeInstruments()
+export const traderPairs = () => activeInstruments()
   .filter((i) => i.category === "gold" || (i.category === "forex" && process.env.AI_FX_TRADER !== "0"))
   .sort((a, b) => (a.pair === PAIR ? -1 : b.pair === PAIR ? 1 : 0));
 
@@ -70,11 +73,14 @@ Qanday tahlil qilasan:
 - Narx qayerdan tushishi va qayerdan ko'tarilishi mumkinligini aniq darajalar bilan ayt.
 Hamkoring Zeus (qoidaga asoslangan robot) strategiyasi, undan foydalan: EMA20/EMA50 bilan trend yo'nalishi, ADX >= 20 bo'lsa trend bor,
 M15 signali H1 trendi bilan tasdiqlanadi, kirish trend ichidagi pullback tugaganda (BUY uchun RSI 45 dan pastga tushib qaytsa, SELL uchun 55 dan),
-${pair === PAIR ? "SL 2.5 ATR, TP1 0.5R (yarmi yopiladi), keyin SL narx ortidan 1 ATR masofada ergashadi. Tarixiy sinovda oltinda M15 ishladi, M30 va H1 zarar berdi." : "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu juftlik hali sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi, shuning uchun faqat aniq setupda kir."}
+${pair === PAIR ? "SL 2.5 ATR, TP1 0.5R (yarmi yopiladi), keyin SL narx ortidan 1 ATR masofada ergashadi. Tarixiy sinovda oltinda M15 ishladi, M30 va H1 zarar berdi." : "SL 2 ATR, TP1 0.5R (yarmi yopiladi), TP2 1.5R. Bu juftlik hali sinovda: natijang mijozlarga ochish-ochmaslikni hal qiladi."}
+Ochiq savdolaringni har soatda qayta ko'rib, SL ni yaqinlashtirish yoki erta yopish imkoning bor: shuning uchun mantiqiy setup bo'lsa kirishdan qo'rqma.
 Qoidalar:
 - Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
 - SL mantiqiy darajaning orqasida bo'lsin, masofasi H1 ATR ning 0.3-3 baravari. TP1 kamida 0.5R, TP2 kamida 1R va TP1 dan uzoqroq.
-- Aniq ustunlik bo'lmasa WAIT de. Yomon savdodan WAIT yaxshi. Oldingi savdolaringning natijasidan saboq ol.
+- Bozorda faol bo'l: trend, daraja va kirish nuqtasi mantiqiy bo'lsa BUY yoki SELL de, ishonch 50-60% bo'lsa ham.
+  WAIT faqat bozor haqiqatan noaniq bo'lsa: yon harakat va ADX past, ko'rsatkichlar bir-biriga qarshi, narx SL qo'yib bo'lmaydigan joyda.
+- Shu juftlikda ochiq savdong bo'lsa (oldingi_savdolaring, holat "open" yoki "tp1"), unga qarshi yo'nalishda kirma. Oldingi savdolaringdan saboq ol.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
 - confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi.
 - agree: robot_zeus_fikri bilan rozimisan ("rozi", "qisman", "qarshi").
@@ -101,8 +107,8 @@ ${ANALYSIS_PROMPT}
 Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","agree","analysis"}.`;
 
 export const round = (x: number, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
-const ohlc = (cs: Candle[], d = 2) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o, d), round(c.h, d), round(c.l, d), round(c.c, d)]);
-function ind(cs: Candle[], d = 2) {
+export const ohlc = (cs: Candle[], d = 2) => cs.map((c) => [new Date(c.t).toISOString().slice(5, 16), round(c.o, d), round(c.h, d), round(c.l, d), round(c.c, d)]);
+export function ind(cs: Candle[], d = 2) {
   const a = analyze(cs.slice(-200));
   return a && { trend: a.trend, ema20: round(a.ema20, d), ema50: round(a.ema50, d), rsi: Math.round(a.rsi), adx: Math.round(a.adx), atr: round(a.atr, d + 1) };
 }
@@ -162,9 +168,9 @@ async function swingFacts(pair: string) {
   };
 }
 
-const planOf = (t: AiTrade): AiPlan => ({ side: t.action as "BUY" | "SELL", entry: Number(t.entry), sl: Number(t.sl), tp1: Number(t.tp1), tp2: Number(t.tp2) });
+export const planOf = (t: AiTrade): AiPlan => ({ side: t.action as "BUY" | "SELL", entry: Number(t.entry), sl: Number(t.sl), tp1: Number(t.tp1), tp2: Number(t.tp2) });
 
-const STATUS_TEXT: Record<string, string> = { sl: "SL urildi", be: "TP1 dan keyin kirishda yopildi", tp2: "TP2 urildi", expired: "muddati o'tib yopildi" };
+const STATUS_TEXT: Record<string, string> = { sl: "SL urildi", be: "TP1 dan keyin kirishda yopildi", tp2: "TP2 urildi", trail: "Claude ko'chirgan SL da yopildi", expired: "muddati o'tib yopildi" };
 
 // Ochiq AI savdolarini yangilaydi (har 5 daqiqada, Twelve Data keshidan): kun ichidagilar M5 bo'yicha 24 soat,
 // swing savdolar H1 bo'yicha swingMaxH() soat.
@@ -176,7 +182,7 @@ export async function trackAiTrades() {
     const inst = ALL_INSTRUMENTS.find((i) => i.pair === t.pair) ?? gold();
     const swing = t.mode === "swing", key = `${inst.pair}|${swing ? 60 : 5}`;
     if (!cache.has(key)) cache.set(key, await getCandles(inst, swing ? 60 : 5, swing ? 260 : 600));
-    const o = trackPlan(planOf(t), new Date(t.at).getTime(), cache.get(key)!, swing ? swingMaxH() : 24);
+    const o = trackPlan(planOf(t), new Date(t.at).getTime(), cache.get(key)!, swing ? swingMaxH() : 24, Date.now(), t.stops ?? []);
     if (o.status === t.status && o.tp1Hit === t.tp1_hit) continue;
     const closed = o.resultR != null;
     await sql(
@@ -193,12 +199,14 @@ export async function trackAiTrades() {
 // force: admin "Hozir so'rash" tugmasi (pair berilmasa oltin).
 export async function aiDecide(force = false, onlyPair?: string): Promise<{ trade?: AiTrade; skipped?: string }> {
   if (!aiTraderEnabled()) return { skipped: "AI ulanmagan" };
-  const busyRows = await sql<{ pair: string }>("SELECT DISTINCT pair FROM ai_trades WHERE mode = 'intraday' AND status IN ('open', 'tp1')");
+  const busyRows = await sql<{ pair: string }>(
+    "SELECT pair FROM ai_trades WHERE mode = 'intraday' AND status IN ('open', 'tp1') GROUP BY pair HAVING count(*) >= $1", [maxOpen()],
+  );
   const busy = new Set(busyRows.map((r) => r.pair));
   let pair: string | undefined;
   if (force) {
     pair = onlyPair ?? PAIR;
-    if (busy.has(pair)) return { skipped: `${pair}: ochiq AI savdo bor` };
+    if (busy.has(pair)) return { skipped: `${pair}: ${maxOpen()} ta ochiq AI savdo bor` };
   } else {
     const lastRows = await sql<{ pair: string; at: Date }>("SELECT pair, max(at) AS at FROM ai_trades WHERE mode = 'intraday' GROUP BY pair");
     const last = new Map(lastRows.map((r) => [r.pair, new Date(r.at).getTime()]));

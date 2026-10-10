@@ -39,8 +39,8 @@ export async function syncDemo(): Promise<{ opened: DemoTrade[]; closed: DemoTra
     if (rows[0]) opened.push(rows[0]);
   }
 
-  // Claude treyderlar: aniq qaror (BUY/SELL, ishonch AI_DEMO_MIN_CONF dan yuqori, standart 60) demo hisobga kiradi.
-  const minConf = Math.max(0, Number(process.env.AI_DEMO_MIN_CONF ?? 60));
+  // Claude treyderlar: aniq qaror (BUY/SELL, ishonch AI_DEMO_MIN_CONF dan yuqori, standart 50) demo hisobga kiradi.
+  const minConf = Math.max(0, Number(process.env.AI_DEMO_MIN_CONF ?? 50));
   const aiFresh = process.env.AI_DEMO === "0" ? [] : await sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; at: Date; mode: string }>(
     `SELECT a.id, a.pair, a.action, a.entry, a.sl, a.tp1, a.tp2, a.at, a.mode FROM ai_trades a LEFT JOIN demo_trades d ON d.ai_trade_id = a.id
      WHERE d.id IS NULL AND a.action IN ('BUY', 'SELL') AND a.status NOT IN ('wait', 'rejected') AND a.confidence >= $1

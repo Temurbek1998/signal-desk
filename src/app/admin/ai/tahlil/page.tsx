@@ -25,7 +25,7 @@ type SignalRow = {
 const TREND: Record<string, string> = { up: "↑ yuqori", down: "↓ past", flat: "→ yon" };
 const STATUS: Record<string, string> = {
   active: "Ochiq", tp1: "TP1 urildi", tp2: "TP2 urildi", sl: "SL urildi", close: "Vaqt bo'yicha yopildi",
-  open: "Ochiq", be: "TP1, so'ng kirishda yopildi", expired: "24 soatdan keyin yopildi", wait: "Kutish", rejected: "Rad etildi",
+  open: "Ochiq", be: "TP1, so'ng kirishda yopildi", trail: "Claude ko'chirgan SL da yopildi", closed: "Claude yopdi", expired: "Muddati o'tib yopildi", wait: "Kutish", rejected: "Rad etildi",
 };
 // Admin istalgan taymfreymda ko'radi: Claude darajalari narx bo'yicha, shuning uchun har birida bir xil chiziladi.
 const TFS: [string, number][] = [["M5", 5], ["M15", 15], ["M30", 30], ["H1", 60], ["H4", 240]];

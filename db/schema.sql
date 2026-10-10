@@ -329,3 +329,30 @@ ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS ai_trade_id bigint UNIQUE REFER
 
 -- Claude swing rejimi (3-5 kunlik savdo, demo): 'intraday' yoki 'swing'.
 ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS mode text NOT NULL DEFAULT 'intraday';
+
+-- Claude ochiq savdolarini har soatda qayta ko'radi (egasining qarori, 2026-10-10): ushlab turish, SL ni yaqinlashtirish yoki yopish.
+-- stops: Claude ko'chirgan SL lar [{t, sl}], exit_price: Claude qo'lda yopgan narx, reviewed_at: oxirgi qayta ko'rish.
+ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS stops jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS exit_price double precision;
+ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS reviewed_at timestamptz;
+
+-- Claude nazorat logi: har qayta ko'rish (joriy narx, pips, R, qaror, sabab) alohida yoziladi.
+CREATE TABLE IF NOT EXISTS ai_trade_reviews (
+  id         bigserial PRIMARY KEY,
+  trade_id   bigint NOT NULL REFERENCES ai_trades(id) ON DELETE CASCADE,
+  at         timestamptz NOT NULL DEFAULT now(),
+  pair       text NOT NULL,
+  price      double precision,
+  pips       double precision,
+  result_r   double precision,
+  stop       double precision,
+  action     text NOT NULL,
+  new_sl     double precision,
+  applied    boolean NOT NULL DEFAULT false,
+  confidence int NOT NULL DEFAULT 0,
+  reason     text NOT NULL DEFAULT '',
+  note       text NOT NULL DEFAULT '',
+  model      text NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS ai_trade_reviews_at ON ai_trade_reviews (at DESC);
+CREATE INDEX IF NOT EXISTS ai_trade_reviews_trade ON ai_trade_reviews (trade_id, at DESC);

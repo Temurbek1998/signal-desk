@@ -4,6 +4,18 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.10.0 (2026-10-10): Claude ochiq savdolarni har soat qayta ko'radi, "Jonli savdolar" sahifasi
+
+- Claude o'z ochiq savdolarini (kun ichi va swing) har soatda qayta ko'radi: ushlab turish, SL ni yaqinlashtirish
+  (faqat xavf kamayadi) yoki joriy narxda yopish. Har tekshiruv "Claude nazorat logi"ga yoziladi (`ai_trade_reviews`):
+  narx, pips, R, amaldagi SL, qaror va sabab. SL ko'chsa yoki yopilsa Telegram xabari. Sozlash: `AI_REVIEW`,
+  `AI_REVIEW_EVERY_MIN` (60). MT5 EA hozircha Claude ko'chirgan SL ni olmaydi.
+- Claude bozorga ko'proq kiradi: oltin har soatda (oldin 2), valyutalar har 2 soatda (oldin 4), bir juftlikda 2 tagacha
+  ochiq savdo (`AI_MAX_OPEN`), WAIT faqat bozor haqiqatan noaniq bo'lsa. Demo hisobga ishonch 50% dan (oldin 60).
+- Kunlik AI chegarasi 70 dan 250 ga (`AI_DAILY_CALLS`), qayta ko'rishlar ham sanaladi.
+- Admin "Jonli savdolar" sahifasi: oltin va har valyuta alohida, Claude va Zeus ochiq savdolari joriy narx bilan
+  (amaldagi SL, SL gacha pips, yurgan pips, demo USDT), 30 kunlik yopilgan natija (pips, R, USDT) manba bo'yicha.
+
 ## v1.9.1 (2026-10-10): mijozga "Claude" nomi ko'rinmaydi
 
 - Sayt, signal kabineti, "Robot haqida" va operatordan "Claude" so'zi olib tashlandi: robot "Zeus", tekshiruv

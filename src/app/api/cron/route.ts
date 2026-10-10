@@ -4,6 +4,7 @@ import { runCycle } from "@/lib/server/runner.ts";
 import { aiDecide, aiSwingDecide, aiTraderEnabled, trackAiTrades } from "@/lib/server/aiTrader.ts";
 import { reviewNewSignals } from "@/lib/server/aiReview.ts";
 import { refreshStaleView } from "@/lib/server/aiView.ts";
+import { reviewOpenTrades } from "@/lib/server/aiManager.ts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -28,12 +29,16 @@ export async function GET(req: Request) {
   const r = await runCycle("cron");
   // Bozorlar sinovi haftada bir marta, javob yuborilgandan keyin (cron-job.org kutib qolmasin).
   after(async () => {
-    // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror soatda bir marta.
+    // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror va Claude qayta ko'rishi navbat bilan.
     if (aiTraderEnabled()) {
       // Zeus'ning yangi signallariga AI ikkinchi fikri (mijozga signal bilan birga ko'rinadi).
       await reviewNewSignals().catch((e) => console.error("AI baho", e));
       await trackAiTrades().catch((e) => console.error("AI kuzatuv", e));
-      const d = await aiDecide().catch((e) => { console.error("AI qaror", e); return null; });
+      // Yangi qaror va ochiq savdolarni qayta ko'rish (har savdo soatda bir) parallel: vaqt chegarasiga sig'adi.
+      const [d] = await Promise.all([
+        aiDecide().catch((e) => { console.error("AI qaror", e); return null; }),
+        reviewOpenTrades().catch((e) => { console.error("AI qayta ko'rish", e); return []; }),
+      ]);
       // Robot + Claude ko'rinishi: qaror so'ralmagan aylanishda (vaqt chegarasiga sig'ishi uchun).
       // Swing (3-5 kunlik) qaror: kun ichidagi qaror bo'lmagan aylanishda, u ham bo'lmasa ko'rinish yangilanadi.
       const s = d?.skipped ? await aiSwingDecide().catch((e) => { console.error("AI swing", e); return null; }) : null;

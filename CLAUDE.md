@@ -23,15 +23,20 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   - `aiReview.ts`: Zeus'ning har yangi kuchli signalini (oltin va valyuta) Claude baholaydi: "tasdiq" yoki "ehtiyot" va to'liq tahlil.
     **Oltinda Claude yakuniy qaror qiladi** (`gated`, `AI_GATE`): mijoz faqat "tasdiq" olgan signalni ko'radi (`/api/signals`).
     Valyutalar faqat admin sinovida.
-  - `aiTrader.ts`: har juftlikda alohida Claude treyder demo savdo qiladi: oltin har 2 soatda (Opus), 6 valyuta har 4 soatda
-    (Sonnet, `AI_FX_TRADER*`). Bir cron aylanishida bitta qaror (oltin oldin, keyin eng eski juftlik). Natija R da o'lchanadi,
+  - `aiTrader.ts`: har juftlikda alohida Claude treyder demo savdo qiladi: oltin har soatda (Opus), 6 valyuta har 2 soatda
+    (Sonnet, `AI_FX_TRADER*`), juftlikda 2 tagacha ochiq savdo (`AI_MAX_OPEN`). Bir cron aylanishida bitta qaror (oltin oldin, keyin eng eski juftlik). Natija R da o'lchanadi,
     har qaror "Robot + Claude" ko'rinishi sifatida ham `ai_views` ga yoziladi. MT5 EA faqat oltin Claude savdolarini oladi.
-    Aniq qarorlar (ishonch >= `AI_DEMO_MIN_CONF`, 60) demo hisobga ham kiradi (`demo.ts`, `demo_trades.ai_trade_id`).
+    Aniq qarorlar (ishonch >= `AI_DEMO_MIN_CONF`, 50) demo hisobga ham kiradi (`demo.ts`, `demo_trades.ai_trade_id`).
     Swing rejim (`aiSwingDecide`, `ai_trades.mode = 'swing'`, `AI_SWING*`): har juftlikda kuniga bitta 3-5 kunlik qaror
     (D1/H4/H1, oltinda 700-1000 pips maqsad, SL 0.3-2 D1 ATR, TP1 >= 1R, TP2 >= 2R), H1 bo'yicha kuzatiladi, 120 soatda yopiladi.
     Kun ichidagi savdoni to'smaydi; cron'da kun ichidagi qaror bo'lmagan aylanishda so'raladi. Faqat demo.
+  - `aiManager.ts`: Claude ochiq savdolarini har soatda qayta ko'radi (`AI_REVIEW_EVERY_MIN`, cron'da qaror bilan parallel,
+    aylanishda 2 tagacha): HOLD, MOVE_SL (faqat yaqinlashtirish, `ai_trades.stops`, `trackPlan` ga beriladi) yoki CLOSE
+    (`status = 'closed'`, `exit_price`). Har tekshiruv `ai_trade_reviews` (Claude nazorat logi). MT5 EA ko'chirilgan SL ni olmaydi.
+  - `live.ts`: admin "Jonli savdolar" (`jonli`): oltin va har valyuta alohida, Claude va Zeus ochiq savdolari joriy narx bilan
+    (amaldagi SL, SL gacha pips, yurgan pips, demo USDT), 30 kunlik pips/R/USDT. Narx `getLastPrice` (cron bilan bitta kesh).
   - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
-  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 70, ~$60-65/oy). Oltin signalini baholash chegarasiz.
+  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 250; qayta ko'rishlar ham sanaladi). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).
 - **Admin** (`src/app/admin/`, maxfiy manzil `ADMIN_PATH` orqali, oddiy `/admin` 404 beradi):
   "Signal pulti" (`pult`: barcha juftliklar, texnik tahlil, kirish/SL/TP, kirish taymeri), "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`
@@ -77,7 +82,8 @@ Tarixiy oltin ma'lumoti backtest skriptlari uchun: `scripts/` (PAXG CSV).
 
 - Egasi qilishi kerak: Telegram bot kaliti (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`), `CRON_SECRET` ni uzun tasodifiy qiymatga almashtirish
   (cron-job.org da ham), Neon parolini yangilash va kompyut limiti, Vercel 2FA, `ADMIN_PATH` ni almashtirish, Brevo kaliti (email kodlari).
-- Egasi qilishi kerak (2026-10-10): Vercel'ga `DEEPSEEK_API_KEY` yoki `GEMINI_API_KEY` (operator), Claude Console limiti $70, `EA_KEY` va MT5 EA.
-- Taklif qilingan, qilinmagan: ochiq savdolarni Claude har soatda qayta ko'rishi (~$10-15/oy).
+- Egasi qilishi kerak (2026-10-10): Vercel'ga `DEEPSEEK_API_KEY` yoki `GEMINI_API_KEY` (operator), Claude Console limitini v1.10.0 xarajatiga
+  moslab oshirish (eski tavsiya $70 edi), `EA_KEY` va MT5 EA.
+- Keyin: MT5 EA Claude ko'chirgan SL va qo'lda yopishni ham bajarishi (hozir faqat demo jadvalda).
 - Bozor ochilgach: Claude qarorlari (kun ichi va swing) va tahlillari paydo bo'lganini `/api/health` orqali tekshirish.
 - 2–4 hafta: Claude (AI treyder) va Zeus natijalarini solishtirish; "ehtiyot" signallar natijasini kuzatish.

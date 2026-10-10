@@ -47,28 +47,86 @@ export function validatePlan(d: AiDecision, price: number, atrH1: number, lim: P
   return { plan: { side: d.action, entry: price, sl, tp1, tp2 } };
 }
 
-export type AiOutcome = { status: "open" | "tp1" | "tp2" | "sl" | "be" | "expired"; resultR: number | null; at: number | null; tp1Hit: boolean };
+export type AiOutcome = { status: "open" | "tp1" | "tp2" | "sl" | "be" | "trail" | "expired"; resultR: number | null; at: number | null; tp1Hit: boolean };
+
+// Claude ochiq savdoni qayta ko'rib SL ni ko'chirgan payt (t, ms) va yangi SL. Faqat yaqinlashtiriladi (xavf kamayadi).
+export type StopMove = { t: number; sl: number };
 
 // Savdo boshqaruvi: TP1 da yarmi yopiladi va SL kirishga ko'chadi; qolgani TP2 yoki kirishda yopiladi.
 // Bitta shamda SL va TP birga tegsa, ehtiyot uchun SL birinchi deb olinadi. maxHours dan keyin joriy narxda yopiladi.
-export function trackPlan(p: AiPlan, openedAt: number, candles: Candle[], maxHours = 24, now = Date.now()): AiOutcome {
+// stops: Claude ko'chirgan SL lar, o'sha paytdan keyin ochilgan shamlarga qo'llanadi (agar joriy SL dan yaqinroq bo'lsa).
+export function trackPlan(p: AiPlan, openedAt: number, candles: Candle[], maxHours = 24, now = Date.now(), stops: StopMove[] = []): AiOutcome {
   const dir = p.side === "BUY" ? 1 : -1;
   const risk = (p.entry - p.sl) * dir;
   const r1 = ((p.tp1 - p.entry) * dir) / risk, r2 = ((p.tp2 - p.entry) * dir) / risk;
+  const rAt = (x: number) => ((x - p.entry) * dir) / risk;
   let tp1Hit = false;
   let last: Candle | null = null;
   for (const c of candles) {
     if (c.t < openedAt) continue;
     last = c;
     const low = dir === 1 ? c.l : -c.h, high = dir === 1 ? c.h : -c.l;
-    const stop = tp1Hit ? p.entry * dir : p.sl * dir;
-    if (low <= stop) return tp1Hit ? { status: "be", resultR: 0.5 * r1, at: c.t, tp1Hit } : { status: "sl", resultR: -1, at: c.t, tp1Hit };
+    const base = tp1Hit ? p.entry : p.sl;
+    const stop = activeStop(base, dir, stops, c.t);
+    if (low <= stop * dir) {
+      const r = tp1Hit ? 0.5 * r1 + 0.5 * rAt(stop) : rAt(stop);
+      return { status: stop !== base ? "trail" : tp1Hit ? "be" : "sl", resultR: r, at: c.t, tp1Hit };
+    }
     if (!tp1Hit && high >= p.tp1 * dir) tp1Hit = true;
     if (tp1Hit && high >= p.tp2 * dir) return { status: "tp2", resultR: 0.5 * r1 + 0.5 * r2, at: c.t, tp1Hit };
   }
   if (last && now - openedAt > maxHours * 3600_000) {
-    const open = ((last.c - p.entry) * dir) / risk;
+    const open = rAt(last.c);
     return { status: "expired", resultR: tp1Hit ? 0.5 * r1 + 0.5 * open : open, at: last.t, tp1Hit };
   }
   return { status: tp1Hit ? "tp1" : "open", resultR: null, at: null, tp1Hit };
+}
+
+// t paytidagi amaldagi SL: asosiy SL (yoki TP1 dan keyin kirish) va Claude ko'chirganlarining eng yaqini.
+export function activeStop(base: number, dir: number, stops: StopMove[], t = Infinity): number {
+  let stop = base;
+  for (const s of stops) if (s.t <= t && (s.sl - stop) * dir > 0) stop = s.sl;
+  return stop;
+}
+
+// Hozir yopilsa natija (R): TP1 urilgan bo'lsa yarmi TP1 da yopilgan.
+export function resultAt(p: AiPlan, price: number, tp1Hit: boolean): number {
+  const dir = p.side === "BUY" ? 1 : -1;
+  const risk = (p.entry - p.sl) * dir;
+  const r1 = ((p.tp1 - p.entry) * dir) / risk, now = ((price - p.entry) * dir) / risk;
+  return tp1Hit ? 0.5 * r1 + 0.5 * now : now;
+}
+
+// Pips: oltinda 1 pip = 0.10 $, JPY juftliklarida 0.01, boshqa valyutalarda 0.0001.
+export const pipSize = (pair: string) => (pair === "XAU/USD" ? 0.1 : pair.includes("JPY") ? 0.01 : 0.0001);
+export const toPips = (pair: string, diff: number) => diff / pipSize(pair);
+
+// Ochiq savdoni qayta ko'rish qarori: ushlab turish, SL ni ko'chirish yoki hozir yopish.
+export type ReviewAction = "HOLD" | "MOVE_SL" | "CLOSE";
+export type AiReviewDecision = { action: ReviewAction; newSl: number | null; confidence: number; reason: string };
+
+export function parseReview(text: string): AiReviewDecision | null {
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const o = JSON.parse(m[0]);
+    const action = String(o.action ?? "").toUpperCase();
+    if (action !== "HOLD" && action !== "MOVE_SL" && action !== "CLOSE") return null;
+    const sl = Number(o.new_sl);
+    return {
+      action, newSl: action === "MOVE_SL" && Number.isFinite(sl) && sl > 0 ? sl : null,
+      confidence: Math.max(0, Math.min(100, Math.round(Number(o.confidence) || 0))),
+      reason: String(o.reason ?? "").slice(0, 2000),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Yangi SL faqat xavfni kamaytirsa qabul qilinadi: joriy SL dan yaqinroq va joriy narxdan kamida minGap (masalan 0.2 ATR) narida.
+export function validateStopMove(side: "BUY" | "SELL", current: number, newSl: number, price: number, minGap: number): string | null {
+  const dir = side === "BUY" ? 1 : -1;
+  if ((newSl - current) * dir <= 0) return "yangi SL joriy SL dan yaqin emas (faqat xavfni kamaytirish mumkin)";
+  if ((price - newSl) * dir < minGap) return "yangi SL narxga juda yaqin";
+  return null;
 }
