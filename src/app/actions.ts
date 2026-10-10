@@ -207,3 +207,12 @@ export async function claudeViewNow(_prev: { msg?: string } | null, form: FormDa
     return { msg: e instanceof Error ? e.message : String(e) };
   }
 }
+
+// Qo'llab-quvvatlash murojaatini yopish (admin).
+export async function closeTicket(form: FormData) {
+  const admin = await requireAdmin();
+  const id = Number(form.get("id")) || 0;
+  const [t] = await sql<{ id: number }>("UPDATE tickets SET status = 'closed', closed_at = now() WHERE id = $1 AND status = 'open' RETURNING id", [id]);
+  if (t) await logAdmin(admin, "murojaat yopildi", null, `#${t.id}`);
+  revalidatePath("/admin");
+}

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAccess } from "@/lib/server/auth.ts";
 import { sql } from "@/lib/server/db.ts";
-import { complete, LlmNotConfigured, operatorProvider, provider, type ChatMessage } from "@/lib/server/llm.ts";
+import { complete, LlmNotConfigured, operatorProvider, type ChatMessage } from "@/lib/server/llm.ts";
 import { operatorPrompt } from "@/lib/server/operator.ts";
 
 export const dynamic = "force-dynamic";
@@ -39,24 +39,18 @@ export async function POST(req: Request) {
   }
 
   try {
-    const system = await operatorPrompt(access);
-    // Operator DeepSeek'da (OPERATOR_PROVIDER); u ishlamasa bir marta asosiy provayder (Claude) bilan qayta urinadi.
-    const op = operatorProvider(), main = provider();
-    const ask = (p: typeof op) => complete(system, messages, { provider: p, model: p === op ? process.env.OPERATOR_MODEL || undefined : undefined });
-    const reply = await ask(op).catch((e) => {
-      if (!main || main === op) throw e;
-      console.error("operator", op, e);
-      return ask(main);
-    });
+    const p = operatorProvider();
+    if (!p) throw new LlmNotConfigured("operator");
+    const reply = await complete(await operatorPrompt(access), messages, { provider: p, model: process.env.OPERATOR_MODEL || undefined, maxTokens: 600 });
     await sql("INSERT INTO chat_log (user_id, client_key, question, answer) VALUES ($1, $2, $3, $4)", [
       access?.user.id ?? null, clientKey, messages[messages.length - 1].content, reply,
     ]);
     return NextResponse.json({ reply });
   } catch (e) {
     if (e instanceof LlmNotConfigured) {
-      return NextResponse.json({ error: "Operator hali ulanmagan. Savolingizni Kabinet orqali adminga yozing." }, { status: 503 });
+      return NextResponse.json({ error: "Operator hali ulanmagan. Muammo bo'lsa \"Adminga murojaat\" tugmasini bosing." }, { status: 503 });
     }
     console.error("chat", e);
-    return NextResponse.json({ error: "Operator hozir javob bera olmadi, birozdan keyin qayta urinib ko'ring." }, { status: 502 });
+    return NextResponse.json({ error: "Operator hozir javob bera olmadi. Qayta urinib ko'ring yoki \"Adminga murojaat\" tugmasini bosing." }, { status: 502 });
   }
 }

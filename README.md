@@ -105,17 +105,17 @@ har bir juftlik va taymfreym bo'yicha oxirgi qaror va uning sababi (masalan "BUY
 yangi va yopilgan signallar, narx olinmagan xatolar, har bir aylanish davomiyligi. "Hozir ishga tushirish"
 tugmasi robotni darhol aylantiradi. Kuchsiz signallar ham shu yerda ko'rinadi, obunachilarga esa faqat kuchlilari.
 
-## AI operator
+## Operator va murojaatlar
 
-Har bir sahifaning pastki o'ng burchagida "Operator" chati bor. U obuna, tariflar, robot qoidalari va
-signallarni o'qish haqidagi savollarga javob beradi. Obunachilarga so'nggi faol signallarni ham ayta oladi,
-mehmonlarga esa aniq signal aytmaydi. Foyda kafolatlamaydi va signal to'qimaydi.
+Har bir sahifaning pastki o'ng burchagida "Operator" chati bor. U faqat platforma haqidagi savollarga javob beradi
+(ro'yxatdan o'tish, tariflar, to'lov, obuna, sahifalar). Signal, narx va bozor haqida gapirmaydi, foyda kafolatlamaydi.
 
-- Ulash: `DEEPSEEK_API_KEY` (platform.deepseek.com) qo'yilsa operator DeepSeek'da ishlaydi. DeepSeek xato bersa,
-  bir marta asosiy provayder (`ANTHROPIC_API_KEY`, Claude) javob beradi. Claude tahlillari Anthropic'da qoladi.
-  Ixtiyoriy: `OPERATOR_PROVIDER`, `OPERATOR_MODEL`.
-- Limit: mehmon uchun kuniga 10, Standart uchun 30, PRO uchun 45, VIP va admin uchun 60 savol. Yozishmalar `chat_log` jadvalida.
-- Kalit berilmasa chat ochiladi, lekin "Operator hali ulanmagan" deb javob beradi.
+- Ulash: `DEEPSEEK_API_KEY` (platform.deepseek.com). Operator faqat DeepSeek'da ishlaydi, Claude operatorlik qilmaydi.
+  Ixtiyoriy: `OPERATOR_MODEL` (standart deepseek-chat).
+- Muammo bo'lsa foydalanuvchi chatdagi "Adminga murojaat" tugmasini bosadi: murojaat `tickets` jadvaliga yoziladi,
+  Telegram ulangan bo'lsa adminga xabar keladi. Admin paneldagi "Operator" sahifasida murojaatlar va yozishmalar ko'rinadi.
+- Limit: chat savollari mehmon uchun kuniga 10, Standart 30, PRO 45, VIP va admin 60; murojaat kuniga 5 ta.
+- Kalit berilmasa chat "Operator hali ulanmagan" deydi, murojaat ochish esa ishlayveradi.
 
 ## Admin panelga maxfiy kirish va ma'lumotlar bazasi
 
@@ -138,7 +138,8 @@ Barcha ma'lumot PostgreSQL bazasida saqlanadi (`db/schema.sql`):
 | `signal_log` | robotning har bir kuchli signali va natijasi (robot xotirasi shundan) |
 | `robot_runs`, `robot_state`, `robot_events` | robotning har bir sikli, hozirgi holati va hodisalari |
 | `demo_trades` | robotning demo hisobidagi savdolar |
-| `chat_log` | AI operator bilan yozishmalar |
+| `chat_log` | Operator bilan yozishmalar |
+| `tickets` | Qo'llab-quvvatlash murojaatlari |
 | `admin_log` | admin harakatlari: kirish, to'lov tasdiqlash/rad etish, qo'lda obuna, robotni ishga tushirish |
 
 ## Robot demo hisobi

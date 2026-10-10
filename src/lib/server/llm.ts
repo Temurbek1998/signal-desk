@@ -6,7 +6,7 @@ import "server-only";
 //   gemini    — GEMINI_API_KEY (aistudio.google.com, bepul tarifi bor), model standart: gemini-2.5-flash
 //   mock      — sinov uchun, tashqi so'rov yubormaydi
 // LLM_MODEL bilan modelni almashtirish mumkin.
-// Sayt operatori (chat) alohida: OPERATOR_PROVIDER (standart: DEEPSEEK_API_KEY bo'lsa deepseek), OPERATOR_MODEL.
+// Sayt operatori (chat) alohida va faqat DeepSeek'da: DEEPSEEK_API_KEY, OPERATOR_MODEL. Claude operatorlik qilmaydi.
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -28,9 +28,9 @@ export function provider() {
   return usable(process.env.LLM_PROVIDER ?? (process.env.ANTHROPIC_API_KEY ? "anthropic" : process.env.DEEPSEEK_API_KEY ? "deepseek" : process.env.GEMINI_API_KEY ? "gemini" : ""));
 }
 
-// Operator chati uchun provayder: arzon DeepSeek, kaliti bo'lmasa asosiy provayder.
+// Operator chati uchun provayder: faqat DeepSeek (lokal sinovda LLM_PROVIDER=mock).
 export function operatorProvider() {
-  return usable(process.env.OPERATOR_PROVIDER ?? (process.env.DEEPSEEK_API_KEY ? "deepseek" : "")) ?? provider();
+  return process.env.LLM_PROVIDER === "mock" ? usable("mock") : usable("deepseek");
 }
 
 // opts.json: javob shu JSON sxemaga mos bo'lsin (Anthropic'da qat'iy, boshqalarda JSON rejimi).

@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.3.0 (2026-10-10): Operator faqat platforma savollari, adminga murojaat
+
+- Operator faqat DeepSeek'da (Claude zaxirasi olib tashlandi) va faqat platforma haqidagi savollarga javob beradi:
+  signallar ro'yxati va bozor gaplari ko'rsatmadan olib tashlandi.
+- Chatda "Adminga murojaat" tugmasi: murojaat (tiket) `tickets` jadvaliga yoziladi, Telegram bo'lsa adminga xabar.
+  Admin "Operator" sahifasida murojaatlar ro'yxati va "yopish" tugmasi.
+
 ## v1.2.1 (2026-10-10): Operator DeepSeek'da
 
 - Operator chati alohida provayderda: `DEEPSEEK_API_KEY` bo'lsa DeepSeek, xato bo'lsa bir marta Claude javob beradi.

@@ -304,3 +304,17 @@ CREATE TABLE IF NOT EXISTS ea_pings (
   last_seen timestamptz NOT NULL DEFAULT now(),
   info      text NOT NULL DEFAULT ''
 );
+
+-- Qo'llab-quvvatlash murojaatlari (tiketlar): foydalanuvchi operator chatida "Adminga murojaat" bosadi.
+CREATE TABLE IF NOT EXISTS tickets (
+  id         bigserial PRIMARY KEY,
+  user_id    uuid REFERENCES users(id) ON DELETE SET NULL,
+  client_key text NOT NULL,
+  contact    text NOT NULL DEFAULT '',
+  message    text NOT NULL,
+  chat       text NOT NULL DEFAULT '',   -- murojaatdan oldingi chat (oxirgi xabarlar)
+  status     text NOT NULL DEFAULT 'open', -- open, closed
+  created_at timestamptz NOT NULL DEFAULT now(),
+  closed_at  timestamptz
+);
+CREATE INDEX IF NOT EXISTS tickets_status_idx ON tickets(status, created_at DESC);
