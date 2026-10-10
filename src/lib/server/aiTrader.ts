@@ -4,7 +4,7 @@ import { parseDecision, SWING_LIMITS, trackPlan, validatePlan, type AiPlan, type
 import { analyze } from "../engine.ts";
 import { activeInstruments, ALL_INSTRUMENTS } from "../instruments.ts";
 import { describe as newsUz, getCalendar } from "../news.ts";
-import { getCandles, getContextCandles } from "../market.ts";
+import { getCandles, getContextCandles, getLastPrice } from "../market.ts";
 import { marketOpen } from "../sessions.ts";
 import type { Candle } from "../types.ts";
 import { digitsOf } from "./analysis.ts";
@@ -276,6 +276,14 @@ export async function aiDecide(force = false, onlyPair?: string): Promise<{ trad
   }
   const f = await facts(pair, { trader: true });
   if (!f.price || Date.now() - f.lastTime > 45 * 60_000) return { skipped: "Bozor yopiq" };
+  // Mijozlar real savdo qiladi: oltin narxi ikkinchi manba (Binance PAXG/USDT) bilan solishtiriladi, 2% dan ko'p farq bo'lsa qaror qilinmaydi.
+  if (pair === PAIR) {
+    const ref = await getLastPrice({ pair: PAIR, category: "gold", source: "binance", symbol: "PAXGUSDT" }).catch(() => null);
+    if (ref && Math.abs(f.price - ref.price) / ref.price > 0.02) {
+      await notifyAdmin(`⚠️ Oltin narxi shubhali: manba ${f.price.toFixed(2)}, PAXG ${ref.price.toFixed(2)}. Claude qarori to'xtatildi.`);
+      return { skipped: "Narx manbai shubhali" };
+    }
+  }
 
   const model = traderModel(pair);
   const text = await complete(systemFor(pair), [{ role: "user", content: JSON.stringify(f.data) }], {
