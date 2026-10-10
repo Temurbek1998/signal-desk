@@ -4,6 +4,13 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.19.0 (2026-10-11): Kunlik arxiv
+
+- Admin jurnallari faqat bugungi kunni (Toshkent vaqti) ko'rsatadi: Robot logi (hodisalar, aylanishlar), AI treyder
+  (qarorlar jurnali, signallar jadvali), Demo hisob (tugagan savdolar). Statistika va balans o'zgarmaydi.
+- Yangi "Kunlik arxiv" sahifasi (`arxiv`): oldingi kunlar ro'yxati (Claude qarorlari, savdoga kirganlari, demo savdo va natija,
+  hodisalar soni), kun tanlansa o'sha kunning qarorlari (tahlil havolasi bilan), demo savdolari va hodisalari. Hech narsa o'chirilmaydi.
+
 ## v1.18.1 (2026-10-10): Signal pulti Claude qarorlari bilan
 
 - Signal pulti endi Claude treyderga asoslangan (v1.17.0 dan mijoz signali shu): har juftlikda Claude'ning ochiq savdosi

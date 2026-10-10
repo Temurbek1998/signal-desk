@@ -2,6 +2,7 @@ import { aiSummary, aiTraderEnabled } from "@/lib/server/aiTrader.ts";
 import { chartData } from "@/lib/server/analysis.ts";
 import { reviewStats } from "@/lib/server/aiReview.ts";
 import { sql } from "@/lib/server/db.ts";
+import { tashDay, todaySql } from "@/lib/day.ts";
 import { adminHref } from "@/lib/adminPath.ts";
 import Link from "next/link";
 import type { ChartSignal } from "../../components/RobotChart.tsx";
@@ -29,9 +30,11 @@ export default async function AiTraderPage() {
     chartData("XAU/USD", "H1", 120).catch(() => null),
     reviewStats().catch(() => []),
   ]);
+  const today = tashDay(Date.now());
+  const todayRows = rows.filter((t) => tashDay(t.at) === today);
   const zeusRows = await sql<{ id: number; pair: string; signal_time: Date; timeframe: string; side: string; status: string; result_r: number | null; ai_verdict: string | null; ai_confidence: number | null; ai_at: Date | null }>(
     `SELECT id, pair, signal_time, timeframe, side, status, result_r, ai_verdict, ai_confidence, ai_at FROM signal_log
-     WHERE category IN ('gold', 'forex') AND coalesce(strategy, 'trend') = 'trend' ORDER BY signal_time DESC LIMIT 40`,
+     WHERE category IN ('gold', 'forex') AND coalesce(strategy, 'trend') = 'trend' AND ${todaySql("signal_time")} ORDER BY signal_time DESC LIMIT 100`,
   ).catch(() => []);
   const byPair = await sql<{ pair: string; n: string; wins: string; total: number | null; ok_n: string; ok_total: number | null }>(
     `SELECT pair, count(*) AS n, count(*) FILTER (WHERE result_r > 0) AS wins, sum(result_r) AS total,
@@ -176,7 +179,7 @@ export default async function AiTraderPage() {
       </section>
 
       <section className="panel">
-        <h2>Signallar: Zeus va Claude qarori</h2>
+        <h2>Signallar: Zeus va Claude qarori, bugun</h2>
         <p className="muted" style={{ marginTop: 0 }}>Oltin mijozlarga Claude tasdig&apos;i bilan chiqadi. Valyutalar faqat admin uchun sinovda: foydasi isbotlangan juftliklar keyin ochiladi.</p>
         {zeusRows.length === 0 ? <p className="muted">Hali signal yo&apos;q.</p> : (
           <div className="table-wrap">
@@ -200,13 +203,16 @@ export default async function AiTraderPage() {
       </section>
 
       <section className="panel">
-        <h2>AI qarorlari jurnali</h2>
-        {rows.length === 0 ? <p className="muted">Hali qaror yo&apos;q.</p> : (
+        <div className="bar">
+          <h2 style={{ margin: 0 }}>AI qarorlari jurnali, bugun</h2>
+          <Link className="muted" href={adminHref("/arxiv")}>Oldingi kunlar: Kunlik arxiv →</Link>
+        </div>
+        {todayRows.length === 0 ? <p className="muted">Bugun hali qaror yo&apos;q.</p> : (
           <div className="table-wrap">
             <table>
               <thead><tr><th>Vaqt</th><th>Juftlik</th><th>Qaror</th><th>Kirish</th><th>SL</th><th>TP1</th><th>TP2</th><th>Holat</th><th>Natija</th><th>Sabab</th><th /></tr></thead>
               <tbody>
-                {rows.slice(0, 60).map((t) => (
+                {todayRows.map((t) => (
                   <tr key={t.id}>
                     <td><LocalTime at={t.at} /></td>
                     <td>{t.pair}{t.mode === "swing" ? " · swing" : ""}</td>

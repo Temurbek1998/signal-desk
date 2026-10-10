@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/server/auth.ts";
 import { demoSummary, type DemoTrade } from "@/lib/server/demo.ts";
 import { liveBoard, type LiveTrade } from "@/lib/server/live.ts";
 import { outcomeNote } from "@/lib/demoNote.ts";
+import { tashDay } from "@/lib/day.ts";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 
 export const metadata = { title: "Demo hisob", robots: { index: false, follow: false } };
@@ -112,6 +113,8 @@ function Row({ t }: { t: DemoTrade }) {
 export default async function DemoAccountPage() {
   await requireAdmin();
   const [d, board] = await Promise.all([demoSummary(), liveBoard().catch(() => null)]);
+  const today = tashDay(Date.now());
+  const recentToday = d.recent.filter((t) => tashDay(t.closed_at ?? t.opened_at) === today);
   // Ochiq demo savdoning jonli holati: Claude savdolari ai_trade_id, Zeus signal_id bo'yicha.
   const liveOf = new Map<string, LiveTrade>();
   for (const p of board?.pairs ?? []) for (const lt of p.trades) liveOf.set(lt.source === "zeus" ? `s${lt.id}` : `a${lt.id}`, lt);
@@ -253,14 +256,17 @@ export default async function DemoAccountPage() {
         )}
       </section>
 
-      {d.recent.length > 0 && (
+      {recentToday.length > 0 && (
         <section className="panel">
-          <h2>Tugagan savdolar</h2>
+          <div className="bar">
+            <h2 style={{ margin: 0 }}>Tugagan savdolar, bugun</h2>
+            <Link className="muted" href={adminHref("/arxiv")}>Oldingi kunlar: Kunlik arxiv →</Link>
+          </div>
           <p className="muted">Har savdo ostida: foyda yoki zarar, qaysi darajada yopilgani va Claude yozgan sababi.</p>
           <div className="table-wrap">
             <table>
               <thead><tr><th>Ochilgan</th><th>Yopilgan</th><th>Juftlik</th><th>Yo'nalish</th><th>Reyting</th><th className="num">Lot</th><th className="num">Kirish</th><th className="num">TP 1</th><th className="num">TP 2</th><th className="num">SL</th><th>Natija</th><th className="num">Foyda / zarar</th><th className="num">Balans</th></tr></thead>
-              <tbody>{d.recent.map((t) => <Row key={t.id} t={t} />)}</tbody>
+              <tbody>{recentToday.map((t) => <Row key={t.id} t={t} />)}</tbody>
             </table>
           </div>
         </section>

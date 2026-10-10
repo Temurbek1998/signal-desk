@@ -68,6 +68,8 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
   (`operator`): murojaatlar (yopish tugmasi) va `chat_log`. Keyinchalik murojaatlarni avtomatlashtirish rejada.
 - **Bozor tugmalari** (v1.16.0): admin bosh sahifasidagi "Bozorlar" (`app_settings.markets`, `server/markets.ts`, `setMarketOverride`)
   `ROBOT_MARKETS` dan ustun. O'chirilgan bozorda Zeus va barcha Claude chaqiruvlari to'xtaydi (egasining talabi: ortiqcha xarajat yo'q).
+- **Kunlik arxiv** (v1.19.0, `src/lib/day.ts`, admin `arxiv`): Robot logi, AI treyder jurnali va Demo tugagan savdolar faqat bugungi
+  Toshkent kunini ko'rsatadi, oldingi kunlar arxivda. Egasining talabi: eski yozuvlar o'chirilmaydi, arxivga o'tadi.
 - `/api/health`: faqat sonlar va umumiy holat (pullik signal tafsilotlari chiqmaydi). `AI_KEY`, `ai_decisions`, `ai_views`, `ai_reviews`.
 
 ## Qat'iy qoidalar (egasi bilan kelishilgan)
