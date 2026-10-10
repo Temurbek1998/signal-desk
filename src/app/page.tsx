@@ -37,8 +37,8 @@ export default async function Home() {
           </h1>
           <p className="lead">
             {goldOnly
-              ? "Signal Desk oltinni (XAU/USD) 24 soat kuzatadi, M15 taymfreymida va faqat barcha shartlar mos kelganda aniq kirish, Take Profit hamda Stop Loss darajalari bilan signal beradi. NFP, CPI va FOMC kabi oltinni silkitadigan yangiliklardan oldin ogohlantiradi."
-              : "Signal Desk oltin, valyuta va kripto juftliklarini M15 va M30 taymfreymlarida uzluksiz tahlil qiladi va aniq kirish, Take Profit hamda Stop Loss darajalari bilan signal beradi. Muhim iqtisodiy yangiliklardan oldin ogohlantiradi."}
+              ? "Zeus Number One oltinni (XAU/USD) 24 soat kuzatadi, M15 taymfreymida va faqat barcha shartlar mos kelganda aniq kirish, Take Profit hamda Stop Loss darajalari bilan signal beradi. NFP, CPI va FOMC kabi oltinni silkitadigan yangiliklardan oldin ogohlantiradi."
+              : "Zeus Number One oltin, valyuta va kripto juftliklarini M15 va M30 taymfreymlarida uzluksiz tahlil qiladi va aniq kirish, Take Profit hamda Stop Loss darajalari bilan signal beradi. Muhim iqtisodiy yangiliklardan oldin ogohlantiradi."}
           </p>
           <div className="cta">
             <Link className="btn gold" href="/royxat">Obuna bo'lish</Link>

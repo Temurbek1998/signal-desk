@@ -5,6 +5,8 @@ GOLD_BACKTEST.md va BACKTEST.md ni o'qing. Loyiha egasi bilan o'zbek tilida (lot
 
 ## Nima bu
 
+Saytdagi nomi: **Zeus Number One** (2026-10-10 dan; repo va kodda eski nomi Signal Desk qolgan).
+
 Oltin (XAU/USD) va valyutalar uchun pullik signal sayti. Next.js 15 (App Router, server actions, `after()`),
 React 19, TypeScript, Postgres (Neon; lokalda PGlite), Vercel Hobby. `main` ga har push Vercel'da avtomatik deploy bo'ladi.
 Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.app` havolalari yangilanmaydi).

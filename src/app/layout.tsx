@@ -10,9 +10,9 @@ import { adminHref } from "@/lib/adminPath.ts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Signal Desk", template: "%s · Signal Desk" },
+  title: { default: "Zeus Number One", template: "%s · Zeus Number One" },
   description: "Oltin (XAU/USD) uchun robot tahlili va savdo signallari",
-  appleWebApp: { capable: true, title: "Signal Desk", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Zeus Number One", statusBarStyle: "black-translucent" },
 };
 
 // iPhone: ekran chetigacha (notch va pastki chiziq hisobga olinadi), status bar rangi fonga mos.
@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="in">
             <Link href="/" className="logo">
               <LogoMark />
-              Signal Desk
+              Zeus Number One
             </Link>
             <nav className="nav">
               <ThemeToggle />
@@ -68,12 +68,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <footer className="site-foot">
           <div className="in">
             <p className="disclaimer">
-              Signal Desk signallari texnik tahlil asosida avtomatik hisoblanadi va moliyaviy maslahat emas. Moliyaviy
+              Zeus Number One signallari texnik tahlil asosida avtomatik hisoblanadi va moliyaviy maslahat emas. Moliyaviy
               bozorlarda savdo yuqori xavf bilan bog'liq, kiritilgan mablag'ning bir qismi yoki hammasini yo'qotish
               mumkin. O'tgan natijalar kelajakdagi natijani kafolatlamaydi.
             </p>
             <p className="muted"><Link href="/robot-haqida">Robot haqida</Link> · <Link href="/natijalar">Natijalar</Link> · <Link href="/#narxlar">Narxlar</Link></p>
-            <p className="muted">© {new Date().getFullYear()} Signal Desk</p>
+            <p className="muted">© {new Date().getFullYear()} Zeus Number One</p>
           </div>
         </footer>
         <ChatWidget />

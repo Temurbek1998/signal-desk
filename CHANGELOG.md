@@ -4,6 +4,11 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.6.0 (2026-10-10): loyiha nomi "Zeus Number One"
+
+- Saytda "Signal Desk" nomi "Zeus Number One" ga almashtirildi (sarlavha, logo yozuvi, footer, email kodi, operator).
+  Domen, repo nomi, kod ichidagi nomlar va MT5 EA fayli o'zgarmadi.
+
 ## v1.5.1 (2026-10-10): robot nomi "Zeus Claude"
 
 - Saytda robot endi "Zeus Claude" deb ataladi (bosh sahifa, Robot haqida, Signallar, Natijalar, operator). Kodda va admin

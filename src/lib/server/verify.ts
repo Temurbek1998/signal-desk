@@ -36,10 +36,10 @@ export async function sendCode(user: { id: string; email: string; name: string }
   try {
     await sendMail({
       to: user.email,
-      subject: `Signal Desk tasdiqlash kodi: ${code}`,
+      subject: `Zeus Number One tasdiqlash kodi: ${code}`,
       text: `${hello}\n\nTasdiqlash kodingiz: ${code}\nKod ${CODE_TTL_MIN} daqiqa amal qiladi.\n\nAgar siz ro'yxatdan o'tmagan bo'lsangiz, bu xatni e'tiborsiz qoldiring.`,
       html: `<div style="font-family:Arial,sans-serif;max-width:420px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
-<h2 style="margin:0 0 12px;color:#0b1730">Signal Desk</h2>
+<h2 style="margin:0 0 12px;color:#0b1730">Zeus Number One</h2>
 <p>${escapeHtml(hello)}</p><p>Tasdiqlash kodingiz:</p>
 <p style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#b8862b;margin:8px 0">${code}</p>
 <p style="color:#6b7280">Kod ${CODE_TTL_MIN} daqiqa amal qiladi. Agar siz ro'yxatdan o'tmagan bo'lsangiz, bu xatni e'tiborsiz qoldiring.</p></div>`,

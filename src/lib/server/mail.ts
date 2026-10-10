@@ -15,7 +15,7 @@ function provider(): string {
   return process.env.NODE_ENV === "production" ? "" : "console";
 }
 
-const from = () => process.env.MAIL_FROM || "Signal Desk <noreply@example.com>";
+const from = () => process.env.MAIL_FROM || "Zeus Number One <noreply@example.com>";
 
 function parseFrom(f: string): { name: string; email: string } {
   const m = f.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);

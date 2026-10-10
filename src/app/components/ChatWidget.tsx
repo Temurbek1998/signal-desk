@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type Msg = { role: "user" | "assistant"; content: string };
-const GREETING: Msg = { role: "assistant", content: "Salom! Men Signal Desk operatoriman. Ro'yxatdan o'tish, tariflar, to'lov yoki obuna haqida so'rang. Muammo bo'lsa, \"Adminga murojaat\" tugmasini bosing." };
+const GREETING: Msg = { role: "assistant", content: "Salom! Men Zeus Number One operatoriman. Ro'yxatdan o'tish, tariflar, to'lov yoki obuna haqida so'rang. Muammo bo'lsa, \"Adminga murojaat\" tugmasini bosing." };
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
