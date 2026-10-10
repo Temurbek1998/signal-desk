@@ -354,7 +354,7 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
       {s.aiHold && (
         <p className="ai-take ehtiyot" style={{ margin: 0 }}>
           {s.aiHold === "checking"
-            ? "Zeus imkoniyat topdi, Claude uni tekshirmoqda. Tasdiqlansa signal shu yerda paydo bo'ladi."
+            ? "Zeus Claude imkoniyat topdi va uni tekshirmoqda. Tasdiqlansa signal shu yerda paydo bo'ladi."
             : "Claude bu imkoniyatni xavfli deb topdi va signal yuborilmadi."}
         </p>
       )}

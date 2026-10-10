@@ -3,7 +3,7 @@ import Robot3D from "../components/Robot3D.tsx";
 
 export const metadata = {
   title: "Robot haqida",
-  description: "Zeus roboti oltin (XAU/USD) bozorini qanday kuzatadi, qachon signal beradi va nimalarni qilmaydi.",
+  description: "Zeus Claude roboti oltin (XAU/USD) bozorini qanday kuzatadi, qachon signal beradi va nimalarni qilmaydi.",
 };
 
 const TASKS = [
@@ -18,7 +18,7 @@ const TASKS = [
   { t: "Xotira va reyting", p: "Robot o'zining o'tgan signallarini eslab qoladi. Har yangi signalga o'xshash vaziyatlardagi natijaga qarab A, B yoki C reyting beradi. Biror rejim ketma-ket yomon natija bersa, u vaqtincha to'xtatiladi.", k: "A · B · C reyting" },
   { t: "Natijani ochiq yozish", p: "Har bir signal bazaga yoziladi va yopilguncha kuzatiladi: TP1, TP2, SL yoki kun oxirida yopilish. Natija avtomatik hisoblanadi va Natijalar sahifasida tanlab olinmasdan ko'rsatiladi.", k: "hammasi ochiq" },
   { t: "Demo hisobda o'zini sinash", p: "Robot o'z signallari bo'yicha virtual hisobda 1% risk bilan o'zi savdo qiladi. Bu haqiqiy pul emas, lekin strategiya amalda qanday ishlashini ko'rsatadi.", k: "virtual hisob · 1% risk" },
-  { t: "Claude yakuniy qaror qiladi", p: "Zeus topgan har bir oltin signalini Claude (Anthropic sun'iy intellekti) mustaqil tahlil qiladi: katta trend, talab va taklif zonalari, yaqin qarshilik darajalari. Faqat Claude tasdiqlagan signal mijozga yuboriladi, xavfli deb topilgani ushlab qolinadi. Tasdiqlangan signal ostida Claude'ning qisqa izohi ko'rinadi.", k: "Claude · ikkinchi tekshiruv" },
+  { t: "Claude yakuniy qaror qiladi", p: "Robot qoidalari topgan har bir oltin signalini Zeus Claude'ning miyasi, Claude (Anthropic sun'iy intellekti) mustaqil tahlil qiladi: katta trend, talab va taklif zonalari, yaqin qarshilik darajalari. Faqat Claude tasdiqlagan signal mijozga yuboriladi, xavfli deb topilgani ushlab qolinadi. Tasdiqlangan signal ostida Claude'ning qisqa izohi ko'rinadi.", k: "Claude · ikkinchi tekshiruv" },
   { t: "Signalni yetkazish", p: "Claude tasdiqlagan signal chiqqanda u obunachilarning kabinetida darhol ko'rinadi: kirish narxi, TP1, TP2, SL, reyting va sababi bilan. Savollar bo'lsa, AI operator javob beradi.", k: "kabinet · AI operator" },
 ];
 
@@ -26,7 +26,7 @@ const CYCLE = [
   { b: "1. Narx keldi", s: "Yangi sham yopildi, robot uyg'ondi." },
   { b: "2. Bozor holati", s: "Trend, uning kuchi va katta taymfreymlar tekshiriladi." },
   { b: "3. Kirish sharti", s: "Pullback tugadimi, xarajat me'yordami, yangilik yaqinmi." },
-  { b: "4. Imkoniyat", s: "Hamma shart bajarilsa Zeus imkoniyat topadi, bittasi bajarilmasa kutadi. Kutish ham qaror." },
+  { b: "4. Imkoniyat", s: "Hamma shart bajarilsa Zeus Claude imkoniyat topadi, bittasi bajarilmasa kutadi. Kutish ham qaror." },
   { b: "5. Claude qarori", s: "Claude imkoniyatni mustaqil tahlil qiladi: tasdiqlasa signal mijozga boradi, rad etsa ushlab qolinadi." },
   { b: "6. Kuzatuv", s: "Ochiq signal TP yoki SL ga yetguncha har 5 daqiqada tekshiriladi." },
   { b: "7. Saboq", s: "Natija xotiraga yoziladi va keyingi signallar reytingiga ta'sir qiladi." },
@@ -45,9 +45,9 @@ export default function AboutRobot() {
       <section className="about-hero">
         <div>
           <span className="eyebrow">Robot haqida</span>
-          <h1>Zeus: oltin bozorini <em>sizning o&apos;rningizga</em> kuzatuvchi robot</h1>
+          <h1>Zeus Claude: oltin bozorini <em>sizning o&apos;rningizga</em> kuzatuvchi robot</h1>
           <p className="lead" style={{ color: "var(--muted)", fontSize: "1.06rem", maxWidth: "58ch", margin: "16px 0 22px" }}>
-            Zeus oltin (XAU/USD) narxini kechayu kunduz kuzatadigan dastur. U his-tuyg&apos;uga berilmaydi, charchamaydi va qoidadan
+            Zeus Claude oltin (XAU/USD) narxini kechayu kunduz kuzatadigan dastur. U his-tuyg&apos;uga berilmaydi, charchamaydi va qoidadan
             chetga chiqmaydi: faqat oldindan belgilangan barcha shartlar bir vaqtda bajarilganda signal beradi.
           </p>
           <div className="cta">

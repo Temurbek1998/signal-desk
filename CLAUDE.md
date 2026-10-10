@@ -11,7 +11,7 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
 
 ## Arxitektura qisqacha
 
-- **Zeus** (`src/lib/engine.ts`, `robot.ts`): qoidaga asoslangan robot. EMA20/EMA50 trend, ADX ≥ 20, katta taymfreym tasdig'i,
+- **Zeus** (`src/lib/engine.ts`, `robot.ts`): qoidaga asoslangan robot. Saytda mijozga "Zeus Claude" deb ko'rinadi (`ROBOT_NAME`, egasining qarori). EMA20/EMA50 trend, ADX ≥ 20, katta taymfreym tasdig'i,
   RSI pullback. Oltinda faqat M15 kuchli. Oltin chiqishi: TP1 0.5R da yarmi yopiladi, so'ng 1 ATR ergashuvchi SL, TP2 1.5R,
   8 soatda (32 M15 sham) yopiladi (`EXIT_BY_CATEGORY`, `walkTrailing`). Sinov: GOLD_BACKTEST.md.
 - **Cron**: cron-job.org har 5 daqiqada `/api/cron` ni chaqiradi (`Authorization: Bearer CRON_SECRET`), `maxDuration` 120.

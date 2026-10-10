@@ -337,8 +337,8 @@ test("Gerakl: razgon shami, SL 80 / TP 150 pips va 2 soatlik vaqt to'xtashi", as
   assert.equal(s[0].status, "close"); // TP ham SL ham urilmadi: 24 shamdan keyin yopildi
   assert.equal(robotOf(s[0].strategy), "gerakl");
   assert.equal(signalLabel("scalp-razgon"), "Gerakl · Razgon");
-  assert.equal(signalLabel("trend"), "Zeus");
-  assert.equal(signalLabel("pips-london"), "Zeus · Pips: London");
+  assert.equal(signalLabel("trend"), "Zeus Claude");
+  assert.equal(signalLabel("pips-london"), "Zeus Claude · Pips: London");
 });
 
 import { walkTrailing } from "../src/lib/engine.ts";
