@@ -93,7 +93,8 @@ export default async function DemoAccountPage() {
 
       <p className="notice warn">
         <b>Bu demo hisob, haqiqiy pul emas.</b> Savdolar robot signallari bo'yicha avtomatik hisoblanadi: boshlang'ich balans {usdt(d.start)},
-        plecho 1:{d.leverage}, har savdoda balansning {d.riskPct}% i xavf ostiga qo'yiladi, birja komissiyasi ham hisobga olinadi. Haqiqiy savdoda sirpanish va
+        plecho 1:{d.leverage}, har savdoda balansning {d.riskPct}% i xavf ostiga qo'yiladi
+        ({d.fixedLots ? `oltin va valyutada qat'iy ${d.fixedLots} lot` : `oltin va valyutada kamida ${d.minLots} lot`}), birja komissiyasi ham hisobga olinadi. Haqiqiy savdoda sirpanish va
         boshqa xarajatlar natijani o'zgartirishi mumkin. O'tgan natija kelajakni kafolatlamaydi.
       </p>
 

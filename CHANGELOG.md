@@ -4,6 +4,12 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.13.1 (2026-10-10): demo hisob 100 000 $, kamida 0.05 lot
+
+- Demo hisob boshlang'ich balansi 100 000 $ (`DEMO_START_BALANCE`), plecho 1:1000 (`DEMO_LEVERAGE`, avvalgidek).
+- Oltin va valyutada har savdo kamida 0.05 lot (`DEMO_MIN_LOTS`); `DEMO_LOTS` berilsa qat'iy lot. Kriptoga ta'sir qilmaydi.
+- Yopilgan savdolar natijasi saqlanadi, balans yangi boshlang'ich summadan qayta hisoblanadi.
+
 ## v1.13.0 (2026-10-10): keskin harakatlar (2-3 daqiqada 180+ pips)
 
 - Yangilikdan qat'i nazar oltin M1 har daqiqada tekshiriladi (`/api/news-watch`, zaxira: asosiy cron oxirgi 5 sham bo'yicha).

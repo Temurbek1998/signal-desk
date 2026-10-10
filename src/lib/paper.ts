@@ -1,6 +1,9 @@
 // Demo hisob hisob-kitobi: sof funksiyalar, bazasiz sinash mumkin.
 
-export type DemoConfig = { startBalance: number; riskPct: number; leverage: number; feeCryptoPct: number; feeFxPct: number; ratings: string[] };
+export type DemoConfig = {
+  startBalance: number; riskPct: number; leverage: number; feeCryptoPct: number; feeFxPct: number; ratings: string[];
+  minLots: number; fixedLots: number | null;
+};
 
 export function demoConfig(env: Record<string, string | undefined> = process.env): DemoConfig {
   const num = (v: string | undefined, d: number, min: number, max: number) => {
@@ -8,11 +11,14 @@ export function demoConfig(env: Record<string, string | undefined> = process.env
     return v && Number.isFinite(n) && n >= min && n <= max ? n : d;
   };
   return {
-    startBalance: num(env.DEMO_START_BALANCE, 10_000, 100, 10_000_000),
+    startBalance: num(env.DEMO_START_BALANCE, 100_000, 100, 10_000_000), // Bek qarori (2026-10-10): 100 000 $
     riskPct: num(env.DEMO_RISK_PCT, 1, 0.1, 5),
     leverage: num(env.DEMO_LEVERAGE, 1000, 1, 3000), // plecho 1:N (Bek qarori: 1:1000)
     feeCryptoPct: num(env.DEMO_FEE_CRYPTO_PCT, 0.04, 0, 1),
     feeFxPct: num(env.DEMO_FEE_FX_PCT, 0.005, 0, 1),
+    // Bek qarori (2026-10-10): oltin va valyutada kamida 0.05 lot. DEMO_LOTS berilsa har savdo shu qat'iy lot bilan.
+    minLots: num(env.DEMO_MIN_LOTS, 0.05, 0, 100),
+    fixedLots: env.DEMO_LOTS ? num(env.DEMO_LOTS, 0, 0.01, 100) || null : null,
     ratings: (env.DEMO_RATINGS ?? "A,B,C").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean),
   };
 }
@@ -23,7 +29,14 @@ export function position(balance: number, cfg: DemoConfig, category: string, ent
   const dist = Math.abs(entry - sl);
   // Plecho garov (marja) hajmini belgilaydi: marja = pozitsiya qiymati / plecho. Marja balansdan oshmasin.
   const lev = cfg.leverage ?? 1;
-  const size = dist > 0 ? Math.min(risk / dist, (balance * lev) / entry) : 0;
+  let size = dist > 0 ? risk / dist : 0;
+  // Oltin va valyutada lot: qat'iy (DEMO_LOTS) yoki kamida minLots. Kriptoda lot yo'q.
+  if (size > 0 && category !== "crypto") {
+    const unit = lotSize(category);
+    if (cfg.fixedLots) size = cfg.fixedLots * unit;
+    else if (cfg.minLots) size = Math.max(size, cfg.minLots * unit);
+  }
+  size = Math.min(size, (balance * lev) / entry);
   const notional = size * entry;
   const feePct = category === "crypto" ? cfg.feeCryptoPct : cfg.feeFxPct;
   const fee = (notional * feePct * 2) / 100;
