@@ -1,7 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { lastMarketTest, saveMarketTest } from "@/lib/server/marketTest.ts";
 import { runCycle } from "@/lib/server/runner.ts";
-import { aiDecide, aiTraderEnabled, trackAiTrades } from "@/lib/server/aiTrader.ts";
+import { aiDecide, aiSwingDecide, aiTraderEnabled, trackAiTrades } from "@/lib/server/aiTrader.ts";
 import { reviewNewSignals } from "@/lib/server/aiReview.ts";
 import { refreshStaleView } from "@/lib/server/aiView.ts";
 
@@ -35,7 +35,9 @@ export async function GET(req: Request) {
       await trackAiTrades().catch((e) => console.error("AI kuzatuv", e));
       const d = await aiDecide().catch((e) => { console.error("AI qaror", e); return null; });
       // Robot + Claude ko'rinishi: qaror so'ralmagan aylanishda (vaqt chegarasiga sig'ishi uchun).
-      if (d?.skipped) await refreshStaleView().catch((e) => console.error("AI ko'rinish", e));
+      // Swing (3-5 kunlik) qaror: kun ichidagi qaror bo'lmagan aylanishda, u ham bo'lmasa ko'rinish yangilanadi.
+      const s = d?.skipped ? await aiSwingDecide().catch((e) => { console.error("AI swing", e); return null; }) : null;
+      if (s?.skipped) await refreshStaleView().catch((e) => console.error("AI ko'rinish", e));
     }
     const last = await lastMarketTest().catch(() => null);
     if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});

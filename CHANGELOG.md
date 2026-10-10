@@ -4,6 +4,14 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.9.0 (2026-10-10): Claude swing rejimi
+
+- Har juftlikda Claude kuniga bir marta 3-5 kunlik swing savdo qarorini beradi (demo): D1, H4, H1 tahlili, oltinda
+  700-1000 pips (70-100 $) maqsad. SL 0.3-2 D1 ATR, TP1 kamida 1R, TP2 kamida 2R. H1 shamlari bo'yicha kuzatiladi,
+  120 soatda yopiladi. Kun ichidagi savdo bilan parallel ishlaydi. Admin "AI treyder"da "· swing" belgisi va
+  "Swing qaror so'rash" tugmasi, demo hisobda SWING. Sozlash: `AI_SWING`, `AI_SWING_EVERY_H`, `AI_SWING_MAX_H`.
+- Kunlik AI chegarasi 70 ga ko'tarildi; kun ichidagi qaror endi ikki marta sanalmaydi (ai_trades va ai_views).
+
 ## v1.8.0 (2026-10-10): Claude savdolari demo hisobda
 
 - Har juftlik Claude treyderining aniq qarori (BUY/SELL, ishonch 60% va yuqori, `AI_DEMO_MIN_CONF`) avtomatik demo hisobga

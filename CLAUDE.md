@@ -27,8 +27,11 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
     (Sonnet, `AI_FX_TRADER*`). Bir cron aylanishida bitta qaror (oltin oldin, keyin eng eski juftlik). Natija R da o'lchanadi,
     har qaror "Robot + Claude" ko'rinishi sifatida ham `ai_views` ga yoziladi. MT5 EA faqat oltin Claude savdolarini oladi.
     Aniq qarorlar (ishonch >= `AI_DEMO_MIN_CONF`, 60) demo hisobga ham kiradi (`demo.ts`, `demo_trades.ai_trade_id`).
+    Swing rejim (`aiSwingDecide`, `ai_trades.mode = 'swing'`, `AI_SWING*`): har juftlikda kuniga bitta 3-5 kunlik qaror
+    (D1/H4/H1, oltinda 700-1000 pips maqsad, SL 0.3-2 D1 ATR, TP1 >= 1R, TP2 >= 2R), H1 bo'yicha kuzatiladi, 120 soatda yopiladi.
+    Kun ichidagi savdoni to'smaydi; cron'da kun ichidagi qaror bo'lmagan aylanishda so'raladi. Faqat demo.
   - `aiView.ts`: valyutalar uchun Robot + Claude tahlili (zaxira: treyder qarori bo'lmasa har 8 soatda, Sonnet).
-  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 60, ~$50-55/oy). Oltin signalini baholash chegarasiz.
+  - `aiBudget.ts`: kunlik chaqiruvlar chegarasi (`AI_DAILY_CALLS`, standart 70, ~$60-65/oy). Oltin signalini baholash chegarasiz.
   - `src/lib/aiAnalysis.ts`: tahlil sxemasi (strategiya, trendlar, darajalar, zonalar, sabablar, xavflar, bekor bo'lish narxi).
 - **Admin** (`src/app/admin/`, maxfiy manzil `ADMIN_PATH` orqali, oddiy `/admin` 404 beradi):
   "Signal pulti" (`pult`: barcha juftliklar, texnik tahlil, kirish/SL/TP, kirish taymeri), "Robot + Claude" (`tahlil`), "AI treyder" (`ai`, juftliklar natijasi, signallar jadvali), `ai/tahlil?s=ID|t=ID&tf=H1`

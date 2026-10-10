@@ -55,8 +55,8 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
     sql<{ pair: string; timeframe: string; trend: string }>("SELECT pair, timeframe, trend FROM market_context WHERE pair = ANY($1)", [pairs]),
     Promise.all(list.map((i) => techOf(i).catch(() => null))),
     Promise.all(pairs.map((p) => latestView(p).catch(() => null))),
-    sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; status: string; at: Date; confidence: number }>(
-      "SELECT id, pair, action, entry, sl, tp1, tp2, status, at, confidence FROM ai_trades WHERE status IN ('open', 'tp1') AND pair = ANY($1)", [pairs],
+    sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; status: string; at: Date; confidence: number; mode: string }>(
+      "SELECT id, pair, action, entry, sl, tp1, tp2, status, at, confidence, mode FROM ai_trades WHERE status IN ('open', 'tp1') AND pair = ANY($1)", [pairs],
     ),
   ]);
   const now = Date.now();
@@ -113,7 +113,7 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
               </p>
               {aiOpen.filter((t) => t.pair === inst.pair).map((t) => (
                 <p key={t.id} style={{ margin: 0 }}>
-                  Claude treyder (demo): <b className={t.action === "BUY" ? "up" : "down"}>{t.action}</b> {f(t.entry)} · SL {f(t.sl)} · TP1 {f(t.tp1)} · TP2 {f(t.tp2)}
+                  Claude {t.mode === "swing" ? "swing, 3-5 kun" : "treyder"} (demo): <b className={t.action === "BUY" ? "up" : "down"}>{t.action}</b> {f(t.entry)} · SL {f(t.sl)} · TP1 {f(t.tp1)} · TP2 {f(t.tp2)}
                   {t.status === "tp1" ? " · TP1 urildi" : ""} · <Link href={`${adminHref("/ai/tahlil")}?t=${t.id}`}>tahlil</Link>
                 </p>
               ))}

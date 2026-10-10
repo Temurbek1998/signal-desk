@@ -41,8 +41,8 @@ export async function syncDemo(): Promise<{ opened: DemoTrade[]; closed: DemoTra
 
   // Claude treyderlar: aniq qaror (BUY/SELL, ishonch AI_DEMO_MIN_CONF dan yuqori, standart 60) demo hisobga kiradi.
   const minConf = Math.max(0, Number(process.env.AI_DEMO_MIN_CONF ?? 60));
-  const aiFresh = process.env.AI_DEMO === "0" ? [] : await sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; at: Date }>(
-    `SELECT a.id, a.pair, a.action, a.entry, a.sl, a.tp1, a.tp2, a.at FROM ai_trades a LEFT JOIN demo_trades d ON d.ai_trade_id = a.id
+  const aiFresh = process.env.AI_DEMO === "0" ? [] : await sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; at: Date; mode: string }>(
+    `SELECT a.id, a.pair, a.action, a.entry, a.sl, a.tp1, a.tp2, a.at, a.mode FROM ai_trades a LEFT JOIN demo_trades d ON d.ai_trade_id = a.id
      WHERE d.id IS NULL AND a.action IN ('BUY', 'SELL') AND a.status NOT IN ('wait', 'rejected') AND a.confidence >= $1
        AND a.at > now() - interval '3 days' ORDER BY a.at, a.id`,
     [minConf],
@@ -54,9 +54,9 @@ export async function syncDemo(): Promise<{ opened: DemoTrade[]; closed: DemoTra
     if (p.size <= 0) continue;
     const rows = await sql<DemoTrade>(
       `INSERT INTO demo_trades (ai_trade_id, pair, category, timeframe, side, rating, entry, sl, opened_at, balance_before, risk_usdt, size, notional, fee, tp1, tp2, lots, strategy)
-       VALUES ($1, $2, $3, 'AI', $4, NULL, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'claude')
+       VALUES ($1, $2, $3, $16, $4, NULL, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'claude')
        ON CONFLICT (ai_trade_id) DO NOTHING RETURNING *`,
-      [a.id, a.pair, category, a.action, a.entry, a.sl, a.at, balance, p.risk, p.size, p.notional, p.fee, a.tp1, a.tp2, lotsOf(category, p.size)],
+      [a.id, a.pair, category, a.action, a.entry, a.sl, a.at, balance, p.risk, p.size, p.notional, p.fee, a.tp1, a.tp2, lotsOf(category, p.size), a.mode === "swing" ? "SWING" : "AI"],
     );
     if (rows[0]) opened.push(rows[0]);
   }

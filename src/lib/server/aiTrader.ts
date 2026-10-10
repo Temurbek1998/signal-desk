@@ -1,9 +1,9 @@
 import "server-only";
 import { ANALYSIS_PROMPT, ANALYSIS_SCHEMA, parseAnalysis, type AiAnalysis } from "../aiAnalysis.ts";
-import { parseDecision, trackPlan, validatePlan, type AiPlan } from "../aiTrade.ts";
+import { parseDecision, SWING_LIMITS, trackPlan, validatePlan, type AiPlan, type PlanLimits } from "../aiTrade.ts";
 import { analyze } from "../engine.ts";
 import { activeInstruments, ALL_INSTRUMENTS } from "../instruments.ts";
-import { getCandles } from "../market.ts";
+import { getCandles, getContextCandles } from "../market.ts";
 import { marketOpen } from "../sessions.ts";
 import type { Candle } from "../types.ts";
 import { digitsOf } from "./analysis.ts";
@@ -25,7 +25,7 @@ const gold = () => ALL_INSTRUMENTS.find((i) => i.pair === PAIR)!;
 export type AiTrade = {
   id: number; at: Date; pair: string; action: string; status: string; entry: number | null; sl: number | null; tp1: number | null; tp2: number | null;
   confidence: number; reason: string; note: string; model: string; tp1_hit: boolean; result_r: number | null; closed_at: Date | null;
-  analysis: AiAnalysis | null;
+  analysis: AiAnalysis | null; mode: string;
 };
 
 export const aiTraderEnabled = () => process.env.AI_TRADER !== "0" && !!provider();
@@ -40,6 +40,13 @@ const everyMin = (pair: string) => Math.max(15, Number((pair === PAIR ? process.
 const traderPairs = () => activeInstruments()
   .filter((i) => i.category === "gold" || (i.category === "forex" && process.env.AI_FX_TRADER !== "0"))
   .sort((a, b) => (a.pair === PAIR ? -1 : b.pair === PAIR ? 1 : 0));
+
+// Swing rejimi (demo): Claude 3–5 kunlik savdo, oltinda 700–1000 pips (70–100 $) maqsad. Har juftlikda AI_SWING_EVERY_H
+// (standart 24) soatda bir qaror, shu juftlikda ochiq swing savdo bo'lmasa. H1 shamlari bo'yicha kuzatiladi,
+// AI_SWING_MAX_H (standart 120) soatda yopiladi. O'chirish: AI_SWING=0.
+export const swingEnabled = () => aiTraderEnabled() && process.env.AI_SWING !== "0";
+const swingEveryH = () => Math.max(4, Number(process.env.AI_SWING_EVERY_H ?? 24));
+export const swingMaxH = () => Math.max(24, Number(process.env.AI_SWING_MAX_H ?? 120));
 
 const SCHEMA = {
   type: "object",
@@ -70,6 +77,25 @@ Qoidalar:
 - Aniq ustunlik bo'lmasa WAIT de. Yomon savdodan WAIT yaxshi. Oldingi savdolaringning natijasidan saboq ol.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
 - confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi.
+- agree: robot_zeus_fikri bilan rozimisan ("rozi", "qisman", "qarshi").
+${ANALYSIS_PROMPT}
+Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","agree","analysis"}.`;
+
+const swingSystemFor = (pair: string) => `Sen Zeus Number One'ning swing treyderisan va ${pair} bilan demo hisobda 3-5 kunlik savdo qilasan.
+Natijang haqqoniy R da o'lchanadi. Kuniga bitta qaror: BUY, SELL yoki WAIT. Kirish doim joriy narxda (bozor buyrug'i).
+Qanday tahlil qilasan:
+- Yuqoridan pastga: haftalik yo'nalish D1 shamlaridan, keyin D1 tuzilmasi (yuqori/past cho'qqilar, sinishlar), keyin H4 va H1 da kirish joyi.
+- Katta talab/taklif zonalari, oldingi haftalik va kunlik cho'qqi/tublar (likvidlik), D1 EMA20/EMA50, RSI, ADX va D1 ATR.
+- Savdo 3-5 kun ushlanadi, ${swingMaxH()} soatdan keyin joriy narxda yopiladi. Kunlik shovqin SL ga tegmasligi kerak.
+${pair === PAIR
+    ? "- Oltinda maqsad katta harakat: TP2 odatda 700-1000 pips (70-100 $) uzoqlikda, agar D1 tuzilmasi va ATR shunga yo'l qo'ysa. Yo'l qo'ymasa kichikroq maqsad yoki WAIT."
+    : "- Maqsad D1 ATR ga mos bo'lsin: TP2 odatda 2-4 kunlik o'rtacha harakat. Valyutada 700-1000 pips 3-5 kunda deyarli bo'lmaydi, uni zo'rlama."}
+Qoidalar:
+- Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
+- SL mantiqiy D1/H4 darajasining orqasida, masofasi D1 ATR ning 0.3-2 baravari. TP1 kamida 1R (yarmi yopiladi, SL kirishga ko'chadi), TP2 kamida 2R.
+- Aniq ustunlik bo'lmasa WAIT de. Yomon savdodan WAIT yaxshi. Oldingi swing savdolaringdan saboq ol.
+- WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
+- confidence 0-100. reason o'zbek tilida (lotin), 4-8 jumla: haftalik va kunlik trend, muhim darajalar, kirish sababi, necha kunda maqsadga yetishi va qaysi holatda g'oya bekor bo'lishi.
 - agree: robot_zeus_fikri bilan rozimisan ("rozi", "qisman", "qarshi").
 ${ANALYSIS_PROMPT}
 Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","agree","analysis"}.`;
@@ -110,27 +136,56 @@ export async function facts(pair = PAIR) {
   };
 }
 
+// Swing uchun ma'lumot: D1 (oxirgi 120 kun), H4 va H1 shamlari, D1 ATR.
+async function swingFacts(pair: string) {
+  const inst = ALL_INSTRUMENTS.find((i) => i.pair === pair) ?? gold();
+  const [d1, h4, h1] = await Promise.all([getContextCandles(inst, "D1"), getCandles(inst, 240, 260), getCandles(inst, 60, 260)]);
+  const [states, past] = await Promise.all([
+    sql<{ timeframe: string; side: string | null; quality: string | null; reason: string }>("SELECT timeframe, side, quality, reason FROM robot_state WHERE pair = $1", [inst.pair]),
+    sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND mode = 'swing' AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [inst.pair]),
+  ]);
+  const price = h1.at(-1)?.c ?? 0;
+  const d = digitsOf(inst.pair, price);
+  const d1a = analyze(d1.slice(-200));
+  return {
+    price, lastTime: h1.at(-1)?.t ?? 0, atr: d1a?.atr ?? 0,
+    data: {
+      juftlik: inst.pair, rejim: "swing (3-5 kun)", hozir_utc: new Date().toISOString(), joriy_narx: round(price, d),
+      ko_rsatkichlar: { D1: ind(d1, d), H4: ind(h4, d), H1: ind(h1, d) },
+      shamlar_ustunlari: "vaqt_utc, open, high, low, close",
+      D1_shamlar: ohlc(d1.slice(-120), d),
+      H4_shamlar: ohlc(h4.slice(-60), d),
+      H1_shamlar: ohlc(h1.slice(-48), d),
+      robot_zeus_fikri: states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, sabab: s.reason })),
+      oldingi_swing_savdolaring: past.map((t) => ({ vaqt: t.at, yonalish: t.action, kirish: t.entry, sl: t.sl, tp1: t.tp1, tp2: t.tp2, holat: t.status, natija_R: t.result_r })),
+    },
+  };
+}
+
 const planOf = (t: AiTrade): AiPlan => ({ side: t.action as "BUY" | "SELL", entry: Number(t.entry), sl: Number(t.sl), tp1: Number(t.tp1), tp2: Number(t.tp2) });
 
-const STATUS_TEXT: Record<string, string> = { sl: "SL urildi", be: "TP1 dan keyin kirishda yopildi", tp2: "TP2 urildi", expired: "24 soat o'tib yopildi" };
+const STATUS_TEXT: Record<string, string> = { sl: "SL urildi", be: "TP1 dan keyin kirishda yopildi", tp2: "TP2 urildi", expired: "muddati o'tib yopildi" };
 
-// Ochiq AI savdolarini M5 shamlari bo'yicha yangilaydi (har 5 daqiqada, Twelve Data keshidan, qo'shimcha so'rovsiz).
+// Ochiq AI savdolarini yangilaydi (har 5 daqiqada, Twelve Data keshidan): kun ichidagilar M5 bo'yicha 24 soat,
+// swing savdolar H1 bo'yicha swingMaxH() soat.
 export async function trackAiTrades() {
   const open = await sql<AiTrade>("SELECT * FROM ai_trades WHERE status IN ('open', 'tp1') ORDER BY at");
   if (!open.length) return;
-  const m5 = new Map<string, Awaited<ReturnType<typeof getCandles>>>();
+  const cache = new Map<string, Awaited<ReturnType<typeof getCandles>>>();
   for (const t of open) {
     const inst = ALL_INSTRUMENTS.find((i) => i.pair === t.pair) ?? gold();
-    if (!m5.has(inst.pair)) m5.set(inst.pair, await getCandles(inst, 5, 600));
-    const o = trackPlan(planOf(t), new Date(t.at).getTime(), m5.get(inst.pair)!);
+    const swing = t.mode === "swing", key = `${inst.pair}|${swing ? 60 : 5}`;
+    if (!cache.has(key)) cache.set(key, await getCandles(inst, swing ? 60 : 5, swing ? 260 : 600));
+    const o = trackPlan(planOf(t), new Date(t.at).getTime(), cache.get(key)!, swing ? swingMaxH() : 24);
     if (o.status === t.status && o.tp1Hit === t.tp1_hit) continue;
     const closed = o.resultR != null;
     await sql(
       `UPDATE ai_trades SET status = $2, tp1_hit = $3, result_r = $4, closed_at = $5, updated_at = now() WHERE id = $1`,
-      [t.id, o.status, o.tp1Hit, o.resultR, closed && o.at ? new Date(o.at + 5 * 60_000) : null],
+      [t.id, o.status, o.tp1Hit, o.resultR, closed && o.at ? new Date(o.at + (swing ? 60 : 5) * 60_000) : null],
     );
-    if (closed) await notifyAdmin(`🤖 AI ${t.action} ${t.pair} yopildi: ${STATUS_TEXT[o.status] ?? o.status}, natija ${o.resultR! >= 0 ? "+" : ""}${o.resultR!.toFixed(2)}R`);
-    else if (o.tp1Hit && !t.tp1_hit) await notifyAdmin(`🤖 AI ${t.action} ${t.pair}: TP1 urildi, SL kirishga ko'chdi`);
+    const tag = swing ? " (swing)" : "";
+    if (closed) await notifyAdmin(`🤖 AI${tag} ${t.action} ${t.pair} yopildi: ${STATUS_TEXT[o.status] ?? o.status}, natija ${o.resultR! >= 0 ? "+" : ""}${o.resultR!.toFixed(2)}R`);
+    else if (o.tp1Hit && !t.tp1_hit) await notifyAdmin(`🤖 AI${tag} ${t.action} ${t.pair}: TP1 urildi, SL kirishga ko'chdi`);
   }
 }
 
@@ -138,14 +193,14 @@ export async function trackAiTrades() {
 // force: admin "Hozir so'rash" tugmasi (pair berilmasa oltin).
 export async function aiDecide(force = false, onlyPair?: string): Promise<{ trade?: AiTrade; skipped?: string }> {
   if (!aiTraderEnabled()) return { skipped: "AI ulanmagan" };
-  const busyRows = await sql<{ pair: string }>("SELECT DISTINCT pair FROM ai_trades WHERE status IN ('open', 'tp1')");
+  const busyRows = await sql<{ pair: string }>("SELECT DISTINCT pair FROM ai_trades WHERE mode = 'intraday' AND status IN ('open', 'tp1')");
   const busy = new Set(busyRows.map((r) => r.pair));
   let pair: string | undefined;
   if (force) {
     pair = onlyPair ?? PAIR;
     if (busy.has(pair)) return { skipped: `${pair}: ochiq AI savdo bor` };
   } else {
-    const lastRows = await sql<{ pair: string; at: Date }>("SELECT pair, max(at) AS at FROM ai_trades GROUP BY pair");
+    const lastRows = await sql<{ pair: string; at: Date }>("SELECT pair, max(at) AS at FROM ai_trades WHERE mode = 'intraday' GROUP BY pair");
     const last = new Map(lastRows.map((r) => [r.pair, new Date(r.at).getTime()]));
     pair = traderPairs()
       .filter((i) => !busy.has(i.pair) && marketOpen(i.category) && Date.now() - (last.get(i.pair) ?? 0) >= (everyMin(i.pair) - 2) * 60_000)
@@ -160,36 +215,69 @@ export async function aiDecide(force = false, onlyPair?: string): Promise<{ trad
   const text = await complete(systemFor(pair), [{ role: "user", content: JSON.stringify(f.data) }], {
     json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 12000 : 3000,
   });
+  return store(pair, "intraday", text, f.price, f.atrH1, undefined, model);
+}
+
+// Swing qarori: vaqti kelgan birinchi juftlik (oltin oldin), shu juftlikda ochiq swing savdo bo'lmasa.
+export async function aiSwingDecide(force = false, onlyPair?: string): Promise<{ trade?: AiTrade; skipped?: string }> {
+  if (!swingEnabled()) return { skipped: "Swing o'chiq" };
+  const busyRows = await sql<{ pair: string }>("SELECT DISTINCT pair FROM ai_trades WHERE mode = 'swing' AND status IN ('open', 'tp1')");
+  const busy = new Set(busyRows.map((r) => r.pair));
+  let pair: string | undefined;
+  if (force) {
+    pair = onlyPair ?? PAIR;
+    if (busy.has(pair)) return { skipped: `${pair}: ochiq swing savdo bor` };
+  } else {
+    const lastRows = await sql<{ pair: string; at: Date }>("SELECT pair, max(at) AS at FROM ai_trades WHERE mode = 'swing' GROUP BY pair");
+    const last = new Map(lastRows.map((r) => [r.pair, new Date(r.at).getTime()]));
+    pair = traderPairs()
+      .filter((i) => !busy.has(i.pair) && marketOpen(i.category) && Date.now() - (last.get(i.pair) ?? 0) >= (swingEveryH() * 60 - 2) * 60_000)
+      .sort((a, b) => (a.pair === PAIR ? -1 : b.pair === PAIR ? 1 : (last.get(a.pair) ?? 0) - (last.get(b.pair) ?? 0)))[0]?.pair;
+    if (!pair) return { skipped: "Swing: hali vaqti emas" };
+    if (!(await underBudget())) return { skipped: "Kunlik AI chegarasi" };
+  }
+  const f = await swingFacts(pair);
+  if (!f.price || Date.now() - f.lastTime > 3 * 3600_000) return { skipped: "Bozor yopiq" };
+  const model = traderModel(pair);
+  const text = await complete(swingSystemFor(pair), [{ role: "user", content: JSON.stringify(f.data) }], {
+    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 12000 : 3000,
+  });
+  return store(pair, "swing", text, f.price, f.atr, SWING_LIMITS, model);
+}
+
+// Qarorni tekshirib ai_trades va ai_views ga yozadi, aniq savdo bo'lsa adminga xabar beradi.
+async function store(pair: string, mode: "intraday" | "swing", text: string, price: number, atr: number, lim: PlanLimits | undefined, model: string | undefined) {
   const d = parseDecision(text);
   const modelName = model ?? process.env.LLM_MODEL ?? provider() ?? "";
   if (!d) {
     const [row] = await sql<AiTrade>(
-      "INSERT INTO ai_trades (pair, action, status, note, model) VALUES ($1, 'WAIT', 'rejected', $2, $3) RETURNING *",
-      [pair, `Javob o'qilmadi: ${text.slice(0, 300)}`, modelName],
+      "INSERT INTO ai_trades (pair, action, status, note, model, mode) VALUES ($1, 'WAIT', 'rejected', $2, $3, $4) RETURNING *",
+      [pair, `Javob o'qilmadi: ${text.slice(0, 300)}`, modelName, mode],
     );
     return { trade: row };
   }
-  const v = validatePlan(d, f.price, f.atrH1);
+  const v = validatePlan(d, price, atr, lim);
   const p = v.plan;
   let analysis = null, agree: string | null = null;
   try {
     const o = JSON.parse(text.match(/\{[\s\S]*\}/)![0]);
-    analysis = parseAnalysis(o.analysis, f.price);
+    analysis = parseAnalysis(o.analysis, price);
     agree = ["rozi", "qisman", "qarshi"].includes(o.agree) ? o.agree : null;
   } catch { /* tahlil bo'lmasa ham qaror yoziladi */ }
   const status = p ? "open" : d.action === "WAIT" ? "wait" : "rejected";
   const [row] = await sql<AiTrade>(
-    `INSERT INTO ai_trades (pair, action, status, entry, sl, tp1, tp2, confidence, reason, note, model, analysis)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-    [pair, d.action, status, f.price, p?.sl ?? d.sl ?? null, p?.tp1 ?? d.tp1 ?? null, p?.tp2 ?? d.tp2 ?? null,
-      d.confidence ?? 0, d.reason ?? "", status === "rejected" ? `Tekshiruvdan o'tmadi: ${v.error}` : "", modelName, analysis ? JSON.stringify(analysis) : null],
+    `INSERT INTO ai_trades (pair, action, status, entry, sl, tp1, tp2, confidence, reason, note, model, analysis, mode)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+    [pair, d.action, status, price, p?.sl ?? d.sl ?? null, p?.tp1 ?? d.tp1 ?? null, p?.tp2 ?? d.tp2 ?? null,
+      d.confidence ?? 0, d.reason ?? "", status === "rejected" ? `Tekshiruvdan o'tmadi: ${v.error}` : "", modelName, analysis ? JSON.stringify(analysis) : null, mode],
   );
-  await sql(
+  // Swing qarori qisqa muddatli "Robot + Claude" ko'rinishini almashtirmaydi.
+  if (mode === "intraday") await sql(
     "INSERT INTO ai_views (pair, bias, confidence, agree, summary, analysis, model) VALUES ($1, $2, $3, $4, $5, $6, $7)",
     [pair, d.action, d.confidence ?? 0, agree, d.reason ?? "", analysis ? JSON.stringify(analysis) : null, modelName],
   );
   if (p) {
-    await notifyAdmin(`🤖 AI treyder (demo): ${p.side} ${pair}\nKirish ${round(p.entry, digitsOf(pair, p.entry))}, SL ${p.sl}, TP1 ${p.tp1}, TP2 ${p.tp2}, ishonch ${d.confidence}%\n${d.reason ?? ""}`);
+    await notifyAdmin(`🤖 AI treyder${mode === "swing" ? " SWING (3-5 kun)" : ""} (demo): ${p.side} ${pair}\nKirish ${round(p.entry, digitsOf(pair, p.entry))}, SL ${p.sl}, TP1 ${p.tp1}, TP2 ${p.tp2}, ishonch ${d.confidence}%\n${d.reason ?? ""}`);
   }
   return { trade: row };
 }

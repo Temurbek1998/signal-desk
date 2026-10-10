@@ -180,12 +180,13 @@ export async function runMarketTestNow() {
 }
 
 // AI treyderdan hozir qaror so'rash (admin). Ochiq AI savdo bo'lsa yangi qaror olinmaydi.
-export async function aiDecideNow(_prev: { msg?: string } | null): Promise<{ msg?: string }> {
+export async function aiDecideNow(_prev: { msg?: string } | null, form: FormData): Promise<{ msg?: string }> {
   const admin = await requireAdmin();
-  await logAdmin(admin, "AI treyderdan qo'lda qaror so'raldi");
-  const { aiDecide } = await import("@/lib/server/aiTrader.ts");
+  const swing = form.get("mode") === "swing";
+  await logAdmin(admin, `AI treyderdan qo'lda ${swing ? "swing " : ""}qaror so'raldi`);
+  const { aiDecide, aiSwingDecide } = await import("@/lib/server/aiTrader.ts");
   try {
-    const r = await aiDecide(true);
+    const r = swing ? await aiSwingDecide(true) : await aiDecide(true);
     revalidatePath("/admin/ai");
     return { msg: r.skipped ?? `Qaror: ${r.trade?.action} (${r.trade?.status})` };
   } catch (e) {

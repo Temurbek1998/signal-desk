@@ -326,3 +326,6 @@ UPDATE plans SET active = false WHERE id IN ('pro_month', 'vip_month');
 -- Claude treyder savdolari ham demo hisobga kiradi (egasining qarori): signal_id yoki ai_trade_id dan biri.
 ALTER TABLE demo_trades ALTER COLUMN signal_id DROP NOT NULL;
 ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS ai_trade_id bigint UNIQUE REFERENCES ai_trades(id) ON DELETE CASCADE;
+
+-- Claude swing rejimi (3-5 kunlik savdo, demo): 'intraday' yoki 'swing'.
+ALTER TABLE ai_trades ADD COLUMN IF NOT EXISTS mode text NOT NULL DEFAULT 'intraday';

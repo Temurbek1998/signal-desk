@@ -28,17 +28,22 @@ export function parseDecision(text: string): AiDecision | null {
 
 // AI darajalarini tekshiradi. Kirish doim joriy narx (AI narxni o'ylab topa olmaydi).
 // SL masofasi H1 ATR ning 0.3–3 baravari, TP1 kamida 0.5R, TP2 kamida 1R va TP1 dan uzoqroq bo'lishi kerak.
-export function validatePlan(d: AiDecision, price: number, atrH1: number): { plan?: AiPlan; error?: string } {
+// Swing rejimida ATR o'rniga D1 ATR beriladi, chegaralar boshqacha: SL 0.3–2 D1 ATR, TP1 kamida 1R, TP2 kamida 2R.
+export type PlanLimits = { atrName: string; minAtr: number; maxAtr: number; r1: number; r2: number };
+export const INTRADAY_LIMITS: PlanLimits = { atrName: "H1 ATR", minAtr: 0.3, maxAtr: 3, r1: 0.5, r2: 1 };
+export const SWING_LIMITS: PlanLimits = { atrName: "D1 ATR", minAtr: 0.3, maxAtr: 2, r1: 1, r2: 2 };
+
+export function validatePlan(d: AiDecision, price: number, atrH1: number, lim: PlanLimits = INTRADAY_LIMITS): { plan?: AiPlan; error?: string } {
   if (d.action === "WAIT") return { error: "kutish" };
   const { sl, tp1, tp2 } = d;
   if (sl == null || tp1 == null || tp2 == null) return { error: "SL yoki TP berilmagan" };
   const dir = d.action === "BUY" ? 1 : -1;
   const risk = (price - sl) * dir;
   if (risk <= 0) return { error: "SL noto'g'ri tomonda" };
-  if (atrH1 > 0 && (risk < 0.3 * atrH1 || risk > 3 * atrH1)) return { error: `SL masofasi ${risk.toFixed(2)} (H1 ATR ${atrH1.toFixed(2)}) me'yorda emas` };
+  if (atrH1 > 0 && (risk < lim.minAtr * atrH1 || risk > lim.maxAtr * atrH1)) return { error: `SL masofasi ${risk.toFixed(2)} (${lim.atrName} ${atrH1.toFixed(2)}) me'yorda emas` };
   const r1 = ((tp1 - price) * dir) / risk, r2 = ((tp2 - price) * dir) / risk;
-  if (r1 < 0.5) return { error: `TP1 juda yaqin (${r1.toFixed(2)}R)` };
-  if (r2 < 1 || r2 <= r1) return { error: `TP2 noto'g'ri (${r2.toFixed(2)}R)` };
+  if (r1 < lim.r1) return { error: `TP1 juda yaqin (${r1.toFixed(2)}R)` };
+  if (r2 < lim.r2 || r2 <= r1) return { error: `TP2 noto'g'ri (${r2.toFixed(2)}R)` };
   return { plan: { side: d.action, entry: price, sl, tp1, tp2 } };
 }
 

@@ -47,12 +47,14 @@ export default async function AiTraderPage() {
   };
   const ok = revOf("tasdiq"), care = revOf("ehtiyot");
   const trades = rows.filter((r) => r.status !== "wait" && r.status !== "rejected");
-  // Har juftlikning o'z Claude treyderi: juftlik bo'yicha natija.
-  const aiPairs = [...new Set(rows.map((r) => r.pair))].map((pair) => {
-    const all = rows.filter((r) => r.pair === pair), tr = trades.filter((r) => r.pair === pair), cl = tr.filter((r) => r.result_r != null);
+  // Har juftlikning o'z Claude treyderi: juftlik va rejim (kun ichi / swing) bo'yicha natija.
+  const keyOf = (r: { pair: string; mode: string }) => `${r.pair}|${r.mode}`;
+  const aiPairs = [...new Set(rows.map(keyOf))].map((key) => {
+    const [pair, mode] = key.split("|");
+    const all = rows.filter((r) => keyOf(r) === key), tr = trades.filter((r) => keyOf(r) === key), cl = tr.filter((r) => r.result_r != null);
     const total = cl.reduce((a, r) => a + Number(r.result_r), 0);
-    return { pair, decisions: all.length, trades: tr.length, open: tr.filter((r) => r.status === "open" || r.status === "tp1").length, closed: cl.length, wins: cl.filter((r) => Number(r.result_r) > 0).length, total };
-  }).sort((a, b) => (a.pair === "XAU/USD" ? -1 : b.pair === "XAU/USD" ? 1 : b.total - a.total));
+    return { key, pair, mode, decisions: all.length, trades: tr.length, open: tr.filter((r) => r.status === "open" || r.status === "tp1").length, closed: cl.length, wins: cl.filter((r) => Number(r.result_r) > 0).length, total };
+  }).sort((a, b) => a.mode.localeCompare(b.mode) || (a.pair === "XAU/USD" ? -1 : b.pair === "XAU/USD" ? 1 : b.total - a.total));
   const dg = (pair: string) => (pair === "XAU/USD" ? 2 : pair.includes("JPY") ? 3 : 5);
   const since = chart?.candles[0]?.t ?? 0;
   const aiSignals: ChartSignal[] = trades
@@ -70,9 +72,12 @@ export default async function AiTraderPage() {
       <header className="page-head">
         <div>
           <h1>AI treyder</h1>
-          <p className="sub">Faqat demo. Har juftlikda alohida Claude bozorni o&apos;zi tahlil qiladi va BUY, SELL yoki kutish qaroriga keladi: oltin har 2 soatda (Opus), valyutalar har 4 soatda (Sonnet). Tugma oltin uchun darhol qaror so&apos;raydi.</p>
+          <p className="sub">Faqat demo. Har juftlikda alohida Claude bozorni o&apos;zi tahlil qiladi va BUY, SELL yoki kutish qaroriga keladi: oltin har 2 soatda (Opus), valyutalar har 4 soatda (Sonnet). Swing rejim: kuniga bitta 3-5 kunlik savdo qarori (oltinda 700-1000 pips maqsad). Tugmalar oltin uchun darhol qaror so&apos;raydi.</p>
         </div>
-        <AiDecideButton enabled={enabled} />
+        <div className="bar" style={{ gap: 8 }}>
+          <AiDecideButton enabled={enabled} />
+          <AiDecideButton enabled={enabled} swing />
+        </div>
       </header>
 
       {!enabled && (
@@ -103,8 +108,8 @@ export default async function AiTraderPage() {
               <thead><tr><th>Juftlik</th><th>Qarorlar</th><th>Savdolar</th><th>Ochiq</th><th>Yopilgan</th><th>Yutuq</th><th>Jami</th></tr></thead>
               <tbody>
                 {aiPairs.map((p) => (
-                  <tr key={p.pair}>
-                    <td>{p.pair}</td><td>{p.decisions}</td><td>{p.trades}</td><td>{p.open}</td><td>{p.closed}</td><td>{pct(p.wins, p.closed)}</td>
+                  <tr key={p.key}>
+                    <td>{p.pair}{p.mode === "swing" ? " · swing" : ""}</td><td>{p.decisions}</td><td>{p.trades}</td><td>{p.open}</td><td>{p.closed}</td><td>{pct(p.wins, p.closed)}</td>
                     <td className={p.total >= 0 ? "up" : "down"}>{p.closed ? r2(p.total) : "—"}</td>
                   </tr>
                 ))}
@@ -203,7 +208,7 @@ export default async function AiTraderPage() {
                 {rows.slice(0, 60).map((t) => (
                   <tr key={t.id}>
                     <td><LocalTime at={t.at} /></td>
-                    <td>{t.pair}</td>
+                    <td>{t.pair}{t.mode === "swing" ? " · swing" : ""}</td>
                     <td className={t.action === "BUY" ? "up" : t.action === "SELL" ? "down" : ""}>{t.action}{t.confidence ? ` ${t.confidence}%` : ""}</td>
                     <td>{t.entry != null ? Number(t.entry).toFixed(dg(t.pair)) : "—"}</td>
                     <td>{t.action !== "WAIT" && t.sl ? Number(t.sl).toFixed(dg(t.pair)) : "—"}</td>

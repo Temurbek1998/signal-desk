@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseDecision, trackPlan, validatePlan } from "../src/lib/aiTrade.ts";
+import { parseDecision, SWING_LIMITS, trackPlan, validatePlan } from "../src/lib/aiTrade.ts";
 
 test("parseDecision: matn ichidagi JSON", () => {
   const d = parseDecision('```json\n{"action":"buy","sl":"2650","tp1":2665,"tp2":2680,"confidence":72,"reason":"x"}\n```');
@@ -34,4 +34,12 @@ test("trackPlan: SELL va muddat o'tishi", () => {
   assert.equal(trackPlan(sell, 0, [c(1, 101, 89)], 24, 2).status, "tp1");
   const exp = trackPlan(sell, 0, [c(1, 102, 96, 95)], 1, 2 * 3600_000);
   assert.deepEqual(exp, { status: "expired", resultR: 0.5, at: 1, tp1Hit: false });
+});
+
+test("validatePlan: swing chegaralari (D1 ATR, TP1 1R, TP2 2R)", () => {
+  const ok = validatePlan({ action: "BUY", sl: 4120, tp1: 4265, tp2: 4340 }, 4190, 60, SWING_LIMITS);
+  assert.ok(ok.plan);
+  assert.match(validatePlan({ action: "BUY", sl: 4120, tp1: 4230, tp2: 4290 }, 4190, 60, SWING_LIMITS).error!, /TP1/);
+  assert.match(validatePlan({ action: "BUY", sl: 4120, tp1: 4265, tp2: 4300 }, 4190, 60, SWING_LIMITS).error!, /TP2/);
+  assert.match(validatePlan({ action: "BUY", sl: 4050, tp1: 4330, tp2: 4500 }, 4190, 60, SWING_LIMITS).error!, /D1 ATR/);
 });
