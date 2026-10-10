@@ -243,14 +243,3 @@ export async function setMarketsAction(form: FormData) {
   await logAdmin(admin, "bozorlar", null, cats.join(",") || "hammasi o'chiq");
   revalidatePath("/admin", "layout");
 }
-
-// Sun'iy narxlar davridagi yozuvlarni tozalash (server/wipe.ts). Tasdiq uchun "TOZALA" yoziladi.
-export async function wipeFakeAction(form: FormData) {
-  const admin = await requireAdmin();
-  if (String(form.get("confirm") ?? "").trim().toUpperCase() !== "TOZALA") return;
-  const { wipeDone, wipeFakeData } = await import("@/lib/server/wipe.ts");
-  if (await wipeDone()) return;
-  await wipeFakeData();
-  await logAdmin(admin, "soxta ma'lumot tozalandi", null, "DEMO_DATA davri");
-  revalidatePath("/admin", "layout");
-}
