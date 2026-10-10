@@ -4,6 +4,12 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.8.0 (2026-10-10): Claude savdolari demo hisobda
+
+- Har juftlik Claude treyderining aniq qarori (BUY/SELL, ishonch 60% va yuqori, `AI_DEMO_MIN_CONF`) avtomatik demo hisobga
+  kiradi (1% risk), natijasi balansga yoziladi. Admin "Demo hisob"da "Zeus Claude · Claude treyder" bo'lib ko'rinadi.
+  O'chirish: `AI_DEMO=0`. Keyinchalik demo MT5 orqali bo'ladi (egasining rejasi).
+
 ## v1.7.0 (2026-10-10): har juftlikka alohida Claude treyder
 
 - Oltindan tashqari 6 valyuta juftligining har biriga alohida Claude treyder (demo): har 4 soatda, Sonnet. Oltin har 2 soatda, Opus.

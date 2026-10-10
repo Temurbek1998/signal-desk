@@ -10,7 +10,7 @@ import AutoRefresh from "../../components/AutoRefresh.tsx";
 export const metadata = { title: "Demo hisob", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-const OUTCOME: Record<string, string> = { tp1: "TP 1", tp2: "TP 2", sl: "SL", close: "Kun oxiri" };
+const OUTCOME: Record<string, string> = { tp1: "TP 1", tp2: "TP 2", sl: "SL", close: "Kun oxiri", be: "TP1, so'ng kirishda", expired: "24 soatda yopildi" };
 const outcome = (t: DemoTrade) => (t.strategy && t.strategy !== "trend" && t.outcome === "tp2" ? "TP" : OUTCOME[t.outcome ?? ""] ?? t.outcome);
 const strat = (s: string | undefined) => signalLabel(s);
 const usdt = (n: number) => `${n.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(",", ".")} USDT`;

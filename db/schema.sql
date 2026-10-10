@@ -322,3 +322,7 @@ CREATE INDEX IF NOT EXISTS tickets_status_idx ON tickets(status, created_at DESC
 -- 2026-10-10: bitta tarif, 20 USDT/oy (egasining qarori). PRO va VIP yangi obuna uchun yopildi.
 UPDATE plans SET name = '1 oy', price_usdt = 20, sort = 1, active = true WHERE id = 'month';
 UPDATE plans SET active = false WHERE id IN ('pro_month', 'vip_month');
+
+-- Claude treyder savdolari ham demo hisobga kiradi (egasining qarori): signal_id yoki ai_trade_id dan biri.
+ALTER TABLE demo_trades ALTER COLUMN signal_id DROP NOT NULL;
+ALTER TABLE demo_trades ADD COLUMN IF NOT EXISTS ai_trade_id bigint UNIQUE REFERENCES ai_trades(id) ON DELETE CASCADE;

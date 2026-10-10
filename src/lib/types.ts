@@ -20,8 +20,8 @@ export type Trend = "up" | "down" | "flat";
 export type MarketContext = Partial<Record<ContextTf, Trend>>;
 
 // trend: asosiy strategiya (yuqori aniqlik, TP1/TP2). pips-*: oltin uchun fiks pips maqsadli rejim (GOLD_BACKTEST.md).
-export type Strategy = "trend" | "pips-pullback" | "pips-london" | "scalp-razgon";
-export const STRATEGY_NAME: Record<Strategy, string> = { trend: "Trend", "pips-pullback": "Pips: pullback", "pips-london": "Pips: London", "scalp-razgon": "Razgon" };
+export type Strategy = "trend" | "pips-pullback" | "pips-london" | "scalp-razgon" | "claude";
+export const STRATEGY_NAME: Record<Strategy, string> = { trend: "Trend", "pips-pullback": "Pips: pullback", "pips-london": "Pips: London", "scalp-razgon": "Razgon", claude: "Claude treyder" };
 
 // Ikki robot: Zeus (trend va 300–400 pips rejimlari) va Gerakl (skalping va razgon, M5).
 export type Robot = "zeus" | "gerakl";
