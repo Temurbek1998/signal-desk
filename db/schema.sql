@@ -409,3 +409,32 @@ CREATE TABLE IF NOT EXISTS news_watch_pings (
   at  timestamptz NOT NULL DEFAULT now(),
   note text NOT NULL DEFAULT ''
 );
+
+-- Keskin harakatlar (egasining talabi, 2026-10-10): yangilikdan qat'i nazar M1 da 2-3 daqiqada 180+ pips.
+-- status: tracking (60 daqiqa kuzatilmoqda), done. Pips harakat oxiridagi narxdan: mfe shu tomonga, mae teskari.
+CREATE TABLE IF NOT EXISTS price_spikes (
+  id          bigserial PRIMARY KEY,
+  at          timestamptz NOT NULL DEFAULT now(),
+  pair        text NOT NULL,
+  source      text NOT NULL DEFAULT '',
+  side        text NOT NULL,
+  bars        int NOT NULL,
+  move_pips   double precision NOT NULL,
+  peak_pips   double precision NOT NULL,
+  from_price  double precision NOT NULL,
+  price       double precision NOT NULL,
+  candle_time timestamptz NOT NULL,
+  news        text NOT NULL DEFAULT '',
+  status      text NOT NULL DEFAULT 'tracking',
+  minutes     int NOT NULL DEFAULT 0,
+  mfe_pips    double precision,
+  mae_pips    double precision,
+  after5      double precision,
+  after15     double precision,
+  after30     double precision,
+  after60     double precision,
+  note        text NOT NULL DEFAULT '',
+  note_at     timestamptz,
+  UNIQUE (pair, candle_time)
+);
+CREATE INDEX IF NOT EXISTS price_spikes_time ON price_spikes (candle_time DESC);

@@ -6,7 +6,7 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 - Sayt: https://signal-desk-vert.vercel.app (saytdagi nomi "Zeus Number One")
 - Repo: github.com/Temurbek1998/signal-desk, branch `main` (har push Vercel'da avtomatik deploy)
 - Loyiha qo'llanmasi: repodagi `CLAUDE.md`, o'zgarishlar tarixi: `CHANGELOG.md`
-- Oxirgi versiya: **v1.12.0** (yangiliklar M1 tahlili va efir impulslari, PR #1)
+- Oxirgi versiya: **v1.13.0** (yangiliklar M1 tahlili, efir impulslari, keskin harakatlar; PR #1)
 
 ## Shu chatda qilinganlar (v1.2.0 – v1.9.1)
 - Operator: faqat DeepSeek yoki bepul Gemini (Claude emas), faqat platforma savollari, signal/narx aytmaydi.
@@ -30,6 +30,9 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 
 - v1.12.0: yangilik efiri impulslari. Yangilik paytida oltin M1 har daqiqada kuzatiladi, 2-3 daqiqa kuchli bir tomonga harakat
   bo'lsa Telegram va admin "Yangilik impulslari" sahifasi. Bek cron-job.org da `/api/news-watch` ni har daqiqaga qo'yishi kerak.
+
+- v1.13.0: keskin harakatlar. Yangilikdan qat'i nazar oltin M1 da 2-3 daqiqada 180+ pips bo'lsa darhol Telegram, bazaga yoziladi,
+  keyingi 60 daqiqada qancha yurgani o'lchanadi va Claude xulosa yozadi. Admin "Keskin harakatlar" sahifasi. Manba Binance PAXG/USDT.
 
 ## Egasi bilan kelishilgan qoidalar
 - Kalit va parollar chatga yoki repoga yozilmaydi, faqat Vercel Environment Variables (Bek o'zi qo'yadi).

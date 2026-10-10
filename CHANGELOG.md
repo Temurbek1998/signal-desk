@@ -4,6 +4,16 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.13.0 (2026-10-10): keskin harakatlar (2-3 daqiqada 180+ pips)
+
+- Yangilikdan qat'i nazar oltin M1 har daqiqada tekshiriladi (`/api/news-watch`, zaxira: asosiy cron oxirgi 5 sham bo'yicha).
+  2-3 daqiqada `SPIKE_PIPS` (180 = 18 $) va undan ko'p harakat bo'lsa darhol Telegram xabari va `price_spikes` jadvaliga yoziladi.
+- Keyingi 60 daqiqada qancha yurgani o'lchanadi: shu tomonga eng uzoq, teskari, 5/15/30/60 daqiqadagi holat (pips), so'ng
+  Telegram'ga natija va Claude (Sonnet, `SPIKE_MODEL`) qisqa xulosasi.
+- Alohida admin sahifa "Keskin harakatlar": statistika, oxirgi harakat M1 grafigi, barcha harakatlar jadvali.
+- Manba: Binance PAXG/USDT (real vaqt, limitsiz; Twelve Data kunlik limiti har daqiqaga yetmaydi), `SPIKE_SOURCE=twelvedata`
+  bilan almashtirish mumkin. O'chirish: `SPIKE_WATCH=0`.
+
 ## v1.12.0 (2026-10-10): yangilik efiri impulslari
 
 - Yangilik (kuchli va o'rta, `NEWS_WATCH_IMPACT`) chiqishidan 1 daqiqa oldin boshlab 20 daqiqa (`NEWS_WATCH_MIN`),

@@ -7,6 +7,7 @@ import { refreshStaleView } from "@/lib/server/aiView.ts";
 import { reviewOpenTrades } from "@/lib/server/aiManager.ts";
 import { newsCycle } from "@/lib/server/newsTrader.ts";
 import { newsWatch } from "@/lib/server/newsWatch.ts";
+import { spikeNotes, spikeWatch } from "@/lib/server/spikeWatch.ts";
 import { cronDenied } from "@/lib/server/cronAuth.ts";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,8 @@ export async function GET(req: Request) {
     const news = newsCycle().catch((e) => console.error("Yangilik", e));
     // Efir impulsi: asosan /api/news-watch har daqiqada, bu yerda zaxira (har daqiqalik cron qo'yilmagan bo'lsa).
     const watch = newsWatch().catch((e) => console.error("Impuls", e));
+    // Keskin harakat: zaxira (oxirgi 5 sham) va kuzatuvi tugaganlarga Claude xulosasi.
+    const spike = spikeWatch(5).then(() => spikeNotes()).catch((e) => console.error("Keskin harakat", e));
     // AI treyder (demo): ochiq savdolarni kuzatish har 5 daqiqada, yangi qaror va Claude qayta ko'rishi navbat bilan.
     if (aiTraderEnabled()) {
       // Zeus'ning yangi signallariga AI ikkinchi fikri (mijozga signal bilan birga ko'rinadi).
@@ -41,7 +44,7 @@ export async function GET(req: Request) {
       const s = d?.skipped ? await aiSwingDecide().catch((e) => { console.error("AI swing", e); return null; }) : null;
       if (s?.skipped) await refreshStaleView().catch((e) => console.error("AI ko'rinish", e));
     }
-    await Promise.all([news, watch]);
+    await Promise.all([news, watch, spike]);
     const last = await lastMarketTest().catch(() => null);
     if (!last || Date.now() - new Date(last.at).getTime() > 7 * 86_400_000) await saveMarketTest().catch(() => {});
   });

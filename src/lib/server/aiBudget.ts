@@ -13,7 +13,8 @@ export async function aiCallsToday(): Promise<number> {
           - (SELECT count(*) FROM ai_trades WHERE mode = 'intraday' AND note NOT LIKE 'Javob o''qilmadi%' AND at >= date_trunc('day', now()))
           + (SELECT count(*) FROM signal_log WHERE ai_at >= date_trunc('day', now()))
           + (SELECT count(*) FROM ai_trade_reviews WHERE at >= date_trunc('day', now()))
-          + (SELECT count(*) FROM news_reactions WHERE at >= date_trunc('day', now())) AS n`,
+          + (SELECT count(*) FROM news_reactions WHERE at >= date_trunc('day', now()))
+          + (SELECT count(*) FROM price_spikes WHERE note_at >= date_trunc('day', now())) AS n`,
   );
   return Number(r?.n ?? 0);
 }

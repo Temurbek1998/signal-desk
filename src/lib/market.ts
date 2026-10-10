@@ -110,7 +110,7 @@ const DEMO_BASE: Record<string, number> = {
   BTCUSDT: 62000, ETHUSDT: 2450, SOLUSDT: 145, BNBUSDT: 580, XRPUSDT: 0.53,
   "GC=F": 2660, "XAU/USD": 2660, "EURUSD=X": 1.095, "EUR/USD": 1.095, "GBPUSD=X": 1.31, "GBP/USD": 1.31,
   "JPY=X": 149.3, "USD/JPY": 149.3, "AUDUSD=X": 0.674, "AUD/USD": 0.674, "CHF=X": 0.858, "USD/CHF": 0.858,
-  "CAD=X": 1.372, "USD/CAD": 1.372,
+  "CAD=X": 1.372, "USD/CAD": 1.372, PAXGUSDT: 2665,
 };
 function demo(symbol: string, minutes: number, limit = LIMIT): Candle[] {
   let seed = [...symbol + minutes].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7) >>> 0;

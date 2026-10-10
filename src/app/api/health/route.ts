@@ -22,7 +22,7 @@ export async function GET() {
     const runs = await sql<{ at: Date; trigger: string; analyzed: number; failed: number; strong: number; weak: number; errors: string }>(
       "SELECT started_at AS at, trigger, analyzed, failed, strong, weak, left(errors, 600) AS errors FROM robot_runs ORDER BY started_at DESC LIMIT 3",
     );
-    const [counts] = await sql<{ signals: string; open_signals: string; demo: string; demo_open: string; states: string; ai_trades: string; ai_decisions: string; ai_views: string; ai_reviews: string; ai_trade_reviews: string; news_reactions: string }>(
+    const [counts] = await sql<{ signals: string; open_signals: string; demo: string; demo_open: string; states: string; ai_trades: string; ai_decisions: string; ai_views: string; ai_reviews: string; ai_trade_reviews: string; news_reactions: string; price_spikes: string }>(
       `SELECT (SELECT count(*) FROM signal_log) AS signals,
               (SELECT count(*) FROM signal_log WHERE status = 'active') AS open_signals,
               (SELECT count(*) FROM demo_trades) AS demo,
@@ -33,7 +33,8 @@ export async function GET() {
               (SELECT count(*) FROM ai_views) AS ai_views,
               (SELECT count(*) FROM signal_log WHERE ai_verdict IS NOT NULL) AS ai_reviews,
               (SELECT count(*) FROM ai_trade_reviews) AS ai_trade_reviews,
-              (SELECT count(*) FROM news_reactions WHERE status <> 'pending') AS news_reactions`,
+              (SELECT count(*) FROM news_reactions WHERE status <> 'pending') AS news_reactions,
+              (SELECT count(*) FROM price_spikes) AS price_spikes`,
     );
     // Bozorlar sinovi: faqat umumiy tarixiy natija (savdolar soni, o'rtacha R, xulosa), signal tafsilotlari emas.
     const [mt] = await sql<{ at: Date; rows: { pair: string; tf: string; days: number; trades: number; avgR: number; half1: number; half2: number; verdict: string }[]; errors: string }>(
