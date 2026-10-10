@@ -77,5 +77,7 @@ Tarixiy oltin ma'lumoti backtest skriptlari uchun: `scripts/` (PAXG CSV).
 
 - Egasi qilishi kerak: Telegram bot kaliti (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`), `CRON_SECRET` ni uzun tasodifiy qiymatga almashtirish
   (cron-job.org da ham), Neon parolini yangilash va kompyut limiti, Vercel 2FA, `ADMIN_PATH` ni almashtirish, Brevo kaliti (email kodlari).
-- Bozor ochilgach: Claude qarorlari va tahlillari paydo bo'lganini `/api/health` orqali tekshirish.
+- Egasi qilishi kerak (2026-10-10): Vercel'ga `DEEPSEEK_API_KEY` yoki `GEMINI_API_KEY` (operator), Claude Console limiti $70, `EA_KEY` va MT5 EA.
+- Taklif qilingan, qilinmagan: ochiq savdolarni Claude har soatda qayta ko'rishi (~$10-15/oy).
+- Bozor ochilgach: Claude qarorlari (kun ichi va swing) va tahlillari paydo bo'lganini `/api/health` orqali tekshirish.
 - 2–4 hafta: Claude (AI treyder) va Zeus natijalarini solishtirish; "ehtiyot" signallar natijasini kuzatish.
