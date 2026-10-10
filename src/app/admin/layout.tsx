@@ -1,6 +1,7 @@
 import AdminNav from "../components/AdminNav.tsx";
 import { adminHref } from "@/lib/adminPath.ts";
 import { requireAdmin } from "@/lib/server/auth.ts";
+import { APP_COMMIT, APP_VERSION } from "@/lib/version.ts";
 
 const ITEMS = [
   { key: "", label: "Umumiy", sub: "" },
@@ -25,6 +26,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <>
       <AdminNav items={ITEMS.map((i) => ({ key: i.key, label: i.label, href: adminHref(i.sub) }))} />
       {children}
+      <p className="wrap muted" style={{ fontSize: "0.8rem", marginTop: 24 }}>
+        Versiya v{APP_VERSION}{APP_COMMIT ? ` · ${APP_COMMIT}` : ""}
+      </p>
     </>
   );
 }

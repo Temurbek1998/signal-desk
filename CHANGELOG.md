@@ -4,6 +4,10 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.14.1 (2026-10-10): versiya saytda ko'rinadi
+
+- Admin panel pastida va `/api/health` boshida versiya (`package.json`) va Vercel deploy qilgan commit (`src/lib/version.ts`).
+
 ## v1.14.0 (2026-10-10): demo savdolar jonli va izoh bilan
 
 - Admin "Demo hisob": ochiq savdolarda joriy narx, yurgan pips, SL gacha pips, suzuvchi USDT va R, amaldagi SL
