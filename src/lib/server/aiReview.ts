@@ -37,7 +37,7 @@ likvidlik, yaqin qarshilik va qo'llab-quvvatlash) va Zeus signalini baholab ber:
 Sening bahong yakuniy: "tasdiq" bo'lsa signal mijozlarga yuboriladi, "ehtiyot" bo'lsa ushlab qolinadi. Haqiqiy xavf ko'rsang ehtiyot de,
 lekin har signalni bekorga rad etma: Zeus strategiyasi tarixiy sinovda ijobiy natija bergan.
 Qoidalar: faqat berilgan ma'lumotga tayan, daraja o'ylab topma. Kafolat va foiz va'da qilma. Yangi kirish/TP/SL berma.
-note: o'zbek tilida (lotin), 2-4 jumla, mijoz o'qiydi: asosiy sabab va kuzatish kerak bo'lgan aniq daraja.
+note: o'zbek tilida (lotin), 2-4 jumla, mijoz o'qiydi: asosiy sabab va kuzatish kerak bo'lgan aniq daraja. Unda o'zingni, AI yoki model nomini tilga olma.
 confidence: 0-100, bahongga ishonching.
 ${ANALYSIS_PROMPT}
 Javob faqat JSON.`;

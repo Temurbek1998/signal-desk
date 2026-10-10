@@ -21,11 +21,11 @@ export type MarketContext = Partial<Record<ContextTf, Trend>>;
 
 // trend: asosiy strategiya (yuqori aniqlik, TP1/TP2). pips-*: oltin uchun fiks pips maqsadli rejim (GOLD_BACKTEST.md).
 export type Strategy = "trend" | "pips-pullback" | "pips-london" | "scalp-razgon" | "claude";
-export const STRATEGY_NAME: Record<Strategy, string> = { trend: "Trend", "pips-pullback": "Pips: pullback", "pips-london": "Pips: London", "scalp-razgon": "Razgon", claude: "Claude treyder" };
+export const STRATEGY_NAME: Record<Strategy, string> = { trend: "Trend", "pips-pullback": "Pips: pullback", "pips-london": "Pips: London", "scalp-razgon": "Razgon", claude: "AI treyder" };
 
 // Ikki robot: Zeus (trend va 300–400 pips rejimlari) va Gerakl (skalping va razgon, M5).
 export type Robot = "zeus" | "gerakl";
-export const ROBOT_NAME: Record<Robot, string> = { zeus: "Zeus Claude", gerakl: "Gerakl" };
+export const ROBOT_NAME: Record<Robot, string> = { zeus: "Zeus", gerakl: "Gerakl" };
 export const robotOf = (strategy?: Strategy | string | null): Robot => (strategy?.startsWith("scalp") ? "gerakl" : "zeus");
 // Ko'rsatish uchun: "Zeus", "Zeus · Pips: London", "Gerakl · Razgon".
 export const signalLabel = (strategy?: Strategy | string | null) => {

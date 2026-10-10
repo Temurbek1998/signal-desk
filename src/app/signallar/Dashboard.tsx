@@ -354,8 +354,8 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
       {s.aiHold && (
         <p className="ai-take ehtiyot" style={{ margin: 0 }}>
           {s.aiHold === "checking"
-            ? "Zeus Claude imkoniyat topdi va uni tekshirmoqda. Tasdiqlansa signal shu yerda paydo bo'ladi."
-            : "Claude bu imkoniyatni xavfli deb topdi va signal yuborilmadi."}
+            ? "Zeus imkoniyat topdi va uni tekshirmoqda. Tasdiqlansa signal shu yerda paydo bo'ladi."
+            : "Tekshiruvda bu imkoniyat xavfli deb topildi va signal yuborilmadi."}
         </p>
       )}
 
@@ -372,7 +372,7 @@ function SignalCard({ s, tier }: { s: Signal; tier?: Quota["tier"] }) {
 
       {s.side && s.ai && (
         <div className={`ai-take ${s.ai.verdict}`}>
-          <b>{s.ai.verdict === "tasdiq" ? "✓ Claude tasdiqladi" : "⚠ Claude: ehtiyot bo'ling"}</b>
+          <b>{s.ai.verdict === "tasdiq" ? "✓ Tekshiruvdan o'tdi" : "⚠ Tekshiruv: ehtiyot bo'ling"}</b>
           <span>{s.ai.note}</span>
         </div>
       )}

@@ -13,7 +13,7 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
 
 ## Arxitektura qisqacha
 
-- **Zeus** (`src/lib/engine.ts`, `robot.ts`): qoidaga asoslangan robot. Saytda mijozga "Zeus Claude" deb ko'rinadi (`ROBOT_NAME`, egasining qarori). EMA20/EMA50 trend, ADX ≥ 20, katta taymfreym tasdig'i,
+- **Zeus** (`src/lib/engine.ts`, `robot.ts`): qoidaga asoslangan robot. Saytda mijozga "Zeus" deb ko'rinadi (`ROBOT_NAME`). EMA20/EMA50 trend, ADX ≥ 20, katta taymfreym tasdig'i,
   RSI pullback. Oltinda faqat M15 kuchli. Oltin chiqishi: TP1 0.5R da yarmi yopiladi, so'ng 1 ATR ergashuvchi SL, TP2 1.5R,
   8 soatda (32 M15 sham) yopiladi (`EXIT_BY_CATEGORY`, `walkTrailing`). Sinov: GOLD_BACKTEST.md.
 - **Cron**: cron-job.org har 5 daqiqada `/api/cron` ni chaqiradi (`Authorization: Bearer CRON_SECRET`), `maxDuration` 120.
@@ -52,6 +52,9 @@ Asosiy manzil: signal-desk-vert.vercel.app (eski `signal-desk-xxxx-....vercel.ap
 ## Qat'iy qoidalar (egasi bilan kelishilgan)
 
 - Kalit va parollar chatga yoki repoga yozilmaydi: faqat Vercel Environment Variables, egasi o'zi qo'yadi.
+- Mijozlar ko'radigan joyda (sayt, operator, signal izohi) "Claude" yoki "Anthropic" so'zi yo'q (egasining qarori, 2026-10-10):
+  robot "Zeus", tekshiruv "ikki bosqichli maxsus tekshiruv" / "Zeus Number One tahlil tizimi". Odamlar tekshiradi deb yozilmaydi.
+  Admin panelda Claude nomi qoladi.
 - Saytda kafolatlangan yutuq foizi va "garant" so'zi yo'q. Claude mijoz signali uchun kirish/TP/SL o'ylab topmaydi:
   darajalar Zeus'dan, Claude faqat tasdiqlaydi yoki ushlab qoladi.
 - Yangi bozor yoki strategiya mijozlarga faqat natijasi isbotlangach ochiladi (valyuta: kamida 20 yopilgan, Claude tasdiqlaganlari bo'yicha ijobiy).

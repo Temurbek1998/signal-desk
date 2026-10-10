@@ -4,6 +4,11 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.9.1 (2026-10-10): mijozga "Claude" nomi ko'rinmaydi
+
+- Sayt, signal kabineti, "Robot haqida" va operatordan "Claude" so'zi olib tashlandi: robot "Zeus", tekshiruv
+  "ikki bosqichli maxsus tekshiruv". Operator AI provayderini aytmaydi. Admin panel o'zgarmadi.
+
 ## v1.9.0 (2026-10-10): Claude swing rejimi
 
 - Har juftlikda Claude kuniga bir marta 3-5 kunlik swing savdo qarorini beradi (demo): D1, H4, H1 tahlili, oltinda
