@@ -66,7 +66,7 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
         </div>
         {d ? (
           <TvChart candles={d.candles} ema20={d.ema20} ema50={d.ema50} signals={d.signals} digits={d.digits} tfMinutes={d.minutes}
-            levels={levels} zones={ca?.zones ?? []} />
+            levels={levels} zones={ca?.zones ?? []} live={{ pair: d.inst.pair, source: d.inst.source }} />
         ) : (
           <p className="err">Narx ma'lumotini olib bo'lmadi: {error}</p>
         )}

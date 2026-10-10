@@ -4,6 +4,12 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.18.0 (2026-10-10): jonli grafik va sham taymeri
+
+- Admin grafiklari (Robot + Claude, Signal pulti, AI treyder, Claude tahlili) jonli: narx yangilanib boradi
+  (kripto 5 s, valyuta 30 s, oltin 60 s: Twelve Data limiti), oxirgi sham shakllanadi, narx ostida TradingView kabi
+  sham yopilishigacha qolgan vaqt. `/api/live` (faqat admin). Claude darajalari, zonalari, kirish/SL/TP grafikda qoladi.
+
 ## v1.17.3 (2026-10-10): tozalash tugmasi olib tashlandi
 
 - Vercel'da `DEMO_DATA` yo'q ekan: ~2500 narxli grafik oltin emas, kripto (ETH/USDT, 24/7 savdo) bo'lgan. Ma'lumotlar haqiqiy,

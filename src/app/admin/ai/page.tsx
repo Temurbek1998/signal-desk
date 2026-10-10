@@ -9,6 +9,7 @@ import AiDecideButton from "../../components/AiDecideButton.tsx";
 import AutoRefresh from "../../components/AutoRefresh.tsx";
 import LocalTime from "../../components/LocalTime.tsx";
 import TvChart from "../../components/TvChart.tsx";
+import { ALL_INSTRUMENTS } from "@/lib/instruments.ts";
 
 export const metadata = { title: "AI treyder", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -144,7 +145,7 @@ export default async function AiTraderPage() {
       {chart && (
         <section className="panel">
           <h2>Oltin H1 va AI savdolari</h2>
-          <TvChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={aiSignals} digits={chart.digits} tfMinutes={60} />
+          <TvChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={aiSignals} digits={chart.digits} tfMinutes={60} live={{ pair: "XAU/USD", source: ALL_INSTRUMENTS.find((i) => i.pair === "XAU/USD")?.source }} />
         </section>
       )}
 

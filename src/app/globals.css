@@ -591,3 +591,4 @@ tr.note-row td { padding-top: 0; font-size: 0.86rem; line-height: 1.45; }
 .market-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
 .market-row input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--buy); }
 .markets .btn { justify-self: start; }
+.tv-timer { position: absolute; right: 0; z-index: 4; pointer-events: none; padding: 1px 6px; border-radius: 3px; background: var(--fg); color: var(--bg); font: 600 11px var(--f-mono); }

@@ -11,6 +11,7 @@ import LocalTime from "../../../components/LocalTime.tsx";
 import AiAnalysisView from "../../../components/AiAnalysisView.tsx";
 import type { ChartLevel, ChartSignal } from "../../../components/RobotChart.tsx";
 import TvChart from "../../../components/TvChart.tsx";
+import { ALL_INSTRUMENTS } from "@/lib/instruments.ts";
 
 export const metadata = { title: "Claude tahlili", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
           </div>
         </header>
         <TfChips base={`${adminHref("/ai/tahlil")}?t=${t.id}`} cur={tm} />
-        {chart && <Chart chart={chart} minutes={tm} signals={sig} a={t.analysis} title={`${t.pair} · ${tfName(tm)} grafik va Claude darajalari`} />}
+        {chart && <Chart chart={chart} minutes={tm} signals={sig} a={t.analysis} title={`${t.pair} · ${tfName(tm)} grafik va Claude darajalari`} pair={t.pair} />}
         {t.reason && <section className="panel"><h2>Qaror sababi</h2><p className="ai-box" style={{ margin: 0 }}>{t.reason}</p>{t.note && <p className="err">{t.note}</p>}</section>}
         <AiAnalysisView a={t.analysis} digits={chart?.digits} />
       </main>
@@ -109,7 +110,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
       </header>
 
       <TfChips base={`${adminHref("/ai/tahlil")}?s=${s.id}`} cur={minutes} />
-      {chart && <Chart chart={chart} minutes={minutes} signals={sig} a={s.ai_analysis} title={`${s.pair} · ${tfName(minutes)} grafik: Zeus signali (${s.timeframe}) va Claude darajalari`} />}
+      {chart && <Chart chart={chart} minutes={minutes} signals={sig} a={s.ai_analysis} pair={s.pair} title={`${s.pair} · ${tfName(minutes)} grafik: Zeus signali (${s.timeframe}) va Claude darajalari`} />}
 
       <div className="an-grid">
         <section className="panel">
@@ -147,8 +148,8 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
   );
 }
 
-function Chart({ chart, minutes, signals, a, title }: {
-  chart: Awaited<ReturnType<typeof windowChart>>; minutes: number; signals: ChartSignal[]; a: AiAnalysis | null; title: string;
+function Chart({ chart, minutes, signals, a, title, pair }: {
+  chart: Awaited<ReturnType<typeof windowChart>>; minutes: number; signals: ChartSignal[]; a: AiAnalysis | null; title: string; pair?: string;
 }) {
   const levels: ChartLevel[] = [...(a?.levels ?? [])];
   if (a?.invalidation) levels.push({ price: a.invalidation, kind: "invalidation", note: "G'oya shu narxda bekor bo'ladi" });
@@ -157,7 +158,8 @@ function Chart({ chart, minutes, signals, a, title }: {
       <h2>{title}</h2>
       {!chart.covered && <p className="muted">Signal vaqti grafik ma&apos;lumotidan eski: faqat mavjud qismi ko&apos;rsatilgan.</p>}
       <TvChart candles={chart.candles} ema20={chart.ema20} ema50={chart.ema50} signals={signals} digits={chart.digits}
-        tfMinutes={minutes} levels={levels} zones={a?.zones ?? []} drawAll />
+        tfMinutes={minutes} levels={levels} zones={a?.zones ?? []} drawAll
+        live={pair ? { pair, source: ALL_INSTRUMENTS.find((i) => i.pair === pair)?.source } : undefined} />
     </section>
   );
 }
