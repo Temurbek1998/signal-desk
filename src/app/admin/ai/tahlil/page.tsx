@@ -76,7 +76,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
           </div>
         </header>
         <TfChips base={`${adminHref("/ai/tahlil")}?t=${t.id}`} cur={tm} />
-        {chart && <Chart chart={chart} minutes={tm} signals={sig} a={t.analysis} title={`${tfName(tm)} grafik va Claude darajalari`} />}
+        {chart && <Chart chart={chart} minutes={tm} signals={sig} a={t.analysis} title={`${t.pair} · ${tfName(tm)} grafik va Claude darajalari`} />}
         {t.reason && <section className="panel"><h2>Qaror sababi</h2><p className="ai-box" style={{ margin: 0 }}>{t.reason}</p>{t.note && <p className="err">{t.note}</p>}</section>}
         <AiAnalysisView a={t.analysis} digits={chart?.digits} />
       </main>
@@ -109,7 +109,7 @@ export default async function AiAnalysisPage({ searchParams }: { searchParams: P
       </header>
 
       <TfChips base={`${adminHref("/ai/tahlil")}?s=${s.id}`} cur={minutes} />
-      {chart && <Chart chart={chart} minutes={minutes} signals={sig} a={s.ai_analysis} title={`${tfName(minutes)} grafik: Zeus signali (${s.timeframe}) va Claude darajalari`} />}
+      {chart && <Chart chart={chart} minutes={minutes} signals={sig} a={s.ai_analysis} title={`${s.pair} · ${tfName(minutes)} grafik: Zeus signali (${s.timeframe}) va Claude darajalari`} />}
 
       <div className="an-grid">
         <section className="panel">

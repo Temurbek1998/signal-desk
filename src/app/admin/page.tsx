@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { adminHref } from "@/lib/adminPath.ts";
-import { approvePayment, rejectPayment, setMarketsAction, wipeFakeAction } from "../actions.ts";
-import { wipeDone } from "@/lib/server/wipe.ts";
+import { approvePayment, rejectPayment, setMarketsAction } from "../actions.ts";
 import { activeCategories } from "@/lib/instruments.ts";
 import GrantForm from "../components/GrantForm.tsx";
 import { requireAdmin } from "@/lib/server/auth.ts";
@@ -42,7 +41,6 @@ export default async function AdminPage() {
   ]);
 
   const on = activeCategories();
-  const wiped = await wipeDone().catch(() => true);
   const MARKETS = [
     { key: "gold", name: "Oltin (XAU/USD)", ai: "Claude treyder har soatda (Opus), signal bahosi, yangiliklar, keskin harakatlar" },
     { key: "forex", name: "Valyutalar (6 juftlik)", ai: "Claude treyder har 2 soatda (Sonnet), signal bahosi" },
@@ -70,19 +68,6 @@ export default async function AdminPage() {
           <div className="stat"><b>{robot.day}</b><span>Signallar, 24 soat</span></div>
         </div>
       </section>
-
-      {!wiped && (
-        <section className="panel">
-          <h2>Sun&apos;iy narxlar davrini tozalash</h2>
-          <p className="muted">Vercel&apos;da DEMO_DATA turgan paytda Zeus signallari, Claude qarorlari, demo hisob, natijalar, yangilik va keskin harakat
-            tahlillari sun&apos;iy narxlarda yozilgan. Tozalansa ular o&apos;chadi, demo hisob 100 000 $ dan va natijalar noldan boshlanadi.
-            Foydalanuvchilar, obunalar, to&apos;lovlar va admin logi saqlanadi. Bu bir martalik amal, ortga qaytarib bo&apos;lmaydi.</p>
-          <form action={wipeFakeAction} className="markets">
-            <label>Tasdiqlash uchun <b>TOZALA</b> deb yozing: <input name="confirm" autoComplete="off" /></label>
-            <button className="btn sm" type="submit">Tozalash</button>
-          </form>
-        </section>
-      )}
 
       <section className="panel">
         <h2>Bozorlar</h2>

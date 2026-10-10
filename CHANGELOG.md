@@ -4,6 +4,11 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.17.3 (2026-10-10): tozalash tugmasi olib tashlandi
+
+- Vercel'da `DEMO_DATA` yo'q ekan: ~2500 narxli grafik oltin emas, kripto (ETH/USDT, 24/7 savdo) bo'lgan. Ma'lumotlar haqiqiy,
+  shuning uchun v1.17.2 dagi "Sun'iy narxlar davrini tozalash" tugmasi olib tashlandi. PAXG narx tekshiruvi va `DEMO_DATA` himoyasi qoladi.
+
 ## v1.17.2 (2026-10-10): sun'iy davrni tozalash tugmasi va narx tekshiruvi
 
 - Admin "Umumiy" sahifasida bir martalik "Sun'iy narxlar davrini tozalash" (`server/wipe.ts`, tasdiq "TOZALA"):
