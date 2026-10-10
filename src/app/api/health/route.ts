@@ -1,4 +1,5 @@
 import { db, sql } from "@/lib/server/db.ts";
+import { APP_COMMIT, APP_VERSION } from "@/lib/version.ts";
 
 // Sayt va baza holatini tekshirish. Ulanish satri yoki parol hech qachon qaytarilmaydi.
 export const dynamic = "force-dynamic";
@@ -41,10 +42,10 @@ export async function GET() {
       "SELECT at, rows, left(errors, 400) AS errors FROM market_test ORDER BY at DESC LIMIT 1",
     ).catch(() => []);
     const marketTest = mt ? { at: mt.at, errors: mt.errors, rows: mt.rows.map((r) => `${r.pair} ${r.tf} (${r.days} kun): ${r.trades} savdo, ${r.avgR.toFixed(3)}R (${r.half1.toFixed(2)}/${r.half2.toFixed(2)}) ${r.verdict}`) } : null;
-    return Response.json({ db: "ok", ms, env, robot: { runs, counts }, marketTest });
+    return Response.json({ version: APP_VERSION, commit: APP_COMMIT, db: "ok", ms, env, robot: { runs, counts }, marketTest });
   } catch (e) {
     const err = e as { message?: string; code?: string };
     const message = String(err.message ?? e).replace(/postgres(ql)?:\/\/\S+/gi, "[url]").replace(/npg_\w+/g, "[parol]");
-    return Response.json({ db: "error", code: err.code ?? null, message, env });
+    return Response.json({ version: APP_VERSION, commit: APP_COMMIT, db: "error", code: err.code ?? null, message, env });
   }
 }
