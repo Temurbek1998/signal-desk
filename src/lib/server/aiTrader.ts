@@ -11,7 +11,7 @@ import { digitsOf } from "./analysis.ts";
 import { underBudget } from "./aiBudget.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
-import { notifyAdmin } from "./telegram.ts";
+import { notifyAdmin, sendTradeCard } from "./telegram.ts";
 
 // AI treyder (faqat demo): har juftlikda alohida Claude bozorni o'zi tahlil qilib BUY, SELL yoki WAIT qaror qiladi.
 // Oltin: har AI_TRADER_EVERY_MIN (standart 60) daqiqada, AI_TRADER_MODEL (Opus). Valyutalar: har AI_FX_TRADER_EVERY_MIN
@@ -286,8 +286,10 @@ export async function aiDecide(force = false, onlyPair?: string): Promise<{ trad
   }
 
   const model = traderModel(pair);
+  const isGold = pair === PAIR;
   const text = await complete(systemFor(pair), [{ role: "user", content: JSON.stringify(f.data) }], {
-    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 12000 : 3000,
+    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? (isGold ? 16000 : 12000) : 3000,
+    thinking: isGold && provider() === "anthropic",
   });
   return store(pair, "intraday", text, f.price, f.atrH1, undefined, model);
 }
@@ -314,7 +316,8 @@ export async function aiSwingDecide(force = false, onlyPair?: string): Promise<{
   if (!f.price || Date.now() - f.lastTime > 3 * 3600_000) return { skipped: "Bozor yopiq" };
   const model = traderModel(pair);
   const text = await complete(swingSystemFor(pair), [{ role: "user", content: JSON.stringify(f.data) }], {
-    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? 12000 : 3000,
+    json: SCHEMA, model, maxTokens: provider() === "anthropic" ? (pair === PAIR ? 16000 : 12000) : 3000,
+    thinking: pair === PAIR && provider() === "anthropic",
   });
   return store(pair, "swing", text, f.price, f.atr, SWING_LIMITS, model);
 }
@@ -351,7 +354,14 @@ async function store(pair: string, mode: "intraday" | "swing", text: string, pri
     [pair, d.action, d.confidence ?? 0, agree, d.reason ?? "", analysis ? JSON.stringify(analysis) : null, modelName],
   );
   if (p) {
-    await notifyAdmin(`🤖 AI treyder${mode === "swing" ? " SWING (3-5 kun)" : ""} (demo): ${p.side} ${pair}\nKirish ${round(p.entry, digitsOf(pair, p.entry))}, SL ${p.sl}, TP1 ${p.tp1}, TP2 ${p.tp2}, ishonch ${d.confidence}%\n${d.reason ?? ""}`);
+    const caption = `🤖 AI treyder${mode === "swing" ? " SWING (3-5 kun)" : ""} (demo): ${p.side} ${pair}\nKirish ${round(p.entry, digitsOf(pair, p.entry))}, SL ${p.sl}, TP1 ${p.tp1}, TP2 ${p.tp2}, ishonch ${d.confidence}%`;
+    const appBase = process.env.APP_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+    if (appBase) {
+      const cardUrl = `${appBase}/api/trade-card?pair=${encodeURIComponent(pair)}&action=${p.side}&entry=${p.entry}&sl=${p.sl}&tp1=${p.tp1}&tp2=${p.tp2}&conf=${d.confidence ?? 0}&mode=${mode}`;
+      await sendTradeCard(cardUrl, caption);
+    } else {
+      await notifyAdmin(`${caption}\n${d.reason ?? ""}`);
+    }
   }
   return { trade: row };
 }

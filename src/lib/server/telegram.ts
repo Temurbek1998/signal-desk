@@ -1,6 +1,25 @@
 import "server-only";
 import { telegramConfig } from "../telegram.ts";
 
+// Adminga Telegram orqali rasm (trade karta). Xato bo'lsa logga yozadi, robotni to'xtatmaydi.
+export async function sendTradeCard(imageUrl: string, caption: string): Promise<void> {
+  const cfg = telegramConfig();
+  if (!cfg) return;
+  await Promise.all(cfg.chatIds.map(async (chat_id) => {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${cfg.token}/sendPhoto`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chat_id, photo: imageUrl, caption, parse_mode: "HTML" }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) console.error("telegram photo", res.status, await res.text().catch(() => ""));
+    } catch (e) {
+      console.error("telegram photo", e);
+    }
+  }));
+}
+
 // Adminga Telegram orqali xabar. Xato bo'lsa robotni to'xtatmaydi, faqat logga yozadi.
 export async function notifyAdmin(html: string): Promise<void> {
   const cfg = telegramConfig();
