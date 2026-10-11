@@ -4,6 +4,16 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.21.0 (2026-10-11): Admin pult taymfreym tanlash va izohlar
+
+- Signal pultidagi grafikka M15/H1/H4 taymfreym tanlash tugmalari qo'shildi. Tanlangan taymfreym URL da saqlanadi,
+  sahifa yangilanganda ham qoladi. Har taymfreym uchun alohida sham soni (M15: 260, H1: 200, H4: 120).
+- Claude ochiq savdosi jadvalida SL/TP1/TP2 uchun R va pips tushuntirishlari: "1R = X pips", har daraja kirish narxidan
+  necha R uzoqlikda ekanini ko'rsatadi.
+- Texnik ko'rsatkichlar (`pult-tech`) uchun tooltip izohlar: ADX kuchi, RSI holati (qizigan/sovigan/normal), ATR ta'rifi, EMA ta'riflari.
+- Grafik ostida rang legendi: EMA20 (sariq), EMA50 (ko'k), BUY/SELL kirish belgilari, SL/TP chiziqlar.
+- Katta taymfreym trend qatorida yo'nalish so'zi qo'shildi: "BULL (ko'tarilish)" kabi.
+
 ## v1.20.0 (2026-10-11): Oltin Extended Thinking + Telegram karta
 
 - Oltin (XAU/USD) uchun Claude Extended Thinking (`thinking: adaptive`) yoqildi: har qarordan oldin chuqurroq tahlil,
