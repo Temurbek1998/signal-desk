@@ -27,7 +27,8 @@ export const maxDuration = 120;
 // (v1.17.0 dan mijoz signali shu), Zeus qoidaviy signali faqat ma'lumot uchun. Keyingi Claude qarorigacha taymer,
 // texnik ko'rsatkichlar va tanlangan juftlik jonli grafigi (Claude darajalari, zonalari, kirish/SL/TP bilan). Faqat admin.
 
-const TF_MIN: Record<string, number> = { M5: 5, M15: 15, M30: 30, H1: 60 };
+const TF_MIN: Record<string, number> = { M15: 15, H1: 60, H4: 240 };
+const TF_CANDLES: Record<string, number> = { M15: 260, H1: 200, H4: 120 };
 const TREND: Record<string, string> = { up: "↑", down: "↓", flat: "→" };
 const TREND_WORD: Record<string, string> = { up: "yuqoriga", down: "pastga", flat: "yon" };
 
@@ -38,14 +39,17 @@ type Sig = {
 type Decision = { id: number; pair: string; action: string; entry: number | null; sl: number | null; tp1: number | null; tp2: number | null; status: string; at: Date; confidence: number; reason: string; mode: string };
 type State = { pair: string; timeframe: string; side: string | null; quality: string | null; status: string | null; reason: string };
 
-async function techOf(inst: Instrument) {
-  const candles = await getCandles(inst, 15, 260);
+async function techOf(inst: Instrument, tfMin = 15) {
+  const n = tfMin === 240 ? 120 : tfMin === 60 ? 200 : 260;
+  const candles = await getCandles(inst, tfMin, n);
   return { candles, a: analyze(candles.slice(-200)) };
 }
 
-export default async function PultPage({ searchParams }: { searchParams: Promise<{ pair?: string }> }) {
+export default async function PultPage({ searchParams }: { searchParams: Promise<{ pair?: string; tf?: string }> }) {
   await requireAdmin();
   const q = await searchParams;
+  const selTf = (TF_MIN[q.tf ?? ""] ? q.tf! : "M15") as keyof typeof TF_MIN;
+  const selTfMin = TF_MIN[selTf];
   const ORDER: Record<string, number> = { gold: 0, forex: 1, crypto: 2 };
   const list = [...activeInstruments()].sort((x, y) => (ORDER[x.category] ?? 9) - (ORDER[y.category] ?? 9));
   const pairs = list.map((i) => i.pair);
@@ -57,7 +61,7 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
     ),
     sql<State>("SELECT pair, timeframe, side, quality, status, reason FROM robot_state WHERE pair = ANY($1)", [pairs]),
     sql<{ pair: string; timeframe: string; trend: string }>("SELECT pair, timeframe, trend FROM market_context WHERE pair = ANY($1)", [pairs]),
-    Promise.all(list.map((i) => techOf(i).catch(() => null))),
+    Promise.all(list.map((i) => techOf(i, selTfMin).catch(() => null))),
     Promise.all(pairs.map((p) => latestView(p).catch(() => null))),
     sql<{ id: number; pair: string; action: string; entry: number; sl: number; tp1: number; tp2: number; status: string; at: Date; confidence: number; mode: string }>(
       "SELECT id, pair, action, entry, sl, tp1, tp2, status, at, confidence, mode FROM ai_trades WHERE status IN ('open', 'tp1') AND pair = ANY($1) ORDER BY at DESC", [pairs],
@@ -74,7 +78,7 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
     return { inst, sig: s, claude, last: lastDec.find((d) => d.pair === inst.pair) ?? null, tech: techs[k], view: views[k], st: states.filter((x) => x.pair === inst.pair), ctx: ctx.filter((x) => x.pair === inst.pair) };
   });
   const sel = rows.find((r) => r.inst.pair === q.pair) ?? rows.find((r) => r.claude.length) ?? rows[0];
-  const href = (p: string) => `${adminHref("/pult")}?pair=${encodeURIComponent(p)}#grafik`;
+  const href = (p: string, tf?: string) => `${adminHref("/pult")}?pair=${encodeURIComponent(p)}${tf ? `&tf=${tf}` : selTf !== "M15" ? `&tf=${selTf}` : ""}#grafik`;
 
   return (
     <main className="wrap">
@@ -151,7 +155,7 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
         })}
       </div>
 
-      <SelectedChart row={sel} />
+      <SelectedChart row={sel} selTf={selTf} adminHref={adminHref("/pult")} />
     </main>
   );
 }
@@ -187,8 +191,10 @@ function ClaudeBox({ t, f }: { t: { id: number; action: string; entry: number; s
   );
 }
 
-async function SelectedChart({ row }: { row: { inst: Instrument; sig: Sig | null; claude: { action: string; entry: number; sl: number; tp1: number; tp2: number; at: Date }[]; tech: Awaited<ReturnType<typeof techOf>> | null; view: Awaited<ReturnType<typeof latestView>> } }) {
+async function SelectedChart({ row, selTf, adminHref: base }: { row: { inst: Instrument; sig: Sig | null; claude: { action: string; entry: number; sl: number; tp1: number; tp2: number; at: Date }[]; tech: Awaited<ReturnType<typeof techOf>> | null; view: Awaited<ReturnType<typeof latestView>> }; selTf: string; adminHref: string }) {
   const { inst, claude, tech, view } = row;
+  const tfMin = TF_MIN[selTf] ?? 15;
+  const tfHref = (tf: string) => `${base}?pair=${encodeURIComponent(inst.pair)}&tf=${tf}#grafik`;
   if (!tech?.candles.length) return <section className="panel" id="grafik"><h2>{inst.pair}</h2><p className="err">Narx ma&apos;lumotini olib bo&apos;lmadi.</p></section>;
   const all = tech.candles;
   const closes = all.map((c) => c.c);
@@ -201,11 +207,15 @@ async function SelectedChart({ row }: { row: { inst: Instrument; sig: Sig | null
   return (
     <section className="panel" id="grafik">
       <div className="bar">
-        <h2 style={{ margin: 0 }}>{inst.pair} · M15 grafik</h2>
-        <Link className="muted" href={`${adminHref("/tahlil")}?pair=${encodeURIComponent(inst.pair)}&tf=M15`}>Boshqa taymfreymlar →</Link>
+        <h2 style={{ margin: 0 }}>{inst.pair} · {selTf} grafik</h2>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          {Object.keys(TF_MIN).map((tf) => (
+            <Link key={tf} href={tfHref(tf)} className={`chip${tf === selTf ? " active" : ""}`} style={{ fontWeight: tf === selTf ? 600 : undefined }}>{tf}</Link>
+          ))}
+        </div>
       </div>
       <TvChart candles={all.slice(from)} ema20={e20.slice(from)} ema50={e50.slice(from)} signals={signals} digits={digitsOf(inst.pair, closes.at(-1) ?? 0)}
-        tfMinutes={15} levels={levels} zones={ca?.zones ?? []} live={{ pair: inst.pair, source: inst.source }} />
+        tfMinutes={tfMin} levels={levels} zones={ca?.zones ?? []} live={{ pair: inst.pair, source: inst.source }} />
       {view ? view.summary && <p className="ai-box" style={{ margin: 0 }}>Claude: {view.summary}</p> : (
         <p className="muted" style={{ margin: 0 }}>Bu juftlikda Claude tahlili (zonalar, darajalar) hali yo&apos;q: cron navbat bilan chizadi yoki hozir so&apos;rang.</p>
       )}
