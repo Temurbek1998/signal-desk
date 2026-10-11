@@ -1,4 +1,4 @@
-# Zeus Number One: joriy holat (2026-10-10)
+# Zeus Number One: joriy holat (2026-10-11)
 
 Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan o'zbek tilida (lotin) gaplashiladi.
 
@@ -6,7 +6,7 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 - Sayt: https://signal-desk-vert.vercel.app (saytdagi nomi "Zeus Number One")
 - Repo: github.com/Temurbek1998/signal-desk, branch `main` (har push Vercel'da avtomatik deploy)
 - Loyiha qo'llanmasi: repodagi `CLAUDE.md`, o'zgarishlar tarixi: `CHANGELOG.md`
-- Oxirgi versiya: **v1.13.0** (yangiliklar M1 tahlili, efir impulslari, keskin harakatlar; PR #1)
+- Oxirgi versiya: **v1.21.0** (admin pult taymfreym tanlash va izohlar; PR #16)
 
 ## Shu chatda qilinganlar (v1.2.0 – v1.9.1)
 - Operator: faqat DeepSeek yoki bepul Gemini (Claude emas), faqat platforma savollari, signal/narx aytmaydi.
@@ -33,6 +33,13 @@ Yangi chat shu fayldan (HOLAT.md) va CLAUDE.md dan boshlasin. Egasi (Bek) bilan 
 
 - v1.13.0: keskin harakatlar. Yangilikdan qat'i nazar oltin M1 da 2-3 daqiqada 180+ pips bo'lsa darhol Telegram, bazaga yoziladi,
   keyingi 60 daqiqada qancha yurgani o'lchanadi va Claude xulosa yozadi. Admin "Keskin harakatlar" sahifasi. Manba Binance PAXG/USDT.
+
+- v1.19.0: kunlik arxiv. Admin jurnallari faqat bugungi Toshkent kunini ko'rsatadi, oldingi kunlar "Kunlik arxiv" sahifasida.
+
+- v1.20.0: oltin Extended Thinking va Telegram trade karta. Oltin qarorlari uchun `thinking: adaptive`, Telegram'ga savdo ochilganda PNG karta.
+
+- v1.21.0: admin pult taymfreym tanlash va izohlar. Signal pultidagi grafikka M15/H1/H4 tugmalari qo'shildi.
+  SL/TP1/TP2 qatorlarida R va pips tushuntirishlari, ADX/RSI/ATR/EMA izohlar (tooltip), grafik legend (EMA20/EMA50, kirish/SL/TP belgilari).
 
 ## Egasi bilan kelishilgan qoidalar
 - Kalit va parollar chatga yoki repoga yozilmaydi, faqat Vercel Environment Variables (Bek o'zi qo'yadi).
