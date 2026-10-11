@@ -118,15 +118,35 @@ export default async function PultPage({ searchParams }: { searchParams: Promise
               {sig && <p className="muted" style={{ margin: 0 }}>Zeus (qoidaviy robot, ma&apos;lumot uchun): {sig.side} {sig.timeframe} {f(sig.entry)} · SL {f(sig.sl)} · <Link href={`${adminHref("/ai/tahlil")}?s=${sig.id}`}>ko&apos;rish</Link></p>}
 
               <div className="pult-tech">
-                <span>M15 trend <b className={a?.trend === "up" ? "up" : a?.trend === "down" ? "down" : ""}>{a ? `${TREND[a.trend]} ${TREND_WORD[a.trend]}` : "—"}</b></span>
-                <span>ADX <b>{a ? Math.round(a.adx) : "—"}</b>{a && a.adx < 20 ? " (kuchsiz)" : ""}</span>
-                <span>RSI <b>{a ? Math.round(a.rsi) : "—"}</b>{a && a.rsi >= 70 ? " (qizigan)" : a && a.rsi <= 30 ? " (sovigan)" : ""}</span>
-                <span>ATR <b>{a ? f(a.atr) : "—"}</b></span>
-                <span>EMA20 <b>{a ? f(a.ema20) : "—"}</b></span>
-                <span>EMA50 <b>{a ? f(a.ema50) : "—"}</b></span>
+                <span title="M15 da EMA20 va EMA50 asosidagi trend yo'nalishi">
+                  M15 trend <b className={a?.trend === "up" ? "up" : a?.trend === "down" ? "down" : ""}>{a ? `${TREND[a.trend]} ${TREND_WORD[a.trend]}` : "—"}</b>
+                </span>
+                <span title="ADX — trend kuchi. 20+ kuchli trend, 20 dan past yon bozor (signal zaif)">
+                  ADX <b>{a ? Math.round(a.adx) : "—"}</b>
+                  <span className="muted"> {a ? (a.adx >= 20 ? "kuchli" : "⚠ kuchsiz") : ""}</span>
+                </span>
+                <span title="RSI — qizib/sovib ketish ko'rsatkichi. 70+ = haddan tashqari o'sdi, 30− = haddan tashqari tushdi">
+                  RSI <b>{a ? Math.round(a.rsi) : "—"}</b>
+                  <span className="muted"> {a ? (a.rsi >= 70 ? "⚠ qizigan" : a.rsi <= 30 ? "⚠ sovigan" : "normal") : ""}</span>
+                </span>
+                <span title="ATR — o'rtacha sham balandligi (volatillik). SL va TP hisoblashda ishlatiladi">
+                  ATR <b>{a ? f(a.atr) : "—"}</b>
+                  <span className="muted"> (volatillik)</span>
+                </span>
+                <span title="EMA20 — so'nggi 20 sham o'rtachasi. Qisqa muddatli trend chizig'i (grafik sariq)">
+                  EMA20 <b>{a ? f(a.ema20) : "—"}</b>
+                  <span className="muted"> qisqa trend</span>
+                </span>
+                <span title="EMA50 — so'nggi 50 sham o'rtachasi. Uzun muddatli trend chizig'i (grafik ko'k)">
+                  EMA50 <b>{a ? f(a.ema50) : "—"}</b>
+                  <span className="muted"> uzun trend</span>
+                </span>
               </div>
               <p className="muted" style={{ margin: 0 }}>
-                Katta trend: {CONTEXT_TFS.map((k) => `${k} ${TREND[c.find((x) => x.timeframe === k)?.trend ?? ""] ?? "—"}`).join(" · ")}
+                Katta trend (yuqori taymfreymlar): {CONTEXT_TFS.map((k) => {
+                  const t = c.find((x) => x.timeframe === k)?.trend;
+                  return `${k} ${TREND[t ?? ""] ?? "—"}${t ? ` (${TREND_WORD[t]})` : ""}`;
+                }).join(" · ")}
               </p>
               <p className="muted" style={{ margin: 0 }}>
                 Robot: {TIMEFRAMES.map((t: Timeframe) => {
@@ -173,20 +193,42 @@ function Timer({ open, last, pair, category, now }: { open: boolean; last: Decis
 function ClaudeBox({ t, f }: { t: { id: number; action: string; entry: number; sl: number; tp1: number; tp2: number; status: string; at: Date; confidence: number }; f: (v: number) => string }) {
   const risk = Math.abs(t.entry - t.sl);
   const r = (v: number) => (risk ? (Math.abs(v - t.entry) / risk).toFixed(1) : "—");
+  const rPips = f(risk);
   return (
     <div className="pult-signal">
       <div className="bar">
-        <b className={t.action === "BUY" ? "up" : "down"} style={{ fontSize: "1.2rem" }}>Claude {t.action}</b>
-        <span className="muted"><LocalTime at={t.at} withDate={false} /> · ishonch {t.confidence}%{t.status === "tp1" ? " · TP1 urildi, SL kirishda" : ""}</span>
+        <b className={t.action === "BUY" ? "up" : "down"} style={{ fontSize: "1.2rem" }}>
+          Claude {t.action === "BUY" ? "✦ SOTIB OL" : "✦ SOT"}
+        </b>
+        <span className="muted"><LocalTime at={t.at} withDate={false} /> · ishonch {t.confidence}%{t.status === "tp1" ? " · TP1 urildi" : ""}</span>
       </div>
       <table className="pult-levels">
         <tbody>
-          <tr><th>Kirish</th><td>{f(t.entry)}</td><td /></tr>
-          <tr><th>SL</th><td className="down">{f(t.sl)}</td><td className="muted">−1R ({f(risk)})</td></tr>
-          <tr><th>TP1</th><td className="up">{f(t.tp1)}</td><td className="muted">+{r(t.tp1)}R, yarmi yopiladi</td></tr>
-          <tr><th>TP2</th><td className="up">{f(t.tp2)}</td><td className="muted">+{r(t.tp2)}R</td></tr>
+          <tr>
+            <th>Kirish narxi</th>
+            <td>{f(t.entry)}</td>
+            <td className="muted">— savdo shu narxda ochilgan</td>
+          </tr>
+          <tr>
+            <th className="down">SL (stop loss)</th>
+            <td className="down">{f(t.sl)}</td>
+            <td className="muted">— zararga to&apos;xtash · {rPips} uzoqlikda</td>
+          </tr>
+          <tr>
+            <th className="up">TP1 (1-maqsad)</th>
+            <td className="up">{f(t.tp1)}</td>
+            <td className="muted">— +{r(t.tp1)}R · yetganda yarmi yopiladi</td>
+          </tr>
+          <tr>
+            <th className="up">TP2 (2-maqsad)</th>
+            <td className="up">{f(t.tp2)}</td>
+            <td className="muted">— +{r(t.tp2)}R · to&apos;liq chiqish{t.status === "tp1" ? " · SL hozir kirishda" : ""}</td>
+          </tr>
         </tbody>
       </table>
+      <p className="muted" style={{ margin: "0.25rem 0 0", fontSize: "0.8rem" }}>
+        1R = {rPips} (kirish va SL orasidagi masofa). TP1 = {r(t.tp1)}×, TP2 = {r(t.tp2)}× xavfga nisbatan foyda.
+      </p>
     </div>
   );
 }
@@ -216,9 +258,17 @@ async function SelectedChart({ row, selTf, adminHref: base }: { row: { inst: Ins
       </div>
       <TvChart candles={all.slice(from)} ema20={e20.slice(from)} ema50={e50.slice(from)} signals={signals} digits={digitsOf(inst.pair, closes.at(-1) ?? 0)}
         tfMinutes={tfMin} levels={levels} zones={ca?.zones ?? []} live={{ pair: inst.pair, source: inst.source }} />
-      {view ? view.summary && <p className="ai-box" style={{ margin: 0 }}>Claude: {view.summary}</p> : (
+      {view ? view.summary && <p className="ai-box" style={{ margin: 0 }}>Claude tahlili xulosa: {view.summary}</p> : (
         <p className="muted" style={{ margin: 0 }}>Bu juftlikda Claude tahlili (zonalar, darajalar) hali yo&apos;q: cron navbat bilan chizadi yoki hozir so&apos;rang.</p>
       )}
+      <div className="pult-legend">
+        <span><span style={{ display: "inline-block", width: 12, height: 3, background: "#f59e0b", borderRadius: 2, verticalAlign: "middle", marginRight: 4 }} />EMA20 — qisqa muddatli trend (20 sham)</span>
+        <span><span style={{ display: "inline-block", width: 12, height: 3, background: "#3b82f6", borderRadius: 2, verticalAlign: "middle", marginRight: 4 }} />EMA50 — uzun muddatli trend (50 sham)</span>
+        <span><span style={{ color: "#22c55e", marginRight: 4 }}>▲</span>Yashil belgisi — Claude BUY kirish narxi</span>
+        <span><span style={{ color: "#ef4444", marginRight: 4 }}>▼</span>Qizil belgisi — Claude SELL kirish narxi</span>
+        <span><span style={{ color: "#ef4444", marginRight: 4 }}>──</span>Qizil chiziq — SL (stop loss, zararga to&apos;xtash)</span>
+        <span><span style={{ color: "#22c55e", marginRight: 4 }}>──</span>Yashil chiziq — TP (maqsad narx)</span>
+      </div>
       <ClaudeViewButton pair={inst.pair} enabled={!!provider()} />
     </section>
   );
