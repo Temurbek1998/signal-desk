@@ -4,6 +4,14 @@ Har bir versiya GitHub'da teg bilan belgilanadi (`git tag`). Istalgan versiyaga 
 GitHub → Releases/Tags, yoki `git checkout v1.0.0`. Yangi versiyada shu faylning boshiga bo'lim qo'shiladi.
 Loyiha haqida to'liq qo'llanma: [CLAUDE.md](CLAUDE.md).
 
+## v1.20.0 (2026-10-11): Oltin Extended Thinking + Telegram karta
+
+- Oltin (XAU/USD) uchun Claude Extended Thinking (`thinking: adaptive`) yoqildi: har qarordan oldin chuqurroq tahlil,
+  max_tokens 16 000 ga oshirildi. Forex va kripto o'zgarmadi.
+- Yangi `/api/trade-card` endpoint: trade ma'lumotlaridan (juftlik, yo'nalish, kirish/SL/TP1/TP2, ishonch) PNG karta generatsiya qiladi.
+- Telegram: yangi savdo ochilganda endi rasm (trade karta) va qisqacha matn bilan `sendPhoto` jo'natiladi.
+  `APP_URL` yoki `VERCEL_URL` env var orqali to'g'ri URL quriladi; topilmasa eski matn formatiga qaytadi.
+
 ## v1.19.0 (2026-10-11): Kunlik arxiv
 
 - Admin jurnallari faqat bugungi kunni (Toshkent vaqti) ko'rsatadi: Robot logi (hodisalar, aylanishlar), AI treyder

@@ -39,7 +39,8 @@ export function operatorProvider() {
 // opts.json: javob shu JSON sxemaga mos bo'lsin (Anthropic'da qat'iy, boshqalarda JSON rejimi).
 // opts.model: shu chaqiruv uchun model (masalan AI treyder uchun alohida), opts.maxTokens: javob chegarasi.
 // opts.provider: asosiysidan boshqa provayder (operator uchun). LLM_MODEL faqat asosiy provayderga tegishli.
-export type CompleteOpts = { json?: Record<string, unknown>; model?: string; maxTokens?: number; provider?: Provider | null };
+// opts.thinking: Anthropic extended thinking (adaptive). Oltin uchun chuqur tahlilda ishlatiladi.
+export type CompleteOpts = { json?: Record<string, unknown>; model?: string; maxTokens?: number; provider?: Provider | null; thinking?: boolean };
 
 export async function complete(system: string, messages: ChatMessage[], opts: CompleteOpts = {}): Promise<string> {
   const main = provider();
@@ -105,6 +106,7 @@ export async function complete(system: string, messages: ChatMessage[], opts: Co
       system,
       messages,
       max_tokens: opts.maxTokens ?? 1200,
+      ...(opts.thinking ? { thinking: { type: "adaptive" } } : {}),
       ...(opts.json ? { output_config: { format: { type: "json_schema", schema: opts.json } } } : {}),
     }),
   });
