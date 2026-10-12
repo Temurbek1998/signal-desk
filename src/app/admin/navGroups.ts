@@ -14,6 +14,7 @@ export const GROUPS = [
       { key: "tahlil", label: "Robot + Claude", sub: "/tahlil" },
       { key: "robot", label: "Robot logi", sub: "/robot" },
       { key: "signallar", label: "Signallar", sub: "/signallar" },
+      { key: "bozor", label: "Bozor tahlili", sub: "/bozor" },
     ],
   },
   {
