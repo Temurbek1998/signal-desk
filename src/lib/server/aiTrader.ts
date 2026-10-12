@@ -12,6 +12,7 @@ import { underBudget } from "./aiBudget.ts";
 import { sql } from "./db.ts";
 import { complete, provider } from "./llm.ts";
 import { notifyAdmin, sendTradeCard } from "./telegram.ts";
+import { getMarketLevels, swingLevels, sessionLevels } from "./marketAnalysis.ts";
 
 // AI treyder (faqat demo): har juftlikda alohida Claude bozorni o'zi tahlil qilib BUY, SELL yoki WAIT qaror qiladi.
 // Oltin: har AI_TRADER_EVERY_MIN (standart 60) daqiqada, AI_TRADER_MODEL (Opus). Valyutalar: har AI_FX_TRADER_EVERY_MIN
@@ -77,29 +78,59 @@ const NEWS_RULES = `Yangiliklar (yangiliklar, yangilik_reaksiyalari, keskin_hara
 - Kuchli (High) yangilikka 45 daqiqadan kam qolgan bo'lsa yangi savdo ochma (WAIT), sababini ayt.
 - Yangilik chiqqandan keyingi 15 daqiqada birinchi impulsga sakrama: bozor yo'nalishni tanlaganini ko'r, keyin kir.
 - Yangilik va keskin harakatlardan keyin ATR kengayadi: SL ni shunga moslab kengroq qo'y yoki kut.`;
+
 const MEMORY_RULES = `Xotira (xotira, oldingi_savdolaring):
 - xotira.statistika: so'nggi 30 kundagi o'z natijang. xotira.saboqlar: yopilgan savdolaring, natijasi va nima uchun shunday bo'lgani.
 - Yutqazgan holatlaringni takrorlama (masalan, bir xil sharoitda ketma-ket SL bo'lsa, o'sha setupga ehtiyot bo'l), yutgan setuplaringni tani.`;
 
-const systemFor = (pair: string) => `Sen Zeus Number One'ning bosh treyderisan va ${pair} bo'yicha mustaqil qaror qilasan. ${pair === PAIR ? "Oltindagi aniq qarorlaring obunachilarga signal bo'lib boradi: ular pul to'laydi, shuning uchun sifat birinchi o'rinda." : "Bu juftlik hozircha demo hisobda sinovda."}
+const SL_RULES = `SL joylash (ENG MUHIM QOIDA — SL "ovchilar" dan himoyalansin):
+- SELL uchun SL = so'nggi swing HIGH dan 2-5 pips YUQORIDA qo'y (swing_darajalar.highs dan).
+- BUY uchun SL = so'nggi swing LOW dan 2-5 pips PASTDA qo'y (swing_darajalar.lows dan).
+- SL supply/demand zonadan TASHQARIDA bo'lsin: SELL uchun supply zonaning yuqorisidan, BUY uchun demand zonaning pastidan.
+- Sessiya darajalari (sessiya_darajalar) va psixologik darajalar (tarixiy_darajalar.psixologik) orqasiga qo'y — round sonlar magnit bo'lib narxni tortadi.
+- Agar swing high/low berilgan ATR chegarasidan tashqarida bo'lsa, narxga yaqinroq swing ni tanlash yoki WAIT de.
+- Minimum SL masofasi: H1 ATR × 0.5. Maksimum: H1 ATR × 3.
+- ASLO: SL ni bozor "ovchilar" likvidi jo'natadigan joydan 5-10 pips UZOQROQ qo'y — round numbers, sessiya high/low, kunlik high/low ni tekshir.`;
+
+const STRATEGY_RULES = `Strategiyalar (qaysi biri ko'proq mosligini tanlaysan):
+1. **Trend Following**: EMA20 va EMA50 yo'nalishida, ADX > 25 — kuchli trend tasdiq.
+2. **Supply/Demand**: Narx tarixiy demand/supply zonaga (tarixiy_darajalar) kirganda reaktsiya kut. BUY faqat demand, SELL faqat supply.
+3. **Liquidity Sweep + Reversal**: Narx swing high/low ni sinib likvidlik yig'gandan keyin keskin qaytsa — contra-trend kirish.
+4. **Market Structure Break (MSB)**: H4/H1 da yuqori/past cho'qqi sinishi — trend o'zgarish belgisi.
+5. **Session High/Low Breakout**: London yoki NY sessiyasi Osiyo diapazonini sindirsa — yo'nalish bo'yicha kir.
+6. **Fair Value Gap (FVG)**: 3 ta shamda o'rta shamning yuqori/past chegarasi narx tomonidan to'ldirilmagan — qaytish joyi.`;
+
+const systemFor = (pair: string) => `Sen Zeus Number One'ning Smart Trader AI san — ${pair} bo'yicha mustaqil qaror qilasan.
+${pair === PAIR ? "Oltindagi aniq qarorlaring obunachilarga signal bo'lib boradi: ular real pul to'laydi, shuning uchun sifat va xavfni boshqarish birinchi o'rinda." : "Bu juftlik hozircha demo hisobda sinovda."}
 Natijang haqqoniy R da o'lchanadi. Har soatda bitta qaror: BUY, SELL yoki WAIT. Kirish doim joriy narxda (bozor buyrug'i).
-Qanday tahlil qilasan (boshqa robot maslahatini kutmaysan, hammasini o'zing qilasan):
-- Yuqoridan pastga: katta_trend (D1, W1), H4 trendi, H1 tuzilmasi (yuqori/past cho'qqilar, sinishlar), keyin M15 da aniq kirish nuqtasi.
-- Talab/taklif zonalari, likvidlik (oldingi cho'qqi va tublar, kunlik high/low), sessiya (Osiyo, London, Nyu-York), EMA20/EMA50, RSI, ADX va ATR.
-- Narx qayerdan tushishi va qayerdan ko'tarilishi mumkinligini aniq darajalar bilan ayt.
+
+Tahlil usuli — yuqoridan pastga (TOP-DOWN):
+1. **Tarixiy kontekst** (tarixiy_darajalar): 8-10 yillik katta darajalar, supply/demand zonalar, psixologik darajalar.
+   Narx qaysi yillik/uch yillik darajalarga yaqin? Qaysi katta zonada turribiz?
+2. **Haftalik va kunlik tuzilma** (W1, D1 shamlar): uzun muddatli va o'rta muddatli trend yo'nalishi.
+   Haftalik trend: bullish → faqat BUY, bearish → faqat SELL. Bu MAJBURIY qoida, ishonch qancha bo'lmasin.
+3. **H4 va H1 tuzilma**: kichik trenddagi yuqori/past cho'qqilar (market structure), sinishlar.
+4. **Swing darajalar** (swing_darajalar): H1 dagi oxirgi swing high/low lar — SL joylash uchun asosiy manba.
+5. **Sessiya konteksti** (sessiya_darajalar): Osiyo, London, NY diapazonlari — likvidlik toplanish joylari.
+6. **Kirish nuqtasi** (H1/M15): ADX, EMA, RSI, ATR — trigger (tetik) uchun.
+
+${STRATEGY_RULES}
+
 Savdo boshqaruvi: TP1 da yarmi yopiladi va SL kirishga ko'chadi, qolgani TP2 gacha boradi; savdo ko'pi bilan 24 soatda yopiladi.
 ${isCrypto(pair) ? "Bu kripto juftlik: bozor 24/7, tun va dam olish kunlari likvidlik past, soxta sinishlar ko'p.\n" : ""}Ochiq savdolaringni har soatda qayta ko'rib, SL ni yaqinlashtirish yoki erta yopish imkoning bor.
+
+${SL_RULES}
 ${NEWS_RULES}
 ${MEMORY_RULES}
-Qoidalar:
-- Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma, har bir daraja ma'lumotdagi narxga asoslansin.
-- SL mantiqiy darajaning orqasida bo'lsin, masofasi H1 ATR ning 0.3-3 baravari. TP1 kamida 0.5R, TP2 kamida 1R va TP1 dan uzoqroq.
-- Trend, daraja va kirish nuqtasi mantiqiy bo'lsa BUY yoki SELL de. Aniq ustunlik bo'lmasa WAIT: yon harakat, ko'rsatkichlar bir-biriga qarshi,
-  narx SL qo'yib bo'lmaydigan joyda yoki yangilik yaqin. Yomon savdodan WAIT yaxshi.
+
+Umumiy qoidalar:
+- Faqat berilgan shamlar va ko'rsatkichlarga tayan. Daraja o'ylab topma — har bir daraja ma'lumotdagi narxga asoslansin.
+- TP1 kamida 0.5R, TP2 kamida 1.5R va TP1 dan ancha uzoqroq bo'lsin.
+- Aniq ustunlik bo'lmasa WAIT: yon harakat, ko'rsatkichlar bir-biriga qarshi, narx SL qo'yib bo'lmaydigan joyda yoki yangilik yaqin.
 - Shu juftlikda ochiq savdong bo'lsa (oldingi_savdolaring, holat "open" yoki "tp1"), unga qarshi yo'nalishda kirma.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
-- confidence 0-100 (80 dan pasti obunachiga bormaydi: SELL yoki BUY bo'lsa ham, ishonch < 80 bo'lsa WAIT deb yoz va sababini ayt). reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi. reason da o'zingni yoki model nomini tilga olma.
-- Haftalik (W1) va oylik trend MAJBURIY tekshiriladi: katta_trend da W1 "bullish" bo'lsa SELL kirma, "bearish" bo'lsa BUY kirma. Trend qarshi bo'lsa WAIT de, ishonch qancha bo'lmasin.
+- confidence 0-100 (80 dan pasti obunachiga bormaydi: SELL yoki BUY bo'lsa ham, ishonch < 80 bo'lsa WAIT deb yoz va sababini ayt).
+- reason o'zbek tilida (lotin), 5-8 jumla: tarixiy kontekst, trend, muhim darajalar, kirish sababi, SL joylash mantiq va qaysi holatda g'oya bekor bo'lishi. reason da o'zingni yoki model nomini tilga olma.
 ${ANALYSIS_PROMPT}
 Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
 
@@ -173,18 +204,29 @@ export async function memoryOf(pair: string) {
 }
 
 // Bozor ma'lumoti (shamlar, ko'rsatkichlar). zeus=true bo'lsa Zeus fikri ham (Claude bahosi uchun);
-// treyder Zeus fikrini olmaydi, o'rniga xotira va yangiliklar beriladi.
+// treyder Zeus fikrini olmaydi, o'rniga xotira, yangiliklar va tarixiy darajalar beriladi.
 export async function facts(pair = PAIR, opts: { zeus?: boolean; trader?: boolean } = { zeus: true }) {
   const inst = ALL_INSTRUMENTS.find((i) => i.pair === pair) ?? gold();
   const [m15, h1, h4] = await Promise.all([getCandles(inst, 15, 260), getCandles(inst, 60, 260), getCandles(inst, 240, 260)]);
+
+  // Treyder uchun qo'shimcha: W1, D1, tarixiy darajalar, swing, sessiya
+  const [w1, d1] = opts.trader
+    ? await Promise.all([getContextCandles(inst, "W1"), getContextCandles(inst, "D1")])
+    : [[], []];
+
   const [states, ctx, past] = await Promise.all([
     sql<{ timeframe: string; side: string | null; quality: string | null; reason: string }>("SELECT timeframe, side, quality, reason FROM robot_state WHERE pair = $1", [inst.pair]),
     sql<{ timeframe: string; trend: string }>("SELECT timeframe, trend FROM market_context WHERE pair = $1", [inst.pair]),
     sql<AiTrade>("SELECT * FROM ai_trades WHERE pair = $1 AND action <> 'WAIT' ORDER BY at DESC LIMIT 8", [inst.pair]),
   ]);
-  const [news, memory] = opts.trader ? await Promise.all([newsContext(inst.pair), memoryOf(inst.pair)]) : [{}, {}];
+
+  const [news, memory, marketLvl] = opts.trader
+    ? await Promise.all([newsContext(inst.pair), memoryOf(inst.pair), getMarketLevels(inst.pair).catch(() => null)])
+    : [{}, {}, null];
+
   const h1a = analyze(h1.slice(-200));
   const d = digitsOf(inst.pair, m15.at(-1)?.c ?? 0);
+
   return {
     price: m15.at(-1)?.c ?? 0,
     lastTime: m15.at(-1)?.t ?? 0,
@@ -194,9 +236,23 @@ export async function facts(pair = PAIR, opts: { zeus?: boolean; trader?: boolea
       katta_trend: Object.fromEntries(ctx.map((c) => [c.timeframe, c.trend])),
       ko_rsatkichlar: { M15: ind(m15, d), H1: ind(h1, d), H4: ind(h4, d) },
       shamlar_ustunlari: "vaqt_utc, open, high, low, close",
-      H4_shamlar: ohlc(h4.slice(-40), d),
-      H1_shamlar: ohlc(h1.slice(-72), d),
+      ...(opts.trader && d1.length ? { D1_shamlar: ohlc(d1.slice(-120), d) } : {}),
+      ...(opts.trader && w1.length ? { W1_shamlar: ohlc(w1.slice(-52), d) } : {}),
+      H4_shamlar: ohlc(h4.slice(-60), d),
+      H1_shamlar: ohlc(h1.slice(-96), d),
       M15_shamlar: ohlc(m15.slice(-64), d),
+      ...(opts.trader ? {
+        swing_darajalar: swingLevels(h1.slice(-100), 5, d),
+        sessiya_darajalar: sessionLevels(h1.slice(-48), d),
+      } : {}),
+      ...(opts.trader && marketLvl ? {
+        tarixiy_darajalar: {
+          uzun_trend: marketLvl.trend_long,
+          orta_trend: marketLvl.trend_medium,
+          ...marketLvl.levels,
+          tahlil_vaqti: marketLvl.analyzed_at,
+        },
+      } : {}),
       ...(opts.zeus ? { robot_zeus_fikri: states.map((s) => ({ tf: s.timeframe, yonalish: s.side, sifat: s.quality, sabab: s.reason })) } : {}),
       ...(opts.trader ? { ...news, xotira: memory } : {}),
       oldingi_savdolaring: past.map((t) => ({ vaqt: t.at, yonalish: t.action, kirish: t.entry, sl: t.sl, tp1: t.tp1, tp2: t.tp2, holat: t.status, natija_R: t.result_r })),

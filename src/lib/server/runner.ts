@@ -5,6 +5,8 @@ import { signalLabel, TIMEFRAMES, type Signal, type Timeframe } from "../types.t
 import { sql } from "./db.ts";
 import { logSignals } from "./track.ts";
 import { syncDemo } from "./demo.ts";
+import { analyzeMarketHistory } from "./marketAnalysis.ts";
+import { traderPairs } from "./aiTrader.ts";
 
 const STATUS_TEXT: Record<string, string> = { tp1: "TP 1 urildi", tp2: "TP 2 urildi", sl: "SL urildi", close: "vaqt bo'yicha yopildi" };
 const label = (s: Signal) => `${signalLabel(s.strategy)}: `;
@@ -102,5 +104,15 @@ export async function runCycle(trigger: string, timeframes: Timeframe[] = TIMEFR
   // Jurnal cheksiz o'smasin.
   await sql("DELETE FROM robot_runs WHERE started_at < now() - interval '14 days'");
   await sql("DELETE FROM robot_events WHERE at < now() - interval '30 days'");
+
+  // Smart Trader AI: kuniga bir marta tarixiy bozor tahlilini yangilaydi (market_levels jadvali).
+  // Har cron aylanishida tekshiriladi, lekin analyzeMarketHistory o'zi vaqtni nazorat qiladi (24 soat).
+  try {
+    const pairs = traderPairs().map((i) => i.pair);
+    for (const pair of pairs) {
+      await analyzeMarketHistory(pair).catch(() => null);
+    }
+  } catch { /* tarixiy tahlil muvaffaqiyatsiz bo'lsa asosiy cron to'xtamaydi */ }
+
   return { analyzed, failed, strong, weak, errors };
 }

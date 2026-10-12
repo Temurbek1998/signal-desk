@@ -443,3 +443,17 @@ CREATE TABLE IF NOT EXISTS price_spikes (
   UNIQUE (pair, candle_time)
 );
 CREATE INDEX IF NOT EXISTS price_spikes_time ON price_spikes (candle_time DESC);
+
+-- Tarixiy bozor tahlili (Smart Trader AI, v1.24.0): Claude kuniga bir marta MN+W1+D1 shamlarni tahlil qilib
+-- katta darajalar, supply/demand zonalar va uzun muddatli trendni aniqlaydi. aiTrader har savdo qarorida foydalanadi.
+CREATE TABLE IF NOT EXISTS market_levels (
+  id           bigserial PRIMARY KEY,
+  pair         text NOT NULL,
+  analyzed_at  timestamptz NOT NULL DEFAULT now(),
+  trend_long   text NOT NULL DEFAULT '',   -- 'bull', 'bear', 'sideways' (oylik, yillik)
+  trend_medium text NOT NULL DEFAULT '',   -- 'bull', 'bear', 'sideways' (haftalik, oylik)
+  levels       jsonb NOT NULL DEFAULT '{}', -- kuchli darajalar, zonalar, S/D, yillik H/L
+  summary      text NOT NULL DEFAULT '',
+  model        text NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS market_levels_pair_at ON market_levels (pair, analyzed_at DESC);
