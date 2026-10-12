@@ -98,7 +98,8 @@ Qoidalar:
   narx SL qo'yib bo'lmaydigan joyda yoki yangilik yaqin. Yomon savdodan WAIT yaxshi.
 - Shu juftlikda ochiq savdong bo'lsa (oldingi_savdolaring, holat "open" yoki "tp1"), unga qarshi yo'nalishda kirma.
 - WAIT bo'lsa sl, tp1, tp2 ni 0 qilib qo'y.
-- confidence 0-100 (50 dan pasti obunachiga bormaydi). reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi. reason da o'zingni yoki model nomini tilga olma.
+- confidence 0-100 (80 dan pasti obunachiga bormaydi: SELL yoki BUY bo'lsa ham, ishonch < 80 bo'lsa WAIT deb yoz va sababini ayt). reason o'zbek tilida (lotin), 4-8 jumla: trend, muhim darajalar, kirish sababi va qaysi holatda g'oya bekor bo'lishi. reason da o'zingni yoki model nomini tilga olma.
+- Haftalik (W1) va oylik trend MAJBURIY tekshiriladi: katta_trend da W1 "bullish" bo'lsa SELL kirma, "bearish" bo'lsa BUY kirma. Trend qarshi bo'lsa WAIT de, ishonch qancha bo'lmasin.
 ${ANALYSIS_PROMPT}
 Javob faqat JSON: {"action","sl","tp1","tp2","confidence","reason","analysis"}.`;
 

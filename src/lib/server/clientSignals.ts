@@ -7,7 +7,7 @@ import type { LoggedSignal, Stats } from "./track.ts";
 // (kirish, SL, TP Claude'dan). Saytda nomi "Zeus" bo'lib qoladi. GOLD_SIGNAL_SOURCE=zeus eski yo'lga qaytaradi.
 export const claudeSource = () => (process.env.GOLD_SIGNAL_SOURCE ?? "claude") !== "zeus";
 // Demo hisob bilan bir xil chegara: ishonchi past qarorlar mijozga bormaydi.
-export const clientMinConf = () => Math.max(0, Number(process.env.AI_DEMO_MIN_CONF ?? 50));
+export const clientMinConf = () => Math.max(0, Number(process.env.AI_DEMO_MIN_CONF ?? 80));
 
 const BASE = `pair = $1 AND mode = 'intraday' AND action IN ('BUY', 'SELL') AND status NOT IN ('wait', 'rejected') AND confidence >= $2`;
 // Ekran uchun: ochiq savdolar, bo'lmasa so'nggi 8 soatda yopilgani, bo'lmasa hech narsa.
