@@ -1,4 +1,3 @@
-"use server";
 import { analyzeMarketHistory, getMarketLevels } from "@/lib/server/marketAnalysis.ts";
 import { traderPairs } from "@/lib/server/aiTrader.ts";
 import LocalTime from "../../components/LocalTime.tsx";
